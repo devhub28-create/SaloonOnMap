@@ -1,0 +1,69 @@
+name: SLOT Platform CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'slot/apps/backend/package-lock.json'
+      - name: Install Dependencies
+        run: cd slot/apps/backend && npm ci
+      - name: Run Tests
+        run: cd slot/apps/backend && npm run test
+      - name: Build Backend
+        run: cd slot/apps/backend && npm run build
+
+  flutter-customer-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: 'stable'
+      - name: Pub Get
+        run: cd slot/apps/customer_app && flutter pub get
+      - name: Analyze
+        run: cd slot/apps/customer_app && flutter analyze
+      - name: Test
+        run: cd slot/apps/customer_app && flutter test
+
+  flutter-partner-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: 'stable'
+      - name: Pub Get
+        run: cd slot/apps/partner_app && flutter pub get
+      - name: Analyze
+        run: cd slot/apps/partner_app && flutter analyze
+      - name: Test
+        run: cd slot/apps/partner_app && flutter test
+
+  flutter-admin-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: 'stable'
+      - name: Pub Get
+        run: cd slot/apps/admin_panel && flutter pub get
+      - name: Analyze
+        run: cd slot/apps/admin_panel && flutter analyze
+      - name: Test
+        run: cd slot/apps/admin_panel && flutter test

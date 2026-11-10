@@ -1,0 +1,20 @@
+[
+  {
+    "scenario": "Hairstyle-Only: Textured Crop",
+    "inference_time_sec": 11.24,
+    "peak_memory_gb": 5.15,
+    "output_file": "benchmark_results/result_hair_textured_crop.png"
+  },
+  {
+    "scenario": "Beard-Only: Heavy Stubble",
+    "inference_time_sec": 11.22,
+    "peak_memory_gb": 5.37,
+    "output_file": "benchmark_results/result_beard_stubble.png"
+  },
+  {
+    "scenario": "Combined: Classic Side Part + Short Beard",
+    "inference_time_sec": 10.58,
+    "peak_memory_gb": 5.35,
+    "output_file": "benchmark_results/result_combined_style.png"
+  }
+]
