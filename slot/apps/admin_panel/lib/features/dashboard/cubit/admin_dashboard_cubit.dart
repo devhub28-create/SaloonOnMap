@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:api_client/api_client.dart';
+import '../../../core/utils/admin_error_message.dart';
 
 abstract class AdminDashboardState {}
 
@@ -29,8 +30,8 @@ class AdminDashboardCubit extends Cubit<AdminDashboardState> {
       final res = await apiClient.getAdminDashboard();
       emit(AdminDashboardLoadedState(res['overview'] ?? {}));
     } catch (e) {
-      emit(AdminDashboardErrorState(
-          'Failed to fetch admin overview: ${e.toString()}'));
+      emit(AdminDashboardErrorState(adminErrorMessage(e,
+          fallback: 'The platform overview could not be loaded.')));
     }
   }
 }

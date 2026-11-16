@@ -24,12 +24,26 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedArea = 'Indiranagar, Bengaluru';
   double? _userLat = 12.9784;
   double? _userLng = 77.6408;
-
+  int _unreadNotificationCount = 0;
 
   @override
   void initState() {
     super.initState();
+    _loadUnreadNotificationCount();
     _detectUserLocation(showToast: false);
+  }
+
+  Future<void> _loadUnreadNotificationCount() async {
+    if (!context.read<AuthCubit>().isAuthenticated) return;
+    try {
+      final count = await context
+          .read<AuthCubit>()
+          .apiClient
+          .getUnreadNotificationCount();
+      if (mounted) setState(() => _unreadNotificationCount = count);
+    } catch (_) {
+      // Notification discovery should never block the customer home screen.
+    }
   }
 
   Future<void> _detectUserLocation({bool showToast = false}) async {
@@ -48,7 +62,8 @@ class _HomeScreenState extends State<HomeScreen> {
         final lat = position.latitude;
         final lng = position.longitude;
 
-        final locationLabel = await CustomerApiService.instance.reverseGeocode(lat: lat, lng: lng);
+        final locationLabel = await CustomerApiService.instance
+            .reverseGeocode(lat: lat, lng: lng);
 
         if (mounted) {
           setState(() {
@@ -351,8 +366,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Row(
                     children: [
-                      // Notification Bell with Red Dot
+                      // Notification bell with a real unread count.
                       Stack(
+                        clipBehavior: Clip.none,
                         children: [
                           Container(
                             decoration: BoxDecoration(
@@ -363,22 +379,42 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: IconButton(
                               icon: const Icon(Icons.notifications_none_rounded,
                                   color: AppColors.darkNeutral, size: 20),
-                              onPressed: () =>
-                                  context.push('/profile/notifications'),
+                              onPressed: () async {
+                                await context.push('/profile/notifications');
+                                if (mounted) _loadUnreadNotificationCount();
+                              },
                             ),
                           ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: primaryAccentColor,
-                                shape: BoxShape.circle,
+                          if (_unreadNotificationCount > 0)
+                            Positioned(
+                              top: -4,
+                              right: -4,
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  minWidth: 18,
+                                  minHeight: 18,
+                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                decoration: BoxDecoration(
+                                  color: primaryAccentColor,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  _unreadNotificationCount > 99
+                                      ? '99+'
+                                      : '$_unreadNotificationCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                       const SizedBox(width: 8),
@@ -402,8 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(Icons.login_rounded,
-                                        size: 14,
-                                        color: AppColors.primaryGold),
+                                        size: 14, color: AppColors.primaryGold),
                                     SizedBox(width: 4),
                                     Text(
                                       'Login',
@@ -610,8 +645,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ? 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=800'
                             : 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=800',
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Container(
+                        errorBuilder: (context, error, stackTrace) => Container(
                           color: AppColors.darkNeutral,
                           child: const Center(
                             child: Icon(Icons.storefront_rounded,
@@ -758,33 +792,31 @@ class _HomeScreenState extends State<HomeScreen> {
                       final serviceObj = svc['service'] is Map
                           ? svc['service'] as Map
                           : (svc is Map ? svc : const {});
-                      final title = (serviceObj['name'] ??
-                              svc['name'] ??
-                              'Service')
-                          .toString();
+                      final title =
+                          (serviceObj['name'] ?? svc['name'] ?? 'Service')
+                              .toString();
                       final dur = formatDuration(svc['duration_minutes'] ?? 30);
                       final subtitle = '$dur • ⭐ 4.9';
-                      final priceNum = double.tryParse(
-                          svc['price']?.toString() ?? '0');
-                      final priceStr = priceNum != null
-                          ? '₹${priceNum.toInt()}'
-                          : '₹399';
-                      final imgUrl = _getServiceImageUrl(
-                          title, isWomenTheme);
+                      final priceNum =
+                          double.tryParse(svc['price']?.toString() ?? '0');
+                      final priceStr =
+                          priceNum != null ? '₹${priceNum.toInt()}' : '₹399';
+                      final imgUrl = _getServiceImageUrl(title, isWomenTheme);
 
                       final targetSalonId = svc['salon_id'] ??
                           svc['salonId'] ??
                           (svc['salon'] is Map ? svc['salon']['id'] : null) ??
                           featuredSalon?['id'];
-                      final targetSalon = (svc['salon'] is Map ? svc['salon'] : null) ??
-                          _salons.cast<Map<String, dynamic>?>().firstWhere(
-                            (s) => s != null && s['id'] == targetSalonId,
-                            orElse: () => featuredSalon,
-                          );
+                      final targetSalon =
+                          (svc['salon'] is Map ? svc['salon'] : null) ??
+                              _salons.cast<Map<String, dynamic>?>().firstWhere(
+                                    (s) =>
+                                        s != null && s['id'] == targetSalonId,
+                                    orElse: () => featuredSalon,
+                                  );
 
                       return Padding(
-                        padding:
-                            const EdgeInsets.only(right: AppSpacing.md),
+                        padding: const EdgeInsets.only(right: AppSpacing.md),
                         child: _buildPopularServiceCard(
                           title,
                           subtitle,
@@ -811,8 +843,8 @@ class _HomeScreenState extends State<HomeScreen> {
               else
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -1004,8 +1036,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: AppColors.darkNeutral)),
                 GestureDetector(
                   onTap: () {
-                    final comboSalonId = _combos.first['salon_id'] ??
-                        featuredSalon?['id'];
+                    final comboSalonId =
+                        _combos.first['salon_id'] ?? featuredSalon?['id'];
                     context.push('/salon-detail', extra: {
                       'salonId': comboSalonId,
                       'salon': featuredSalon
@@ -1018,122 +1050,138 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: const [AppShadows.cardShadow],
                     ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.auto_awesome_rounded,
-                                    color: primaryAccentColor, size: 16),
-                                const SizedBox(width: 6),
-                                Text(
-                                  _combos.first['discountTag']?.toString() ??
-                                      'POWER COMBO',
-                                  style: TextStyle(
-                                      color: primaryAccentColor,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.1),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                                _combos.first['name']?.toString() ??
-                                    'Special Package',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 4),
-                            Text(_combos.first['description']?.toString() ?? '',
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
-                            const SizedBox(height: 14),
-                            Builder(
-                              builder: (context) {
-                                final combo = _combos.first;
-                                final price = double.tryParse(combo['price']?.toString() ?? '0') ?? 0.0;
-                                final rawOrig = double.tryParse((combo['original_price'] ?? combo['originalPrice'])?.toString() ?? '0');
-                                final origPrice = (rawOrig != null && rawOrig > price) ? rawOrig : (price * 1.25).roundToDouble();
-                                final hasDiscount = origPrice > price;
-                                final savings = (origPrice - price).round();
-
-                                return Row(
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    if (hasDiscount) ...[
-                                      Text(
-                                        '₹${origPrice.toInt()}',
-                                        style: const TextStyle(
-                                          color: Colors.white54,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          decoration: TextDecoration.lineThrough,
-                                          decorationColor: Colors.white70,
-                                          decorationThickness: 2,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                    ],
-                                    Text(
-                                      '₹${price.toInt()}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 22,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.auto_awesome_rounded,
+                                      color: primaryAccentColor, size: 16),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _combos.first['discountTag']?.toString() ??
+                                        'POWER COMBO',
+                                    style: TextStyle(
+                                        color: primaryAccentColor,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    if (hasDiscount && savings > 0) ...[
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primaryGoldDark,
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          'SAVE ₹$savings',
+                                        letterSpacing: 1.1),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                  _combos.first['name']?.toString() ??
+                                      'Special Package',
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4),
+                              Text(
+                                  _combos.first['description']?.toString() ??
+                                      '',
+                                  style: const TextStyle(
+                                      color: Colors.white70, fontSize: 12)),
+                              const SizedBox(height: 14),
+                              Builder(
+                                builder: (context) {
+                                  final combo = _combos.first;
+                                  final price = double.tryParse(
+                                          combo['price']?.toString() ?? '0') ??
+                                      0.0;
+                                  final rawOrig = double.tryParse(
+                                      (combo['original_price'] ??
+                                                  combo['originalPrice'])
+                                              ?.toString() ??
+                                          '0');
+                                  final origPrice =
+                                      (rawOrig != null && rawOrig > price)
+                                          ? rawOrig
+                                          : (price * 1.25).roundToDouble();
+                                  final hasDiscount = origPrice > price;
+                                  final savings = (origPrice - price).round();
+
+                                  return Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.baseline,
+                                    textBaseline: TextBaseline.alphabetic,
+                                    children: [
+                                      if (hasDiscount) ...[
+                                        Text(
+                                          '₹${origPrice.toInt()}',
                                           style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 0.5,
+                                            color: Colors.white54,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            decoration:
+                                                TextDecoration.lineThrough,
+                                            decorationColor: Colors.white70,
+                                            decorationThickness: 2,
                                           ),
                                         ),
+                                        const SizedBox(width: 8),
+                                      ],
+                                      Text(
+                                        '₹${price.toInt()}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
+                                      if (hasDiscount && savings > 0) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 7, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primaryGoldDark,
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            'SAVE ₹$savings',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ],
-                                  ],
-                                );
-                              },
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Row(
+                          children: [
+                            Icon(Icons.content_cut_rounded,
+                                color: primaryAccentColor, size: 28),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              child: Text('+',
+                                  style: TextStyle(
+                                      color: primaryAccentColor,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold)),
                             ),
+                            Icon(Icons.auto_awesome_rounded,
+                                color: primaryAccentColor, size: 28),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Row(
-                        children: [
-                          Icon(Icons.content_cut_rounded,
-                              color: primaryAccentColor, size: 28),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Text('+',
-                                style: TextStyle(
-                                    color: primaryAccentColor,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                          Icon(Icons.auto_awesome_rounded,
-                              color: primaryAccentColor, size: 28),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
               ],
@@ -1216,8 +1264,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: secondaryBadgeColor,
-                                      borderRadius:
-                                          BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Row(
                                       children: [
@@ -1285,8 +1332,8 @@ class _HomeScreenState extends State<HomeScreen> {
               else
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 28, horizontal: 20),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -1307,8 +1354,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(height: 4),
                       Text(
                         'Registered partner salons will appear here.',
-                        style: TextStyle(
-                            fontSize: 12, color: AppColors.textMuted),
+                        style:
+                            TextStyle(fontSize: 12, color: AppColors.textMuted),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -1390,7 +1437,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   IconData _getServiceFallbackIcon(String title) {
     final lower = title.toLowerCase();
-    if (lower.contains('cut') || lower.contains('hair') || lower.contains('styling')) {
+    if (lower.contains('cut') ||
+        lower.contains('hair') ||
+        lower.contains('styling')) {
       return Icons.content_cut_rounded;
     }
     if (lower.contains('beard') || lower.contains('shave')) {
@@ -1399,10 +1448,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (lower.contains('spa') || lower.contains('massage')) {
       return Icons.spa_rounded;
     }
-    if (lower.contains('facial') || lower.contains('cleanup') || lower.contains('glow')) {
+    if (lower.contains('facial') ||
+        lower.contains('cleanup') ||
+        lower.contains('glow')) {
       return Icons.auto_awesome_rounded;
     }
-    if (lower.contains('nail') || lower.contains('manicure') || lower.contains('pedicure')) {
+    if (lower.contains('nail') ||
+        lower.contains('manicure') ||
+        lower.contains('pedicure')) {
       return Icons.brush_rounded;
     }
     return Icons.star_border_rounded;
@@ -1418,12 +1471,17 @@ class _HomeScreenState extends State<HomeScreen> {
           ? 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=400'
           : 'https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&q=80&w=400';
     }
-    if (lower.contains('facial') || lower.contains('cleanup') || lower.contains('glow') || lower.contains('charcoal')) {
+    if (lower.contains('facial') ||
+        lower.contains('cleanup') ||
+        lower.contains('glow') ||
+        lower.contains('charcoal')) {
       return isWomenTheme
           ? 'https://images.unsplash.com/photo-1512290900672-1f02f9e42104?auto=format&fit=crop&q=80&w=400'
           : 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=400';
     }
-    if (lower.contains('nail') || lower.contains('manicure') || lower.contains('pedicure')) {
+    if (lower.contains('nail') ||
+        lower.contains('manicure') ||
+        lower.contains('pedicure')) {
       return 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=400';
     }
     return isWomenTheme
@@ -1557,7 +1615,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.storefront_rounded, size: 48, color: AppColors.primaryGold),
+            Icon(Icons.storefront_rounded,
+                size: 48, color: AppColors.primaryGold),
             SizedBox(height: 6),
             Text(
               'SLOT Premium Salon',
@@ -1587,7 +1646,8 @@ class _HomeScreenState extends State<HomeScreen> {
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFD49B28).withOpacity(0.35), width: 1.2),
+          border: Border.all(
+              color: const Color(0xFFD49B28).withOpacity(0.35), width: 1.2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.12),
@@ -1605,7 +1665,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFFD49B28).withOpacity(0.2),
                           borderRadius: BorderRadius.circular(6),
@@ -1613,7 +1674,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.auto_awesome, size: 12, color: Color(0xFFE5B552)),
+                            Icon(Icons.auto_awesome,
+                                size: 12, color: Color(0xFFE5B552)),
                             SizedBox(width: 4),
                             Text(
                               'AI STYLE STUDIO',
@@ -1629,14 +1691,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 3),
                         decoration: BoxDecoration(
                           color: Colors.white10,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
                           '100% FREE',
-                          style: TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -1654,7 +1720,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 4),
                   const Text(
                     'See your new cut or beard style before your chair appointment.',
-                    style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.3),
+                    style: TextStyle(
+                        color: Colors.white70, fontSize: 12, height: 1.3),
                   ),
                 ],
               ),
@@ -1666,10 +1733,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: const Color(0xFFD49B28),
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: const Color(0xFFD49B28).withOpacity(0.4), blurRadius: 8),
+                  BoxShadow(
+                      color: const Color(0xFFD49B28).withOpacity(0.4),
+                      blurRadius: 8),
                 ],
               ),
-              child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+              child: const Icon(Icons.arrow_forward_rounded,
+                  color: Colors.white, size: 20),
             ),
           ],
         ),

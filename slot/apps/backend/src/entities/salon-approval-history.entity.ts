@@ -1,16 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Salon } from './salon.entity';
+import { Salon, SalonStatus } from './salon.entity';
 import { User } from './user.entity';
 
-export enum SalonStatus {
-  DRAFT = 'DRAFT',
-  PENDING_APPROVAL = 'PENDING_APPROVAL',
-  CHANGES_REQUESTED = 'CHANGES_REQUESTED',
-  APPROVED = 'APPROVED',
-  ACTIVE = 'ACTIVE',
-  SUSPENDED = 'SUSPENDED',
-  REJECTED = 'REJECTED',
-}
+export { SalonStatus } from './salon.entity';
 
 @Entity('salon_approval_history')
 export class SalonApprovalHistory {

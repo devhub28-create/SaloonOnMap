@@ -27,7 +27,8 @@ class CustomerApiService extends ApiClient {
     } on DioException catch (dioErr) {
       final statusCode = dioErr.response?.statusCode;
       final responseData = dioErr.response?.data;
-      String errorMessage = 'Network error occurred. Please check your connection.';
+      String errorMessage =
+          'Network error occurred. Please check your connection.';
 
       if (responseData is Map && responseData['message'] != null) {
         final msg = responseData['message'];
@@ -35,7 +36,8 @@ class CustomerApiService extends ApiClient {
       } else if (statusCode != null) {
         switch (statusCode) {
           case 400:
-            errorMessage = 'Invalid request parameters. Please verify your details.';
+            errorMessage =
+                'Invalid request parameters. Please verify your details.';
             break;
           case 401:
             errorMessage = 'Your session has expired. Please sign in again.';
@@ -52,37 +54,29 @@ class CustomerApiService extends ApiClient {
           case 500:
           case 502:
           case 503:
-            errorMessage = 'Server is currently unavailable. Please try again shortly.';
+            errorMessage =
+                'Server is currently unavailable. Please try again shortly.';
             break;
           default:
             errorMessage = 'Server error occurred (Code $statusCode).';
         }
       }
 
-      developer.log('[$operation Error] $errorMessage (HTTP $statusCode)', error: dioErr);
-      throw CustomerApiException(errorMessage, statusCode: statusCode, originalError: dioErr);
+      developer.log('[$operation Error] $errorMessage (HTTP $statusCode)',
+          error: dioErr);
+      throw CustomerApiException(errorMessage,
+          statusCode: statusCode, originalError: dioErr);
     } catch (e) {
       developer.log('[$operation Unexpected Error] $e', error: e);
       if (e is CustomerApiException) rethrow;
-      throw CustomerApiException('An unexpected error occurred: $e', originalError: e);
+      throw CustomerApiException('An unexpected error occurred: $e',
+          originalError: e);
     }
   }
 
   // ==========================================
   // Auth & Account Management
   // ==========================================
-
-  /// Direct login / registration bypassing OTP
-  Future<Map<String, dynamic>> loginCustomerDirectly(
-    String phone, {
-    String? name,
-    String? email,
-  }) async {
-    return handleRequest(
-      () => verifyOtp(phone, '000000', name: name, email: email),
-      operation: 'Direct Customer Login',
-    );
-  }
 
   /// Request OTP for customer phone number
   Future<Map<String, dynamic>> requestOtpCode(String phone) async {
@@ -92,7 +86,7 @@ class CustomerApiService extends ApiClient {
     );
   }
 
-  /// Verify OTP code (or bypass code)
+  /// Verify the one-time code delivered to the customer.
   Future<Map<String, dynamic>> verifyOtpCode(
     String phone,
     String code, {
@@ -170,18 +164,23 @@ class CustomerApiService extends ApiClient {
   }
 
   /// Centralized reverse geocoding via OpenStreetMap with fallback
-  Future<String> reverseGeocode({required double lat, required double lng}) async {
+  Future<String> reverseGeocode(
+      {required double lat, required double lng}) async {
     try {
-      final response = await dio.get(
-        CustomerApiUrls.reverseGeocodeUrl,
-        queryParameters: {'format': 'json', 'lat': lat, 'lon': lng},
-        options: Options(headers: {'User-Agent': 'SlotApp/1.0'}),
-      ).timeout(const Duration(seconds: 4));
+      final response = await dio
+          .get(
+            CustomerApiUrls.reverseGeocodeUrl,
+            queryParameters: {'format': 'json', 'lat': lat, 'lon': lng},
+            options: Options(headers: {'User-Agent': 'SlotApp/1.0'}),
+          )
+          .timeout(const Duration(seconds: 4));
 
       if (response.data != null && response.data['address'] != null) {
         final addr = response.data['address'];
-        final suburb = addr['suburb'] ?? addr['neighbourhood'] ?? addr['subdistrict'];
-        final city = addr['city'] ?? addr['town'] ?? addr['county'] ?? 'Bengaluru';
+        final suburb =
+            addr['suburb'] ?? addr['neighbourhood'] ?? addr['subdistrict'];
+        final city =
+            addr['city'] ?? addr['town'] ?? addr['county'] ?? 'Bengaluru';
         return suburb != null ? '$suburb, $city' : city.toString();
       }
     } catch (_) {
@@ -227,7 +226,8 @@ class CustomerApiService extends ApiClient {
   }
 
   /// Confirm booking after payment / slot confirmation
-  Future<Map<String, dynamic>> confirmReservation(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> confirmReservation(
+      Map<String, dynamic> data) async {
     return handleRequest(
       () => confirmBooking(data),
       operation: 'Confirm Booking',

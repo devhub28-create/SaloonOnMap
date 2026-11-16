@@ -1,5 +1,15 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
+export enum SalonStatus {
+  DRAFT = 'DRAFT',
+  PENDING_APPROVAL = 'PENDING_APPROVAL',
+  CHANGES_REQUESTED = 'CHANGES_REQUESTED',
+  APPROVED = 'APPROVED',
+  ACTIVE = 'ACTIVE',
+  SUSPENDED = 'SUSPENDED',
+  REJECTED = 'REJECTED',
+}
+
 @Entity('salons')
 export class Salon {
   @PrimaryGeneratedColumn('uuid')
@@ -34,6 +44,9 @@ export class Salon {
 
   @Column({ default: true })
   is_active: boolean;
+
+  @Column({ type: 'varchar', default: SalonStatus.PENDING_APPROVAL })
+  approval_status: SalonStatus;
 
   @Column({ default: 'UNISEX' })
   target_gender: string;

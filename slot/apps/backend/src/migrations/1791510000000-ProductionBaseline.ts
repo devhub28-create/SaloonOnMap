@@ -1,18 +1,32 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class ProductionBaseline1791510000000 implements MigrationInterface {
-  name = 'ProductionBaseline1791510000000';
+  name = "ProductionBaseline1791510000000";
 
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "btree_gist"`);
-    await queryRunner.query(`DO $$ BEGIN CREATE TYPE "users_role_enum" AS ENUM ('CUSTOMER','SALON_OWNER','SALON_STAFF','ADMIN'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
-    await queryRunner.query(`DO $$ BEGIN CREATE TYPE "seats_status_enum" AS ENUM ('AVAILABLE','BOOKED','IN_SERVICE','RESERVED','CLEANING'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
-    await queryRunner.query(`DO $$ BEGIN CREATE TYPE "staff_status_enum" AS ENUM ('AVAILABLE','IN_SERVICE','BREAK','OFF_SHIFT'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
-    await queryRunner.query(`DO $$ BEGIN CREATE TYPE "booking_holds_status_enum" AS ENUM ('ACTIVE','CONVERTED','EXPIRED','CANCELLED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
-    await queryRunner.query(`DO $$ BEGIN CREATE TYPE "bookings_status_enum" AS ENUM ('CONFIRMED','WAITING','IN_SERVICE','DONE','CANCELLED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
-    await queryRunner.query(`DO $$ BEGIN CREATE TYPE "offers_discount_type_enum" AS ENUM ('PERCENTAGE','FIXED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
-    await queryRunner.query(`DO $$ BEGIN CREATE TYPE "offers_scope_enum" AS ENUM ('PLATFORM','SALON'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
+    await queryRunner.query(
+      `DO $$ BEGIN CREATE TYPE "users_role_enum" AS ENUM ('CUSTOMER','SALON_OWNER','SALON_STAFF','ADMIN','SUPER_ADMIN','OPERATIONS_ADMIN','SUPPORT_ADMIN','MARKETING_ADMIN'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    );
+    await queryRunner.query(
+      `DO $$ BEGIN CREATE TYPE "seats_status_enum" AS ENUM ('AVAILABLE','BOOKED','IN_SERVICE','RESERVED','CLEANING'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    );
+    await queryRunner.query(
+      `DO $$ BEGIN CREATE TYPE "staff_status_enum" AS ENUM ('AVAILABLE','IN_SERVICE','BREAK','OFF_SHIFT'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    );
+    await queryRunner.query(
+      `DO $$ BEGIN CREATE TYPE "booking_holds_status_enum" AS ENUM ('ACTIVE','CONVERTED','EXPIRED','CANCELLED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    );
+    await queryRunner.query(
+      `DO $$ BEGIN CREATE TYPE "bookings_status_enum" AS ENUM ('CONFIRMED','WAITING','IN_SERVICE','DONE','CANCELLED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    );
+    await queryRunner.query(
+      `DO $$ BEGIN CREATE TYPE "offers_discount_type_enum" AS ENUM ('PERCENTAGE','FIXED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    );
+    await queryRunner.query(
+      `DO $$ BEGIN CREATE TYPE "offers_scope_enum" AS ENUM ('PLATFORM','SALON'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "users" (
@@ -32,7 +46,8 @@ export class ProductionBaseline1791510000000 implements MigrationInterface {
         "address" varchar NOT NULL, "city" varchar NOT NULL, "area" varchar NOT NULL,
         "latitude" double precision NOT NULL DEFAULT 12.9784, "longitude" double precision NOT NULL DEFAULT 77.6408,
         "rating" double precision NOT NULL DEFAULT 0, "review_count" integer NOT NULL DEFAULT 0,
-        "is_active" boolean NOT NULL DEFAULT false, "target_gender" varchar NOT NULL DEFAULT 'UNISEX',
+        "is_active" boolean NOT NULL DEFAULT false, "approval_status" varchar NOT NULL DEFAULT 'PENDING_APPROVAL',
+        "target_gender" varchar NOT NULL DEFAULT 'UNISEX',
         "opening_time" varchar NOT NULL DEFAULT '09:00', "closing_time" varchar NOT NULL DEFAULT '21:00',
         "timezone" varchar NOT NULL DEFAULT 'Asia/Kolkata', "cover_image" varchar,
         "created_at" timestamptz NOT NULL DEFAULT now(), "updated_at" timestamptz NOT NULL DEFAULT now()
@@ -109,6 +124,12 @@ export class ProductionBaseline1791510000000 implements MigrationInterface {
         "previous_status" varchar, "new_status" varchar NOT NULL, "changed_by" uuid REFERENCES users(id), "reason" varchar,
         "created_at" timestamptz NOT NULL DEFAULT now()
       );
+      CREATE TABLE IF NOT EXISTS "reviews" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(), "booking_id" uuid NOT NULL UNIQUE REFERENCES bookings(id) ON DELETE CASCADE,
+        "customer_id" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE, "salon_id" uuid NOT NULL REFERENCES salons(id) ON DELETE CASCADE,
+        "rating" integer NOT NULL CHECK (rating BETWEEN 1 AND 5), "comment" varchar, "tags" text,
+        "customer_name" varchar, "created_at" timestamptz NOT NULL DEFAULT now(), "updated_at" timestamptz NOT NULL DEFAULT now()
+      );
       CREATE TABLE IF NOT EXISTS "notifications" (
         "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(), "user_id" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         "title" varchar NOT NULL, "body" varchar NOT NULL, "type" varchar NOT NULL DEFAULT 'INFO',
@@ -145,26 +166,70 @@ export class ProductionBaseline1791510000000 implements MigrationInterface {
       );
     `);
 
-    await queryRunner.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash varchar`);
-    await queryRunner.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version integer NOT NULL DEFAULT 0`);
-    await queryRunner.query(`ALTER TABLE salons ADD COLUMN IF NOT EXISTS timezone varchar NOT NULL DEFAULT 'Asia/Kolkata'`);
-    await queryRunner.query(`ALTER TABLE booking_holds ADD COLUMN IF NOT EXISTS service_ids jsonb NOT NULL DEFAULT '[]'::jsonb`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_booking_holds_expiry ON booking_holds(status, expires_at)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_booking_holds_customer ON booking_holds(customer_id)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_bookings_salon_status_start ON bookings(salon_id, status, start_at)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_device_registrations_user_app ON device_registrations(user_id, app_type)`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_expiry ON refresh_tokens(user_id, expires_at)`);
-    await queryRunner.query(`DO $$ BEGIN ALTER TABLE bookings ADD CONSTRAINT bookings_no_active_overlap EXCLUDE USING gist (seat_id WITH =, tstzrange(start_at, end_at, '[)') WITH &&) WHERE (status IN ('CONFIRMED','WAITING','IN_SERVICE')); EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
-    await queryRunner.query(`DO $$ BEGIN ALTER TABLE booking_holds ADD CONSTRAINT holds_no_active_overlap EXCLUDE USING gist (seat_id WITH =, tstzrange(start_at, end_at, '[)') WITH &&) WHERE (status = 'ACTIVE'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
+    await queryRunner.query(
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash varchar`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version integer NOT NULL DEFAULT 0`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE salons ADD COLUMN IF NOT EXISTS timezone varchar NOT NULL DEFAULT 'Asia/Kolkata'`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE salons ADD COLUMN IF NOT EXISTS approval_status varchar NOT NULL DEFAULT 'PENDING_APPROVAL'`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE booking_holds ADD COLUMN IF NOT EXISTS service_ids jsonb NOT NULL DEFAULT '[]'::jsonb`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_booking_holds_expiry ON booking_holds(status, expires_at)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_booking_holds_customer ON booking_holds(customer_id)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_bookings_salon_status_start ON bookings(salon_id, status, start_at)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_device_registrations_user_app ON device_registrations(user_id, app_type)`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_expiry ON refresh_tokens(user_id, expires_at)`,
+    );
+    await queryRunner.query(
+      `DO $$ BEGIN ALTER TABLE bookings ADD CONSTRAINT bookings_no_active_overlap EXCLUDE USING gist (seat_id WITH =, tstzrange(start_at, end_at, '[)') WITH &&) WHERE (status IN ('CONFIRMED','WAITING','IN_SERVICE')); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    );
+    await queryRunner.query(
+      `DO $$ BEGIN ALTER TABLE booking_holds ADD CONSTRAINT holds_no_active_overlap EXCLUDE USING gist (seat_id WITH =, tstzrange(start_at, end_at, '[)') WITH &&) WHERE (status = 'ACTIVE'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    );
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
     for (const table of [
-      'salon_approval_history', 'offers', 'audit_logs', 'refresh_tokens', 'device_registrations', 'notifications',
-      'booking_status_history', 'booking_services', 'bookings', 'booking_holds', 'staff_schedules',
-      'staff', 'seats', 'combos', 'salon_services', 'services', 'salon_users', 'salons',
-      'customer_profiles', 'users',
+      "salon_approval_history",
+      "offers",
+      "audit_logs",
+      "refresh_tokens",
+      "device_registrations",
+      "notifications",
+      "reviews",
+      "booking_status_history",
+      "booking_services",
+      "bookings",
+      "booking_holds",
+      "staff_schedules",
+      "staff",
+      "seats",
+      "combos",
+      "salon_services",
+      "services",
+      "salon_users",
+      "salons",
+      "customer_profiles",
+      "users",
     ]) {
       await queryRunner.query(`DROP TABLE IF EXISTS "${table}" CASCADE`);
     }

@@ -6,7 +6,13 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { Review, Booking, Salon, BookingStatus } from "../../entities";
+import {
+  Review,
+  Booking,
+  Salon,
+  BookingStatus,
+  ReviewModerationStatus,
+} from "../../entities";
 
 export class CreateReviewDto {
   bookingId: string;
@@ -26,7 +32,10 @@ export class ReviewsService {
     private readonly salonRepository: Repository<Salon>,
   ) {}
 
-  async createReview(dto: CreateReviewDto, customerId: string): Promise<Review> {
+  async createReview(
+    dto: CreateReviewDto,
+    customerId: string,
+  ): Promise<Review> {
     const booking = await this.bookingRepository.findOne({
       where: { id: dto.bookingId },
       relations: ["customer", "salon"],
@@ -69,21 +78,7 @@ export class ReviewsService {
 
     // Recalculate average rating & count for salon
     try {
-      const stats = await this.reviewRepository
-        .createQueryBuilder("r")
-        .select("AVG(r.rating)", "avgRating")
-        .addSelect("COUNT(r.id)", "totalCount")
-        .where("r.salon_id = :salonId", { salonId: booking.salon_id })
-        .getRawOne();
-
-      const count = parseInt(stats?.totalCount || "0", 10);
-      const avg = parseFloat(stats?.avgRating || "5.0");
-      const roundedAvg = Math.round(avg * 10) / 10;
-
-      await this.salonRepository.update(booking.salon_id, {
-        rating: roundedAvg,
-        review_count: count,
-      });
+      await this.recalculateSalonRating(booking.salon_id);
     } catch (_) {}
 
     return savedReview;
@@ -91,13 +86,18 @@ export class ReviewsService {
 
   async getSalonReviews(salonId: string, limit = 20, offset = 0) {
     const [reviews, total] = await this.reviewRepository.findAndCount({
-      where: { salon_id: salonId },
+      where: {
+        salon_id: salonId,
+        moderation_status: ReviewModerationStatus.PUBLISHED,
+      },
       order: { created_at: "DESC" },
       take: limit,
       skip: offset,
     });
 
-    const salon = await this.salonRepository.findOne({ where: { id: salonId } });
+    const salon = await this.salonRepository.findOne({
+      where: { id: salonId },
+    });
 
     return {
       salonId,
@@ -117,8 +117,29 @@ export class ReviewsService {
 
   async getPartnerReviews(salonId: string) {
     return this.reviewRepository.find({
-      where: { salon_id: salonId },
+      where: {
+        salon_id: salonId,
+        moderation_status: ReviewModerationStatus.PUBLISHED,
+      },
       order: { created_at: "DESC" },
+    });
+  }
+
+  async recalculateSalonRating(salonId: string) {
+    const stats = await this.reviewRepository
+      .createQueryBuilder("review")
+      .select("AVG(review.rating)", "avgRating")
+      .addSelect("COUNT(review.id)", "totalCount")
+      .where("review.salon_id = :salonId", { salonId })
+      .andWhere("review.moderation_status = :status", {
+        status: ReviewModerationStatus.PUBLISHED,
+      })
+      .getRawOne();
+    const count = Number(stats?.totalCount || 0);
+    const average = count > 0 ? Number(stats?.avgRating || 0) : 0;
+    await this.salonRepository.update(salonId, {
+      rating: Math.round(average * 10) / 10,
+      review_count: count,
     });
   }
 }

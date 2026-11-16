@@ -15,29 +15,26 @@ export class StaffService {
   ) {}
 
   async getSalonStaff(salonId: string) {
-    try {
-      const list = await this.staffRepository.find({
-        where: { salon_id: salonId },
-        order: { created_at: "ASC" },
-      });
+    const list = await this.staffRepository.find({
+      where: { salon_id: salonId },
+      order: { created_at: "ASC" },
+    });
 
-      return list.map((s) => {
-        const parts = s.name.split(" ");
-        const initials =
-          parts.length >= 2
-            ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()
-            : s.name.substring(0, 2).toUpperCase();
-        return {
-          id: s.id,
-          name: s.name,
-          roleTitle: s.role_title,
-          status: s.status,
-          initials,
-        };
-      });
-    } catch (_) {
-      return [];
-    }
+    return list.map((s) => {
+      const parts = s.name.split(" ");
+      const initials =
+        parts.length >= 2
+          ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+          : s.name.substring(0, 2).toUpperCase();
+      return {
+        id: s.id,
+        name: s.name,
+        roleTitle: s.role_title,
+        status: s.status,
+        jobCountToday: s.job_count_today,
+        initials,
+      };
+    });
   }
 
   private toStaffStatus(status?: string) {
@@ -58,6 +55,7 @@ export class StaffService {
       name: staff.name,
       roleTitle: staff.role_title,
       status: staff.status,
+      jobCountToday: staff.job_count_today,
       initials,
     };
   }

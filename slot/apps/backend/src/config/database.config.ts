@@ -1,8 +1,34 @@
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { User, CustomerProfile, Salon, SalonUser, Service, SalonService, Combo, Seat, Staff, BookingHold, Booking, BookingService, BookingStatusHistory, AuditLog, Notification, Offer, SalonApprovalHistory, StaffSchedule, DeviceRegistration, RefreshToken, Review, AiStyleJob, AiSavedLook } from '../entities';
+import { TypeOrmModuleOptions } from "@nestjs/typeorm";
+import {
+  User,
+  CustomerProfile,
+  Salon,
+  SalonUser,
+  Service,
+  SalonService,
+  Combo,
+  Seat,
+  Staff,
+  BookingHold,
+  Booking,
+  BookingService,
+  BookingStatusHistory,
+  AuditLog,
+  Notification,
+  Offer,
+  SalonApprovalHistory,
+  StaffSchedule,
+  DeviceRegistration,
+  RefreshToken,
+  Review,
+  AiStyleJob,
+  AiSavedLook,
+  SupportTicket,
+  SupportTicketMessage,
+} from "../entities";
 
 export const getDatabaseConfig = (): TypeOrmModuleOptions => {
-  const isProd = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
+  const isProd = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
   const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
   const baseEntities = [
@@ -29,6 +55,8 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
     Review,
     AiStyleJob,
     AiSavedLook,
+    SupportTicket,
+    SupportTicketMessage,
   ];
 
   let isValidUrl = false;
@@ -45,41 +73,51 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
 
   if (isValidUrl && dbUrl) {
     return {
-      type: 'postgres',
+      type: "postgres",
       url: dbUrl,
       entities: baseEntities,
-      synchronize: process.env.DB_SYNCHRONIZE !== 'false',
-      logging: process.env.NODE_ENV === 'development',
-      ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
-      migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-      migrationsRun: process.env.DB_MIGRATIONS_RUN === 'true',
+      synchronize: process.env.DB_SYNCHRONIZE === "true" && !isProd,
+      logging: process.env.NODE_ENV === "development",
+      ssl:
+        process.env.DB_SSL === "false" ? false : { rejectUnauthorized: false },
+      migrations: [__dirname + "/../migrations/*{.ts,.js}"],
+      migrationsRun: process.env.DB_MIGRATIONS_RUN === "true",
       retryAttempts: 1,
       retryDelay: 1000,
     };
   }
 
-  const missingEnv = ['DB_HOST', 'DB_USERNAME', 'DB_PASSWORD', 'DB_DATABASE'].filter(
-    (name) => !process.env[name],
-  );
+  const missingEnv = [
+    "DB_HOST",
+    "DB_USERNAME",
+    "DB_PASSWORD",
+    "DB_DATABASE",
+  ].filter((name) => !process.env[name]);
   if (isProd && missingEnv.length > 0) {
     console.warn(
-      `[DatabaseConfig] Warning: Missing DB environment variables: ${missingEnv.join(', ')}. Please configure DATABASE_URL or DB_HOST in your Vercel Dashboard.`,
+      `[DatabaseConfig] Warning: Missing DB environment variables: ${missingEnv.join(", ")}. Please configure DATABASE_URL or DB_HOST in your Vercel Dashboard.`,
     );
   }
 
   return {
-    type: 'postgres',
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-    username: process.env.DB_USERNAME || 'slot_user',
-    password: process.env.DB_PASSWORD || 'slot_password',
-    database: process.env.DB_DATABASE || 'slot_db',
+    type: "postgres",
+    host: process.env.DB_HOST || "localhost",
+    port: parseInt(process.env.DB_PORT || "5432", 10),
+    username: process.env.DB_USERNAME || "slot_user",
+    password: process.env.DB_PASSWORD || "slot_password",
+    database: process.env.DB_DATABASE || "slot_db",
     entities: baseEntities,
-    synchronize: process.env.DB_SYNCHRONIZE === 'true',
-    logging: process.env.NODE_ENV === 'development',
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' } : false,
-    migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-    migrationsRun: process.env.DB_MIGRATIONS_RUN === 'true',
+    synchronize: process.env.DB_SYNCHRONIZE === "true",
+    logging: process.env.NODE_ENV === "development",
+    ssl:
+      process.env.DB_SSL === "true"
+        ? {
+            rejectUnauthorized:
+              process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false",
+          }
+        : false,
+    migrations: [__dirname + "/../migrations/*{.ts,.js}"],
+    migrationsRun: process.env.DB_MIGRATIONS_RUN === "true",
     retryAttempts: 1,
     retryDelay: 1000,
   };

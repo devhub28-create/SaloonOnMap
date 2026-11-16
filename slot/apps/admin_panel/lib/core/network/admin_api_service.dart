@@ -27,7 +27,8 @@ class AdminApiService extends ApiClient {
     } on DioException catch (dioErr) {
       final statusCode = dioErr.response?.statusCode;
       final responseData = dioErr.response?.data;
-      String errorMessage = 'Network error occurred. Please check your connection.';
+      String errorMessage =
+          'Network error occurred. Please check your connection.';
 
       if (responseData is Map && responseData['message'] != null) {
         final msg = responseData['message'];
@@ -41,7 +42,8 @@ class AdminApiService extends ApiClient {
             errorMessage = 'Admin session expired or credentials invalid.';
             break;
           case 403:
-            errorMessage = 'Restricted: Super-administrator permissions required.';
+            errorMessage =
+                'Restricted: Super-administrator permissions required.';
             break;
           case 404:
             errorMessage = 'Target resource was not found.';
@@ -49,19 +51,23 @@ class AdminApiService extends ApiClient {
           case 500:
           case 502:
           case 503:
-            errorMessage = 'Admin backend is currently unreachable. Please try again shortly.';
+            errorMessage =
+                'Admin backend is currently unreachable. Please try again shortly.';
             break;
           default:
             errorMessage = 'Admin request failed (HTTP $statusCode).';
         }
       }
 
-      developer.log('[$operation Error] $errorMessage (Status: $statusCode)', error: dioErr);
-      throw AdminApiException(errorMessage, statusCode: statusCode, originalError: dioErr);
+      developer.log('[$operation Error] $errorMessage (Status: $statusCode)',
+          error: dioErr);
+      throw AdminApiException(errorMessage,
+          statusCode: statusCode, originalError: dioErr);
     } catch (e) {
       developer.log('[$operation Unexpected Error] $e', error: e);
       if (e is AdminApiException) rethrow;
-      throw AdminApiException('An unexpected error occurred: $e', originalError: e);
+      throw AdminApiException('An unexpected error occurred: $e',
+          originalError: e);
     }
   }
 
@@ -112,6 +118,23 @@ class AdminApiService extends ApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> fetchSalons({
+    String? search,
+    String? status,
+    int page = 1,
+    int limit = 25,
+  }) async {
+    return handleRequest(
+      () => getAdminSalons(
+        search: search,
+        status: status,
+        page: page,
+        limit: limit,
+      ),
+      operation: 'Search Salons',
+    );
+  }
+
   /// Approve or reject salon registration
   Future<Map<String, dynamic>> reviewPartnerSalon({
     required String salonId,
@@ -129,9 +152,15 @@ class AdminApiService extends ApiClient {
   // ==========================================
 
   /// Fetch all platform users across customers and partners
-  Future<List<dynamic>> fetchPlatformUsers() async {
+  Future<Map<String, dynamic>> fetchPlatformUsers({
+    String? search,
+    String? role,
+    String? status,
+    int page = 1,
+  }) async {
     return handleRequest(
-      () => getAdminUsers(),
+      () =>
+          getAdminUsers(search: search, role: role, status: status, page: page),
       operation: 'Get Admin Users',
     );
   }
@@ -152,18 +181,61 @@ class AdminApiService extends ApiClient {
   // ==========================================
 
   /// Fetch platform-wide bookings for auditing
-  Future<List<dynamic>> fetchPlatformBookings() async {
+  Future<Map<String, dynamic>> fetchPlatformBookings({
+    String? search,
+    String? status,
+    int page = 1,
+  }) async {
     return handleRequest(
-      () => getAdminBookings(),
+      () => getAdminBookings(search: search, status: status, page: page),
       operation: 'Get Admin Bookings',
     );
   }
 
-  /// Fetch administrative audit logs for compliance tracking
-  Future<List<dynamic>> fetchAuditLogs() async {
+  Future<Map<String, dynamic>> changeBookingStatus({
+    required String bookingId,
+    required String status,
+    required String reason,
+  }) async {
     return handleRequest(
-      () => getAdminAuditLogs(),
+      () => updateAdminBookingStatus(bookingId, status, reason),
+      operation: 'Update Booking Status',
+    );
+  }
+
+  /// Fetch administrative audit logs for compliance tracking
+  Future<Map<String, dynamic>> fetchAuditLogs({
+    String? search,
+    String? action,
+    String? entityType,
+    int page = 1,
+  }) async {
+    return handleRequest(
+      () => getAdminAuditLogs(
+          search: search, action: action, entityType: entityType, page: page),
       operation: 'Get Audit Logs',
+    );
+  }
+
+  Future<List<dynamic>> fetchOffers() async {
+    return handleRequest(
+      () => getAdminOffers(),
+      operation: 'Get Admin Offers',
+    );
+  }
+
+  Future<Map<String, dynamic>> createOffer(Map<String, dynamic> data) async {
+    return handleRequest(
+      () => createAdminOffer(data),
+      operation: 'Create Offer',
+    );
+  }
+
+  Future<Map<String, dynamic>> setOfferActive(
+      String offerId, bool isActive) async {
+    return handleRequest(
+      () => updateAdminOfferStatus(offerId, isActive),
+      operation: isActive ? 'Publish Offer' : 'Pause Offer',
     );
   }
 }

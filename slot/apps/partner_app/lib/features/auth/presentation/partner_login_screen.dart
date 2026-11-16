@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
@@ -31,6 +32,44 @@ class _PartnerLoginScreenState extends State<PartnerLoginScreen> {
     );
   }
 
+  Future<void> _showPasswordRecovery() async {
+    const supportEmail = 'support@salononmap.com';
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Recover partner access'),
+        content: const Text(
+          'Password resets are verified by platform support to protect your '
+          'salon account. Contact support from the email or phone registered '
+          'with your salon.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              await Clipboard.setData(
+                const ClipboardData(text: supportEmail),
+              );
+              if (!dialogContext.mounted) return;
+              Navigator.of(dialogContext).pop();
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('$supportEmail copied to clipboard.'),
+                ),
+              );
+            },
+            icon: const Icon(Icons.copy_rounded, size: 18),
+            label: const Text('Copy support email'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,7 +97,8 @@ class _PartnerLoginScreenState extends State<PartnerLoginScreen> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           minHeight: constraints.maxHeight > (AppSpacing.lg * 2)
@@ -76,156 +116,175 @@ class _PartnerLoginScreenState extends State<PartnerLoginScreen> {
                                 badgeText: 'PARTNER',
                               ),
                               const SizedBox(height: 36),
-                    // Header Title
-                    const Text(
-                      'PARTNER DESK',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 3.0,
-                        color: AppColors.primaryGoldDark,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Salon Desk Portal',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.darkNeutral,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Manage bookings, seats, services & live shifts',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
+                              // Header Title
+                              const Text(
+                                'PARTNER DESK',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 3.0,
+                                  color: AppColors.primaryGoldDark,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Salon Desk Portal',
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.darkNeutral,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Manage bookings, seats, services & live shifts',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xxl),
 
-                    // Phone / Email Field
-                    TextField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkNeutral),
-                      decoration: InputDecoration(
-                        labelText: 'Mobile Number / Email',
-                        prefixIcon: const Icon(Icons.phone_android_rounded, color: AppColors.textMuted),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: AppColors.borderLight),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: AppColors.borderLight),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: AppColors.primaryGoldDark, width: 1.5),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
+                              // Phone / Email Field
+                              TextField(
+                                controller: _phoneController,
+                                keyboardType: TextInputType.phone,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.darkNeutral),
+                                decoration: InputDecoration(
+                                  labelText: 'Mobile Number / Email',
+                                  prefixIcon: const Icon(
+                                      Icons.phone_android_rounded,
+                                      color: AppColors.textMuted),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                        color: AppColors.borderLight),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                        color: AppColors.borderLight),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                        color: AppColors.primaryGoldDark,
+                                        width: 1.5),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
 
-                    // Password Field
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkNeutral),
-                      decoration: InputDecoration(
-                        labelText: 'Password / PIN',
-                        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.textMuted),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                            color: AppColors.textMuted,
+                              // Password Field
+                              TextField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.darkNeutral),
+                                decoration: InputDecoration(
+                                  labelText: 'Password / PIN',
+                                  prefixIcon: const Icon(
+                                      Icons.lock_outline_rounded,
+                                      color: AppColors.textMuted),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                      color: AppColors.textMuted,
+                                    ),
+                                    onPressed: () => setState(() =>
+                                        _obscurePassword = !_obscurePassword),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                        color: AppColors.borderLight),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                        color: AppColors.borderLight),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                        color: AppColors.primaryGoldDark,
+                                        width: 1.5),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+
+                              // Forgot Password link
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: _showPasswordRecovery,
+                                  child: const Text(
+                                    'Forgot Password?',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primaryGoldDark,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+
+                              // Primary Login Button
+                              SlotPrimaryButton(
+                                text: isLoading
+                                    ? 'Authenticating Desk...'
+                                    : 'Sign In to Salon Desk →',
+                                onPressed: isLoading ? null : _submitLogin,
+                              ),
+                              const SizedBox(height: AppSpacing.xxl),
+
+                              // Registration footer
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    "Want to list your salon?",
+                                    style: TextStyle(
+                                        color: AppColors.textMuted,
+                                        fontSize: 13),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => context.push('/register'),
+                                    child: const Text(
+                                      'Register Salon',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.darkNeutral,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: AppColors.borderLight),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: AppColors.borderLight),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: AppColors.primaryGoldDark, width: 1.5),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-
-                    // Forgot Password link
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Password reset instructions sent to registered salon email.')),
-                          );
-                        },
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primaryGoldDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-
-                    // Primary Login Button
-                    SlotPrimaryButton(
-                      text: isLoading ? 'Authenticating Desk...' : 'Sign In to Salon Desk →',
-                      onPressed: isLoading ? null : _submitLogin,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-
-                    // Registration footer
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Want to list your salon?",
-                          style: TextStyle(color: AppColors.textMuted, fontSize: 13),
-                        ),
-                        TextButton(
-                          onPressed: () => context.push('/register'),
-                          child: const Text(
-                            'Register Salon',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.darkNeutral,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),
           );
         },
-      ),
-    ),
-  ),
-);
-},
       ),
     );
   }

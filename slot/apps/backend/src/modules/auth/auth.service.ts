@@ -3,7 +3,10 @@ import {
   UnauthorizedException,
   BadRequestException,
   ConflictException,
+  HttpException,
+  HttpStatus,
   OnModuleDestroy,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -29,10 +32,11 @@ import {
   Seat,
   SeatStatus,
   RefreshToken,
+  SalonStatus,
 } from "../../entities";
 import { OtpProviderFactory, normalizePhoneNumber } from "./otp-provider";
-import Redis from 'ioredis';
-import { createHash, randomBytes } from 'crypto';
+import Redis from "ioredis";
+import { createHash, randomBytes, randomInt, timingSafeEqual } from "crypto";
 
 interface OtpRecord {
   code: string;
@@ -124,22 +128,24 @@ export class AuthService implements OnModuleDestroy {
         maxRetriesPerRequest: 2,
         enableReadyCheck: true,
       });
-    } else if (process.env.NODE_ENV === 'production') {
-      console.warn('[AuthService] REDIS_URL not configured; using resilient in-memory OTP store.');
+    } else if (process.env.NODE_ENV === "production") {
+      console.warn(
+        "[AuthService] REDIS_URL not configured; using resilient in-memory OTP store.",
+      );
     }
   }
 
   async onModuleDestroy() {
-    if (this.redis && this.redis.status !== 'end') await this.redis.quit();
+    if (this.redis && this.redis.status !== "end") await this.redis.quit();
   }
 
   private otpKey(phone: string) {
-    return `otp:${createHash('sha256').update(phone).digest('hex')}`;
+    return `otp:${createHash("sha256").update(phone).digest("hex")}`;
   }
 
   private async getOtp(phone: string): Promise<OtpRecord | undefined> {
     if (!this.redis) return this.otpStore.get(phone);
-    if (this.redis.status === 'wait') await this.redis.connect();
+    if (this.redis.status === "wait") await this.redis.connect();
     const value = await this.redis.get(this.otpKey(phone));
     return value ? JSON.parse(value) : undefined;
   }
@@ -149,9 +155,17 @@ export class AuthService implements OnModuleDestroy {
       this.otpStore.set(phone, record);
       return;
     }
-    if (this.redis.status === 'wait') await this.redis.connect();
-    const ttlSeconds = Math.max(1, Math.ceil((record.expiresAt - Date.now()) / 1000));
-    await this.redis.set(this.otpKey(phone), JSON.stringify(record), 'EX', ttlSeconds);
+    if (this.redis.status === "wait") await this.redis.connect();
+    const ttlSeconds = Math.max(
+      1,
+      Math.ceil((record.expiresAt - Date.now()) / 1000),
+    );
+    await this.redis.set(
+      this.otpKey(phone),
+      JSON.stringify(record),
+      "EX",
+      ttlSeconds,
+    );
   }
 
   private async deleteOtp(phone: string) {
@@ -167,33 +181,48 @@ export class AuthService implements OnModuleDestroy {
       salonId,
       tokenVersion: user.token_version,
     });
-    const refreshToken = randomBytes(48).toString('base64url');
-    const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
-    const days = Math.min(Math.max(Number(process.env.REFRESH_TOKEN_DAYS || 30), 1), 90);
-    await this.refreshTokenRepository.save(this.refreshTokenRepository.create({
-      user_id: user.id,
-      token_hash: tokenHash,
-      expires_at: new Date(Date.now() + days * 86400000),
-    }));
+    const refreshToken = randomBytes(48).toString("base64url");
+    const tokenHash = createHash("sha256").update(refreshToken).digest("hex");
+    const days = Math.min(
+      Math.max(Number(process.env.REFRESH_TOKEN_DAYS || 30), 1),
+      90,
+    );
+    await this.refreshTokenRepository.save(
+      this.refreshTokenRepository.create({
+        user_id: user.id,
+        token_hash: tokenHash,
+        expires_at: new Date(Date.now() + days * 86400000),
+      }),
+    );
     return { accessToken, refreshToken };
   }
 
   async refreshSession(rawToken: string) {
-    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const tokenHash = createHash("sha256").update(rawToken).digest("hex");
     const stored = await this.refreshTokenRepository.findOne({
       where: { token_hash: tokenHash },
-      relations: ['user'],
+      relations: ["user"],
     });
-    if (!stored || stored.revoked_at || stored.expires_at.getTime() <= Date.now() || !stored.user?.is_active) {
-      throw new UnauthorizedException('Refresh token is invalid or expired.');
+    if (
+      !stored ||
+      stored.revoked_at ||
+      stored.expires_at.getTime() <= Date.now() ||
+      !stored.user?.is_active
+    ) {
+      throw new UnauthorizedException("Refresh token is invalid or expired.");
     }
     const result = await this.refreshTokenRepository.update(
       { id: stored.id, revoked_at: IsNull() },
       { revoked_at: new Date() },
     );
-    if (result.affected !== 1) throw new UnauthorizedException('Refresh token has already been used.');
-    const membership = await this.salonUserRepository.findOne({ where: { user_id: stored.user_id }, relations: ['salon'] });
-    if (membership && !membership.salon?.is_active) throw new UnauthorizedException('Salon account is pending or inactive.');
+    if (result.affected !== 1)
+      throw new UnauthorizedException("Refresh token has already been used.");
+    const membership = await this.salonUserRepository.findOne({
+      where: { user_id: stored.user_id },
+      relations: ["salon"],
+    });
+    if (membership && !membership.salon?.is_active)
+      throw new UnauthorizedException("Salon account is pending or inactive.");
     return this.issueSession(stored.user, membership?.salon_id);
   }
 
@@ -202,8 +231,48 @@ export class AuthService implements OnModuleDestroy {
   ): Promise<{ message: string; cooldownSeconds: number }> {
     const normalized = normalizePhoneNumber(phone);
     const now = Date.now();
-    const code = "000000";
+    const existing = await this.getOtp(normalized);
+    const cooldownMs = 30_000;
+    if (existing && now - existing.lastSentAt < cooldownMs) {
+      const retryAfter = Math.ceil(
+        (cooldownMs - (now - existing.lastSentAt)) / 1000,
+      );
+      throw new HttpException(
+        `Please wait ${retryAfter} seconds before requesting another OTP.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    const providerType = (
+      process.env.OTP_PROVIDER || "development"
+    ).toLowerCase();
+    const isDevelopmentProvider = providerType === "development";
+    const isProduction =
+      process.env.NODE_ENV === "production" || !!process.env.VERCEL;
+    if (isProduction && isDevelopmentProvider) {
+      throw new ServiceUnavailableException(
+        "OTP delivery is not configured. Please contact support.",
+      );
+    }
+
+    const code = isDevelopmentProvider
+      ? process.env.DEV_DEFAULT_OTP || "000000"
+      : randomInt(100000, 1000000).toString();
     const expiresAt = now + 15 * 60 * 1000;
+
+    try {
+      const sent = await this.otpProvider.sendOtp({
+        phoneNumber: normalized,
+        otp: code,
+        expiresAt: new Date(expiresAt),
+      });
+      if (!sent) {
+        throw new Error("OTP provider rejected the request");
+      }
+    } catch {
+      throw new ServiceUnavailableException(
+        "We could not send an OTP right now. Please try again shortly.",
+      );
+    }
 
     await this.setOtp(normalized, {
       code,
@@ -212,20 +281,10 @@ export class AuthService implements OnModuleDestroy {
       lastSentAt: now,
     });
 
-    // Try sending OTP if provider is configured, but never fail if it isn't
-    try {
-      if (this.otpProvider) {
-        await this.otpProvider.sendOtp({
-          phoneNumber: normalized,
-          otp: code,
-          expiresAt: new Date(expiresAt),
-        });
-      }
-    } catch (e) {
-      // Ignored for dev bypass
-    }
-
-    return { message: "OTP verification bypassed (development mode)", cooldownSeconds: 0 };
+    return {
+      message: "OTP sent successfully.",
+      cooldownSeconds: cooldownMs / 1000,
+    };
   }
 
   async verifyOtp(
@@ -235,8 +294,51 @@ export class AuthService implements OnModuleDestroy {
     email?: string,
   ): Promise<{ accessToken: string; refreshToken: string; user: any }> {
     const normalized = normalizePhoneNumber(phone);
+    const record = await this.getOtp(normalized);
+    if (!record) {
+      throw new UnauthorizedException(
+        "OTP is invalid or has expired. Request a new code.",
+      );
+    }
+    if (record.expiresAt <= Date.now()) {
+      await this.deleteOtp(normalized);
+      throw new UnauthorizedException("OTP has expired. Request a new code.");
+    }
+    if (record.attempts >= 5) {
+      await this.deleteOtp(normalized);
+      throw new UnauthorizedException(
+        "Too many incorrect attempts. Request a new code.",
+      );
+    }
 
-    // Bypass OTP check flow - automatically allow authentication
+    const submittedCode = (code || "").trim();
+    const providerType = (
+      process.env.OTP_PROVIDER || "development"
+    ).toLowerCase();
+    let isValid = false;
+    if (providerType === "development") {
+      const expected = Buffer.from(record.code);
+      const submitted = Buffer.from(submittedCode);
+      isValid =
+        expected.length === submitted.length &&
+        timingSafeEqual(expected, submitted);
+    } else {
+      try {
+        isValid = await this.otpProvider.verifyOtp(normalized, submittedCode);
+      } catch {
+        throw new ServiceUnavailableException(
+          "OTP verification is temporarily unavailable. Please try again.",
+        );
+      }
+    }
+
+    if (!isValid) {
+      record.attempts += 1;
+      if (record.attempts >= 5) await this.deleteOtp(normalized);
+      else await this.setOtp(normalized, record);
+      throw new UnauthorizedException("The OTP is invalid.");
+    }
+
     await this.deleteOtp(normalized);
 
     let user = await this.userRepository.findOne({
@@ -258,7 +360,12 @@ export class AuthService implements OnModuleDestroy {
       }
     } else {
       let needsSave = false;
-      if (name?.trim() && (!user.name || user.name === "Guest User" || user.name === "Customer User")) {
+      if (
+        name?.trim() &&
+        (!user.name ||
+          user.name === "Guest User" ||
+          user.name === "Customer User")
+      ) {
         user.name = name.trim();
         needsSave = true;
       }
@@ -290,22 +397,32 @@ export class AuthService implements OnModuleDestroy {
   async loginAdmin(
     dto: LoginAdminDto,
   ): Promise<{ accessToken: string; refreshToken: string; user: any }> {
-    const configuredEmail = (process.env.ADMIN_EMAIL || "admin@slot.com").trim().toLowerCase();
+    const isProduction =
+      process.env.NODE_ENV === "production" || !!process.env.VERCEL;
+    const configuredEmail = (process.env.ADMIN_EMAIL || "admin@slot.com")
+      .trim()
+      .toLowerCase();
     const configuredPasswordHash = process.env.ADMIN_PASSWORD_HASH;
-    const configuredPassword = process.env.ADMIN_PASSWORD || "Admin@123";
+    const configuredPassword = process.env.ADMIN_PASSWORD;
     const configuredPhone = (process.env.ADMIN_PHONE || "+919999999999").trim();
     const email = dto.email?.trim().toLowerCase();
 
-    const allowedEmails = [configuredEmail, "admin@slot.com", "admin@example.com"];
+    if (isProduction && !configuredPasswordHash && !configuredPassword) {
+      throw new UnauthorizedException(
+        "Admin authentication is not configured.",
+      );
+    }
+
+    const allowedEmails = isProduction
+      ? [configuredEmail]
+      : [configuredEmail, "admin@slot.com", "admin@example.com"];
     const isEmailValid = allowedEmails.includes(email);
 
     const isPasswordValid = configuredPasswordHash
       ? await bcrypt.compare(dto.password || "", configuredPasswordHash)
-      : (dto.password === configuredPassword ||
-         dto.password === "Admin@123" ||
-         dto.password === "admin123" ||
-         dto.password === "000000" ||
-         dto.password === "change-me");
+      : isProduction
+        ? dto.password === configuredPassword
+        : dto.password === (configuredPassword || "Admin@123");
 
     if (!isEmailValid || !isPasswordValid) {
       throw new UnauthorizedException("Invalid admin credentials.");
@@ -321,17 +438,20 @@ export class AuthService implements OnModuleDestroy {
           email: email,
           phone: normalizedPhone,
           name: "Platform Admin",
-          role: UserRole.ADMIN,
+          role: UserRole.SUPER_ADMIN,
         }),
       );
     } else {
       user.email = email;
-      user.role = UserRole.ADMIN;
-      user.is_active = true;
+      // The configured bootstrap identity is the platform owner. Do not leave
+      // it as legacy ADMIN (which cannot manage scoped administrator roles),
+      // and never downgrade an existing super administrator during login.
+      user.role = UserRole.SUPER_ADMIN;
       user = await this.userRepository.save(user);
     }
 
-    if (!user.is_active) throw new UnauthorizedException('Admin account is inactive.');
+    if (!user.is_active)
+      throw new UnauthorizedException("Admin account is inactive.");
     const session = await this.issueSession(user);
     return {
       ...session,
@@ -386,9 +506,12 @@ export class AuthService implements OnModuleDestroy {
     return this.getCustomerProfile(userId);
   }
 
-  async registerPartner(
-    dto: RegisterPartnerDto,
-  ): Promise<{ accessToken: string; refreshToken: string; user: any; salon: any }> {
+  async registerPartner(dto: RegisterPartnerDto): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    user: any;
+    salon: any;
+  }> {
     let rawPhone =
       dto?.phone ||
       (dto as any)?.phoneNumber ||
@@ -515,6 +638,7 @@ export class AuthService implements OnModuleDestroy {
       longitude: 77.6408,
       opening_time: "09:00",
       closing_time: "21:00",
+      approval_status: SalonStatus.PENDING_APPROVAL,
     });
 
     const savedSalon = await this.salonRepository.save(newSalon);
@@ -565,14 +689,17 @@ export class AuthService implements OnModuleDestroy {
         cover_image: savedSalon.cover_image,
         coverImage: savedSalon.cover_image,
         isActive: savedSalon.is_active,
-        approvalStatus: "PENDING_APPROVAL",
+        approvalStatus: savedSalon.approval_status,
       },
     };
   }
 
-  async loginPartner(
-    dto: LoginPartnerDto,
-  ): Promise<{ accessToken: string; refreshToken: string; user: any; salon: any }> {
+  async loginPartner(dto: LoginPartnerDto): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    user: any;
+    salon: any;
+  }> {
     const input = dto.phoneOrEmail ? dto.phoneOrEmail.trim() : "";
     if (!input) {
       throw new BadRequestException(
@@ -603,7 +730,9 @@ export class AuthService implements OnModuleDestroy {
       );
     }
     if (!user.is_active || !user.password_hash) {
-      throw new UnauthorizedException("Partner account is inactive or not configured.");
+      throw new UnauthorizedException(
+        "Partner account is inactive or not configured.",
+      );
     }
     const validPassword = await bcrypt.compare(
       dto.password || "",
@@ -622,7 +751,9 @@ export class AuthService implements OnModuleDestroy {
     if (salonUser && salonUser.salon) {
       const salon = salonUser.salon;
       if (!salon.is_active) {
-        throw new UnauthorizedException('Salon registration is pending approval.');
+        throw new UnauthorizedException(
+          "Salon registration is pending approval.",
+        );
       }
       const seats = await this.seatRepository.find({
         where: { salon_id: salon.id },
@@ -639,6 +770,10 @@ export class AuthService implements OnModuleDestroy {
         targetGender: salon.target_gender,
         cover_image: salon.cover_image,
         coverImage: salon.cover_image,
+        rating: salon.rating,
+        reviewCount: salon.review_count,
+        isActive: salon.is_active,
+        approvalStatus: salon.approval_status,
         seatCount,
       };
     }
@@ -660,7 +795,10 @@ export class AuthService implements OnModuleDestroy {
 
   async logout(userId: string) {
     await this.userRepository.increment({ id: userId }, "token_version", 1);
-    await this.refreshTokenRepository.update({ user_id: userId, revoked_at: IsNull() }, { revoked_at: new Date() });
+    await this.refreshTokenRepository.update(
+      { user_id: userId, revoked_at: IsNull() },
+      { revoked_at: new Date() },
+    );
     return { status: "logged_out" };
   }
 }

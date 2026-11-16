@@ -17,12 +17,14 @@ void main() {
       expect(authCubit.isAuthenticated, false);
     });
 
-    test('requestOtp emits AuthValidationErrorState for invalid phone', () async {
+    test('requestOtp emits AuthValidationErrorState for invalid phone',
+        () async {
       await authCubit.requestOtp('123');
       expect(authCubit.state, isA<AuthValidationErrorState>());
     });
 
     test('verifyOtp emits AuthInvalidOtpState for short code', () async {
+      authCubit.setPhone('9876543210');
       await authCubit.verifyOtp('12');
       expect(authCubit.state, isA<AuthInvalidOtpState>());
     });

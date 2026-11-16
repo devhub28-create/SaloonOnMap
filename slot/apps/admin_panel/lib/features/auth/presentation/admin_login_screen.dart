@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/foundation.dart';
 import '../cubit/admin_auth_cubit.dart';
 
 class AdminLoginScreen extends StatefulWidget {
@@ -217,22 +218,26 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primaryGold,
-                        side: const BorderSide(color: Color(0x4DC89300)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    if (kDebugMode) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primaryGold,
+                          side: const BorderSide(color: Color(0x4DC89300)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _emailController.text = 'admin@slot.com';
+                            _passwordController.text = 'Admin@123';
+                          });
+                        },
+                        icon: const Icon(Icons.key_rounded, size: 16),
+                        label:
+                            const Text('Auto-Fill Demo Admin (admin@slot.com)'),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _emailController.text = 'admin@slot.com';
-                          _passwordController.text = 'Admin@123';
-                        });
-                      },
-                      icon: const Icon(Icons.key_rounded, size: 16),
-                      label: const Text('Auto-Fill Demo Admin (admin@slot.com)'),
-                    ),
+                    ],
                   ],
                 ),
               ),

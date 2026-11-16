@@ -10,13 +10,16 @@ class ApiConfig {
     'ENV',
     defaultValue: 'production',
   );
-  static const String configuredBaseUrl = String.fromEnvironment('API_BASE_URL');
+  static const String configuredBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+  );
   static const String configuredWsUrl = String.fromEnvironment('WS_URL');
 
   // Vercel Production Base URL (Pointed to live cloud deployment)
   static const String vercelBaseUrl = 'https://salononmap.vercel.app/api/v1';
   static const String vercelWsUrl = 'wss://salononmap.vercel.app';
-  static const String vercelDeploymentUrl = 'https://salononmap-dzohxt0y6-devhub28-6640.vercel.app/api/v1';
+  static const String vercelDeploymentUrl =
+      'https://salononmap-dzohxt0y6-devhub28-6640.vercel.app/api/v1';
 
   static const String fallbackLanUrl = 'http://192.168.2.51:3000/api/v1';
   static const String fallbackLanWsUrl = 'ws://192.168.2.51:3000';
@@ -25,7 +28,8 @@ class ApiConfig {
   static String? _activeBaseUrl;
 
   static String get baseUrl {
-    if (_activeBaseUrl != null && _activeBaseUrl!.isNotEmpty) return _activeBaseUrl!;
+    if (_activeBaseUrl != null && _activeBaseUrl!.isNotEmpty)
+      return _activeBaseUrl!;
     if (configuredBaseUrl.isNotEmpty) return configuredBaseUrl;
     // Primary Vercel Cloud API Endpoint (No localhost)
     return vercelBaseUrl;
@@ -38,7 +42,9 @@ class ApiConfig {
   static String get wsUrl {
     if (configuredWsUrl.isNotEmpty) return configuredWsUrl;
     if (_activeBaseUrl != null && _activeBaseUrl!.isNotEmpty) {
-      return _activeBaseUrl!.replaceAll('http', 'ws').replaceAll(RegExp(r'/api/v1/?$'), '');
+      return _activeBaseUrl!
+          .replaceAll('http', 'ws')
+          .replaceAll(RegExp(r'/api/v1/?$'), '');
     }
     return vercelWsUrl;
   }
@@ -113,11 +119,16 @@ class ApiEndpoints {
   static String get uploadSalonImageUrl => '$baseUrl$uploadSalonImage';
 
   static String salonDetailsUrl(String id) => '$baseUrl$salons/$id';
-  static String availableSlotsUrl(String salonId) => '$baseUrl$salons/$salonId/available-slots';
-  static String cancelBookingUrl(String bookingId) => '$baseUrl$bookings/$bookingId/cancel';
-  static String bookingStatusUrl(String bookingId) => '$baseUrl$bookings/$bookingId/status';
-  static String salonReviewsUrl(String salonId) => '$baseUrl$salons/$salonId/reviews';
-  static String bookingReviewUrl(String bookingId) => '$baseUrl$reviews/booking/$bookingId';
+  static String availableSlotsUrl(String salonId) =>
+      '$baseUrl$salons/$salonId/available-slots';
+  static String cancelBookingUrl(String bookingId) =>
+      '$baseUrl$bookings/$bookingId/cancel';
+  static String bookingStatusUrl(String bookingId) =>
+      '$baseUrl$bookings/$bookingId/status';
+  static String salonReviewsUrl(String salonId) =>
+      '$baseUrl$salons/$salonId/reviews';
+  static String bookingReviewUrl(String bookingId) =>
+      '$baseUrl$reviews/booking/$bookingId';
 
   // Partner Desk
   static const String partnerSalon = '/partner/salon';
@@ -141,8 +152,10 @@ class ApiEndpoints {
   static String get partnerStaffUrl => '$baseUrl$partnerStaff';
   static String get partnerReportsUrl => '$baseUrl$partnerReports';
   static String get partnerReviewsUrl => '$baseUrl$partnerReviews';
-  static String partnerSeatStatusUrl(String seatId) => '$baseUrl$partnerSeats/$seatId/status';
-  static String partnerServiceByIdUrl(String id) => '$baseUrl$partnerServices/$id';
+  static String partnerSeatStatusUrl(String seatId) =>
+      '$baseUrl$partnerSeats/$seatId/status';
+  static String partnerServiceByIdUrl(String id) =>
+      '$baseUrl$partnerServices/$id';
   static String partnerStaffByIdUrl(String id) => '$baseUrl$partnerStaff/$id';
 
   // Admin
@@ -157,8 +170,10 @@ class ApiEndpoints {
   static String get adminUsersUrl => '$baseUrl$adminUsers';
   static String get adminBookingsUrl => '$baseUrl$adminBookings';
   static String get adminAuditLogsUrl => '$baseUrl$adminAuditLogs';
-  static String adminReviewSalonUrl(String salonId) => '$baseUrl/admin/salons/$salonId/review';
-  static String adminUserStatusUrl(String userId) => '$baseUrl$adminUsers/$userId/status';
+  static String adminReviewSalonUrl(String salonId) =>
+      '$baseUrl/admin/salons/$salonId/review';
+  static String adminUserStatusUrl(String userId) =>
+      '$baseUrl$adminUsers/$userId/status';
 
   // AI Style Studio
   static const String aiStyleOptions = '/style-studio/options';
@@ -174,11 +189,14 @@ class ApiEndpoints {
   static String get aiStyleGenerationsUrl => '$baseUrl$aiStyleGenerations';
   static String get aiStyleSaveLookUrl => '$baseUrl$aiStyleSaveLook';
   static String get aiStyleSavedLooksUrl => '$baseUrl$aiStyleSavedLooks';
-  static String aiStyleJobUrl(String jobId) => '$baseUrl$aiStyleGenerations/$jobId';
-  static String aiStyleLooksUrl(String jobId) => '$baseUrl$aiStyleGenerations/$jobId/looks';
+  static String aiStyleJobUrl(String jobId) =>
+      '$baseUrl$aiStyleGenerations/$jobId';
+  static String aiStyleLooksUrl(String jobId) =>
+      '$baseUrl$aiStyleGenerations/$jobId/looks';
 
   // Reverse Geocoding
-  static const String reverseGeocodeUrl = 'https://nominatim.openstreetmap.org/reverse';
+  static const String reverseGeocodeUrl =
+      'https://nominatim.openstreetmap.org/reverse';
 }
 
 class ApiClient {
@@ -192,71 +210,92 @@ class ApiClient {
 
   ApiClient({String? baseUrl, FlutterSecureStorage? storage})
     : _storage = storage ?? const FlutterSecureStorage() {
-      dio = Dio(
-        BaseOptions(
-          baseUrl: baseUrl ?? ApiConfig.baseUrl,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-          headers: {'Content-Type': 'application/json'},
-        ),
-      );
-      dio.interceptors.add(InterceptorsWrapper(onError: (error, handler) async {
-        final isConnError = error.type == DioExceptionType.connectionError ||
-            error.type == DioExceptionType.connectionTimeout;
-        final reqUri = error.requestOptions.uri;
-        final isLocal = reqUri.host == '127.0.0.1' || reqUri.host == 'localhost' || reqUri.host == '10.0.2.2';
+    dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl ?? ApiConfig.baseUrl,
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+        headers: {'Content-Type': 'application/json'},
+      ),
+    );
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (error, handler) async {
+          final isConnError =
+              error.type == DioExceptionType.connectionError ||
+              error.type == DioExceptionType.connectionTimeout;
+          final reqUri = error.requestOptions.uri;
+          final isLocal =
+              reqUri.host == '127.0.0.1' ||
+              reqUri.host == 'localhost' ||
+              reqUri.host == '10.0.2.2';
 
-        if (isConnError && isLocal && !error.requestOptions.extra.containsKey('retried_lan_fallback')) {
-          final candidateUrls = <String>[
-            if (reqUri.host != '10.0.2.2' && !kIsWeb && defaultTargetPlatform == TargetPlatform.android)
-              ApiConfig.emulatorBaseUrl,
-            if (reqUri.host != '127.0.0.1')
-              'http://127.0.0.1:3000/api/v1',
-            ApiConfig.fallbackLanUrl,
-          ];
+          if (isConnError &&
+              isLocal &&
+              !error.requestOptions.extra.containsKey('retried_lan_fallback')) {
+            final candidateUrls = <String>[
+              if (reqUri.host != '10.0.2.2' &&
+                  !kIsWeb &&
+                  defaultTargetPlatform == TargetPlatform.android)
+                ApiConfig.emulatorBaseUrl,
+              if (reqUri.host != '127.0.0.1') 'http://127.0.0.1:3000/api/v1',
+              ApiConfig.fallbackLanUrl,
+            ];
 
-          for (final candidateUrl in candidateUrls) {
-            try {
-              final fallbackOptions = error.requestOptions.copyWith();
-              fallbackOptions.extra['retried_lan_fallback'] = true;
-              fallbackOptions.baseUrl = candidateUrl;
-              final retryDio = Dio(BaseOptions(
-                baseUrl: candidateUrl,
-                connectTimeout: const Duration(seconds: 5),
-                receiveTimeout: error.requestOptions.receiveTimeout ?? const Duration(minutes: 3),
-                sendTimeout: error.requestOptions.sendTimeout,
-                headers: error.requestOptions.headers,
-              ));
-              final response = await retryDio.fetch<dynamic>(fallbackOptions);
-              dio.options.baseUrl = candidateUrl;
-              ApiConfig.setActiveBaseUrl(candidateUrl);
-              return handler.resolve(response);
-            } catch (_) {
-              // Try next candidate
+            for (final candidateUrl in candidateUrls) {
+              try {
+                final fallbackOptions = error.requestOptions.copyWith();
+                fallbackOptions.extra['retried_lan_fallback'] = true;
+                fallbackOptions.baseUrl = candidateUrl;
+                final retryDio = Dio(
+                  BaseOptions(
+                    baseUrl: candidateUrl,
+                    connectTimeout: const Duration(seconds: 5),
+                    receiveTimeout:
+                        error.requestOptions.receiveTimeout ??
+                        const Duration(minutes: 3),
+                    sendTimeout: error.requestOptions.sendTimeout,
+                    headers: error.requestOptions.headers,
+                  ),
+                );
+                final response = await retryDio.fetch<dynamic>(fallbackOptions);
+                dio.options.baseUrl = candidateUrl;
+                ApiConfig.setActiveBaseUrl(candidateUrl);
+                return handler.resolve(response);
+              } catch (_) {
+                // Try next candidate
+              }
             }
           }
-        }
 
-        final isUnauthorized = error.response?.statusCode == 401;
-        final path = error.requestOptions.path;
-        if (!isUnauthorized || path.contains('/auth/refresh') || path.contains('/auth/login')) {
-          handler.next(error);
-          return;
-        }
-        try {
-          _refreshInFlight ??= _refreshAccessToken();
-          await _refreshInFlight;
-          _refreshInFlight = null;
-          final response = await dio.fetch<dynamic>(error.requestOptions..headers['Authorization'] = dio.options.headers['Authorization']);
-          handler.resolve(response);
-        } catch (_) {
-          _refreshInFlight = null;
-          await clearSession();
-          await onUnauthorized?.call();
-          handler.next(error);
-        }
-      }));
-    }
+          final isUnauthorized = error.response?.statusCode == 401;
+          final path = error.requestOptions.path;
+          if (!isUnauthorized ||
+              path.contains('/auth/refresh') ||
+              path.contains('/auth/login')) {
+            handler.next(error);
+            return;
+          }
+          try {
+            _refreshInFlight ??= _refreshAccessToken();
+            await _refreshInFlight;
+            _refreshInFlight = null;
+            final response = await dio.fetch<dynamic>(
+              error.requestOptions
+                ..headers['Authorization'] =
+                    dio.options.headers['Authorization'],
+            );
+            handler.resolve(response);
+          } catch (_) {
+            _refreshInFlight = null;
+            await clearSession();
+            await onUnauthorized?.call();
+            handler.next(error);
+          }
+        },
+      ),
+    );
+  }
 
   Future<bool> restoreSession() async {
     if (kIsWeb) return false;
@@ -286,10 +325,14 @@ class ApiClient {
     final refreshToken = await _storage.read(key: _refreshTokenKey);
     if (refreshToken == null) throw StateError('No refresh token');
     final refreshDio = Dio(dio.options);
-    final response = await refreshDio.post('/auth/refresh', data: {'refreshToken': refreshToken});
+    final response = await refreshDio.post(
+      '/auth/refresh',
+      data: {'refreshToken': refreshToken},
+    );
     final access = response.data['accessToken']?.toString();
     final rotatedRefresh = response.data['refreshToken']?.toString();
-    if (access == null || rotatedRefresh == null) throw StateError('Invalid refresh response');
+    if (access == null || rotatedRefresh == null)
+      throw StateError('Invalid refresh response');
     await saveSession(access, rotatedRefresh);
   }
 
@@ -335,20 +378,14 @@ class ApiClient {
     String? name,
     String? email,
   }) async {
-    final payload = <String, dynamic>{
-      'phone': phone,
-      'code': code,
-    };
+    final payload = <String, dynamic>{'phone': phone, 'code': code};
     if (name != null && name.trim().isNotEmpty) {
       payload['name'] = name.trim();
     }
     if (email != null && email.trim().isNotEmpty) {
       payload['email'] = email.trim();
     }
-    final response = await dio.post(
-      '/auth/verify-otp',
-      data: payload,
-    );
+    final response = await dio.post('/auth/verify-otp', data: payload);
     return response.data;
   }
 
@@ -399,6 +436,12 @@ class ApiClient {
   Future<List<dynamic>> getNotifications() async {
     final response = await dio.get('/notifications');
     return response.data;
+  }
+
+  Future<int> getUnreadNotificationCount() async {
+    final response = await dio.get('/notifications/unread-count');
+    final data = Map<String, dynamic>.from(response.data as Map);
+    return (data['count'] as num? ?? 0).toInt();
   }
 
   Future<void> markAllNotificationsRead() async {
@@ -480,10 +523,7 @@ class ApiClient {
   }) async {
     final response = await dio.patch(
       '/bookings/$bookingId/status',
-      data: {
-        'status': status,
-        if (reason != null) 'reason': reason,
-      },
+      data: {'status': status, if (reason != null) 'reason': reason},
     );
     return Map<String, dynamic>.from(response.data as Map);
   }
@@ -587,7 +627,9 @@ class ApiClient {
     return Map<String, dynamic>.from(response.data as Map);
   }
 
-  Future<Map<String, dynamic>> updatePartnerSalon(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> updatePartnerSalon(
+    Map<String, dynamic> data,
+  ) async {
     final response = await dio.patch('/partner/salon', data: data);
     return Map<String, dynamic>.from(response.data as Map);
   }
@@ -732,6 +774,24 @@ class ApiClient {
     return response.data;
   }
 
+  Future<Map<String, dynamic>> getAdminSalons({
+    String? search,
+    String? status,
+    int page = 1,
+    int limit = 25,
+  }) async {
+    final response = await dio.get(
+      '/admin/salons',
+      queryParameters: {
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (status != null && status != 'ALL') 'status': status,
+        'page': page,
+        'limit': limit,
+      },
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
   Future<Map<String, dynamic>> reviewSalon(
     String salonId,
     String action, {
@@ -744,30 +804,253 @@ class ApiClient {
     return response.data;
   }
 
-  Future<List<dynamic>> getAdminUsers() async {
-    final response = await dio.get('/admin/users');
-    return response.data;
+  Future<Map<String, dynamic>> getAdminUsers({
+    String? search,
+    String? role,
+    String? status,
+    int page = 1,
+    int limit = 25,
+  }) async {
+    final response = await dio.get(
+      '/admin/users',
+      queryParameters: {
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (role != null && role != 'ALL') 'role': role,
+        if (status != null && status != 'ALL') 'status': status,
+        'page': page,
+        'limit': limit,
+      },
+    );
+    return Map<String, dynamic>.from(response.data as Map);
   }
 
-  Future<List<dynamic>> getAdminBookings() async {
-    final response = await dio.get('/admin/bookings');
-    return response.data;
+  Future<Map<String, dynamic>> getAdminBookings({
+    String? search,
+    String? status,
+    int page = 1,
+    int limit = 25,
+  }) async {
+    final response = await dio.get(
+      '/admin/bookings',
+      queryParameters: {
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (status != null && status != 'ALL') 'status': status,
+        'page': page,
+        'limit': limit,
+      },
+    );
+    return Map<String, dynamic>.from(response.data as Map);
   }
 
-  Future<List<dynamic>> getAdminAuditLogs() async {
-    final response = await dio.get('/admin/audit-logs');
-    return response.data;
+  Future<Map<String, dynamic>> updateAdminBookingStatus(
+    String bookingId,
+    String status,
+    String reason,
+  ) async {
+    final response = await dio.patch(
+      '/admin/bookings/$bookingId/status',
+      data: {'status': status, 'reason': reason.trim()},
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> getAdminReviews({
+    String? search,
+    String? status,
+    int page = 1,
+    int limit = 25,
+  }) async {
+    final response = await dio.get(
+      '/admin/reviews',
+      queryParameters: {
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (status != null && status != 'ALL') 'status': status,
+        'page': page,
+        'limit': limit,
+      },
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> moderateAdminReview(
+    String reviewId,
+    String status, {
+    String? reason,
+  }) async {
+    final response = await dio.patch(
+      '/admin/reviews/$reviewId/moderation',
+      data: {
+        'status': status,
+        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+      },
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> getAdminAuditLogs({
+    String? search,
+    String? action,
+    String? entityType,
+    int page = 1,
+    int limit = 25,
+  }) async {
+    final response = await dio.get(
+      '/admin/audit-logs',
+      queryParameters: {
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (action != null && action != 'ALL') 'action': action,
+        if (entityType != null && entityType != 'ALL') 'entityType': entityType,
+        'page': page,
+        'limit': limit,
+      },
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<List<dynamic>> getAdminNotificationCampaigns() async {
+    final response = await dio.get('/admin/notification-campaigns');
+    return response.data as List<dynamic>;
+  }
+
+  Future<Map<String, dynamic>> sendAdminNotificationCampaign(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await dio.post(
+      '/admin/notification-campaigns',
+      data: data,
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> getAdminAiStyleOperations() async {
+    final response = await dio.get('/admin/ai-style/operations');
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> getAdminAnalytics({int days = 30}) async {
+    final response = await dio.get(
+      '/admin/analytics',
+      queryParameters: {'days': days},
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> getAdminSystemHealth() async {
+    final response = await dio.get('/admin/system-health');
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> createSupportTicket(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await dio.post('/support/tickets', data: data);
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<List<dynamic>> getMySupportTickets() async {
+    final response = await dio.get('/support/tickets/my');
+    return response.data as List<dynamic>;
+  }
+
+  Future<Map<String, dynamic>> addSupportTicketMessage(
+    String ticketId,
+    String message,
+  ) async {
+    final response = await dio.post(
+      '/support/tickets/$ticketId/messages',
+      data: {'message': message},
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> getAdminSupportTickets({
+    String? search,
+    String? status,
+    String? priority,
+    int page = 1,
+  }) async {
+    final response = await dio.get(
+      '/admin/support-tickets',
+      queryParameters: {
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (status != null && status != 'ALL') 'status': status,
+        if (priority != null && priority != 'ALL') 'priority': priority,
+        'page': page,
+      },
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> replyToSupportTicket(
+    String ticketId,
+    String message, {
+    bool internalNote = false,
+  }) async {
+    final response = await dio.post(
+      '/admin/support-tickets/$ticketId/messages',
+      data: {'message': message, 'internalNote': internalNote},
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> updateSupportTicketStatus(
+    String ticketId,
+    String status,
+  ) async {
+    final response = await dio.patch(
+      '/admin/support-tickets/$ticketId/status',
+      data: {'status': status},
+    );
+    return Map<String, dynamic>.from(response.data as Map);
   }
 
   Future<Map<String, dynamic>> updateUserStatus(
     String userId,
+    bool isActive, {
+    String? reason,
+  }) async {
+    final response = await dio.patch(
+      '/admin/users/$userId/status',
+      data: {
+        'isActive': isActive,
+        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+      },
+    );
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> updateAdminUserRole(
+    String userId,
+    String role,
+  ) async {
+    final response = await dio.patch(
+      '/admin/users/$userId/role',
+      data: {'role': role},
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<List<dynamic>> getAdminOffers() async {
+    final response = await dio.get('/admin/offers');
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> createAdminOffer(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await dio.post('/admin/offers', data: data);
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> updateAdminOfferStatus(
+    String offerId,
     bool isActive,
   ) async {
     final response = await dio.patch(
-      '/admin/users/$userId/status',
+      '/admin/offers/$offerId/status',
       data: {'isActive': isActive},
     );
-    return response.data;
+    return Map<String, dynamic>.from(response.data as Map);
   }
 
   // AI Style Studio APIs (/style-studio/*)
@@ -907,7 +1190,8 @@ class ApiClient {
         if (hairLengthCm != null) 'hairLengthCm': hairLengthCm,
         if (beardLengthMm != null) 'beardLengthMm': beardLengthMm,
         if (stylingProducts != null) 'stylingProducts': stylingProducts,
-        if (barberInstructions != null) 'barberInstructions': barberInstructions,
+        if (barberInstructions != null)
+          'barberInstructions': barberInstructions,
       },
     );
     return response.data is Map<String, dynamic>

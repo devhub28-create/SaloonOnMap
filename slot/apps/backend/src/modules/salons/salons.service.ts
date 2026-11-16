@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm";
+import {
+  DataSource,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+} from "typeorm";
 import {
   Salon,
   SalonService,
@@ -13,6 +18,7 @@ import {
   BookingHold,
   HoldStatus,
   Review,
+  ReviewModerationStatus,
 } from "../../entities";
 
 function getDistanceKm(
@@ -295,7 +301,9 @@ export class SalonsService {
       where: { salon_id: id, is_available: true },
       relations: ["service"],
     });
-    const rawCombos = await this.comboRepository.find({ where: { salon_id: id } });
+    const rawCombos = await this.comboRepository.find({
+      where: { salon_id: id },
+    });
     const combos = rawCombos.map(formatComboWithCutPrice);
     const comboIds = new Set(combos.map((c) => c.id));
     const services = allServices.filter(
@@ -305,7 +313,10 @@ export class SalonsService {
     let reviews: Review[] = [];
     try {
       reviews = await this.dataSource.getRepository(Review).find({
-        where: { salon_id: id },
+        where: {
+          salon_id: id,
+          moderation_status: ReviewModerationStatus.PUBLISHED,
+        },
         order: { created_at: "DESC" },
         take: 10,
       });
@@ -319,7 +330,11 @@ export class SalonsService {
     };
   }
 
-  async getAvailableSlots(salonId: string, dateStr?: string, durationMinutes?: number) {
+  async getAvailableSlots(
+    salonId: string,
+    dateStr?: string,
+    durationMinutes?: number,
+  ) {
     const isValidUuid = (id?: string) =>
       typeof id === "string" &&
       /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
@@ -346,15 +361,32 @@ export class SalonsService {
       order: { created_at: "ASC" },
     });
 
-    const todayInSalon = new Intl.DateTimeFormat('en-CA', {
+    const todayInSalon = new Intl.DateTimeFormat("en-CA", {
       timeZone: salon.timezone,
-      year: 'numeric', month: '2-digit', day: '2-digit',
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
     }).format(new Date());
-    const selectedDate = /^\d{4}-\d{2}-\d{2}$/.test(dateStr || "") ? dateStr! : todayInSalon;
-    const dayStart = this.zonedDateTimeToUtc(selectedDate, '00:00', salon.timezone);
-    const dayEnd = this.zonedDateTimeToUtc(selectedDate, '23:59', salon.timezone);
-    if (isNaN(dayStart.getTime()) || dayStart.getTime() > Date.now() + 90 * 86400000) {
-      throw new NotFoundException('Requested availability date is invalid or outside the 90-day booking window.');
+    const selectedDate = /^\d{4}-\d{2}-\d{2}$/.test(dateStr || "")
+      ? dateStr!
+      : todayInSalon;
+    const dayStart = this.zonedDateTimeToUtc(
+      selectedDate,
+      "00:00",
+      salon.timezone,
+    );
+    const dayEnd = this.zonedDateTimeToUtc(
+      selectedDate,
+      "23:59",
+      salon.timezone,
+    );
+    if (
+      isNaN(dayStart.getTime()) ||
+      dayStart.getTime() > Date.now() + 90 * 86400000
+    ) {
+      throw new NotFoundException(
+        "Requested availability date is invalid or outside the 90-day booking window.",
+      );
     }
     const bookings = await this.bookingRepository
       .createQueryBuilder("booking")
@@ -366,16 +398,27 @@ export class SalonsService {
       })
       .getMany();
     const holds = await this.holdRepository
-      .createQueryBuilder('hold')
-      .where('hold.salon_id = :salonId', { salonId: targetSalonId })
-      .andWhere('hold.status = :status', { status: HoldStatus.ACTIVE })
-      .andWhere('hold.expires_at > NOW()')
-      .andWhere('hold.start_at < :dayEnd AND hold.end_at > :dayStart', { dayStart, dayEnd })
+      .createQueryBuilder("hold")
+      .where("hold.salon_id = :salonId", { salonId: targetSalonId })
+      .andWhere("hold.status = :status", { status: HoldStatus.ACTIVE })
+      .andWhere("hold.expires_at > NOW()")
+      .andWhere("hold.start_at < :dayEnd AND hold.end_at > :dayStart", {
+        dayStart,
+        dayEnd,
+      })
       .getMany();
     const [openHour, openMinute] = salon.opening_time.split(":").map(Number);
     const [closeHour, closeMinute] = salon.closing_time.split(":").map(Number);
-    const cursor = this.zonedDateTimeToUtc(selectedDate, `${openHour.toString().padStart(2, '0')}:${openMinute.toString().padStart(2, '0')}`, salon.timezone);
-    const closing = this.zonedDateTimeToUtc(selectedDate, `${closeHour.toString().padStart(2, '0')}:${closeMinute.toString().padStart(2, '0')}`, salon.timezone);
+    const cursor = this.zonedDateTimeToUtc(
+      selectedDate,
+      `${openHour.toString().padStart(2, "0")}:${openMinute.toString().padStart(2, "0")}`,
+      salon.timezone,
+    );
+    const closing = this.zonedDateTimeToUtc(
+      selectedDate,
+      `${closeHour.toString().padStart(2, "0")}:${closeMinute.toString().padStart(2, "0")}`,
+      salon.timezone,
+    );
     const requiredDuration = Math.max(30, durationMinutes || 30);
     const timeSlots: Array<{
       time: string;
@@ -395,19 +438,35 @@ export class SalonsService {
           )
           .map((booking) => booking.seat_id),
       );
-      const availableSeatIds = (isPast || exceedsClosing)
-        ? []
-        : seats.filter((seat) => !occupiedSeatIds.has(seat.id)).map((seat) => seat.id);
-      const time = new Intl.DateTimeFormat('en-US', {
-        timeZone: salon.timezone, hour: '2-digit', minute: '2-digit', hour12: true,
+      const availableSeatIds =
+        isPast || exceedsClosing
+          ? []
+          : seats
+              .filter((seat) => !occupiedSeatIds.has(seat.id))
+              .map((seat) => seat.id);
+      const time = new Intl.DateTimeFormat("en-US", {
+        timeZone: salon.timezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
       }).format(cursor);
       const available = availableSeatIds.length > 0;
       timeSlots.push({
         time,
         available,
         availableSeatIds,
-        occupiedSeatIds: isPast ? seats.map((s) => s.id) : Array.from(occupiedSeatIds),
-        ...(!available ? { label: isPast ? "Full" : (occupiedSeatIds.size >= seats.length ? "Occupied" : "Full") } : {}),
+        occupiedSeatIds: isPast
+          ? seats.map((s) => s.id)
+          : Array.from(occupiedSeatIds),
+        ...(!available
+          ? {
+              label: isPast
+                ? "Full"
+                : occupiedSeatIds.size >= seats.length
+                  ? "Occupied"
+                  : "Full",
+            }
+          : {}),
       });
       cursor.setMinutes(cursor.getMinutes() + 30);
     }
@@ -428,18 +487,35 @@ export class SalonsService {
     };
   }
 
-  private zonedDateTimeToUtc(date: string, time: string, timeZone: string): Date {
-    const [year, month, day] = date.split('-').map(Number);
-    const [hour, minute] = time.split(':').map(Number);
+  private zonedDateTimeToUtc(
+    date: string,
+    time: string,
+    timeZone: string,
+  ): Date {
+    const [year, month, day] = date.split("-").map(Number);
+    const [hour, minute] = time.split(":").map(Number);
     const target = Date.UTC(year, month - 1, day, hour, minute);
     let guess = target;
     for (let i = 0; i < 2; i++) {
-      const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
       }).formatToParts(new Date(guess));
-      const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-      const observed = Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day), Number(values.hour), Number(values.minute));
+      const values = Object.fromEntries(
+        parts.map((part) => [part.type, part.value]),
+      );
+      const observed = Date.UTC(
+        Number(values.year),
+        Number(values.month) - 1,
+        Number(values.day),
+        Number(values.hour),
+        Number(values.minute),
+      );
       guess += target - observed;
     }
     return new Date(guess);

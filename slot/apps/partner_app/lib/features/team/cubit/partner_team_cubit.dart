@@ -51,6 +51,7 @@ class PartnerTeamCubit extends Cubit<PartnerTeamState> {
                   name: item['name'] ?? 'Stylist',
                   role: item['role'] ?? 'Barber & Stylist',
                   status: item['status'] ?? 'Available',
+                  jobCountToday: item['jobCountToday'] as int? ?? 0,
                 ))
             .toList();
       }
@@ -83,14 +84,14 @@ class PartnerTeamCubit extends Cubit<PartnerTeamState> {
           item['role']?.toString() ??
           'Stylist',
       status: item['status']?.toString() ?? 'AVAILABLE',
+      jobCountToday: (item['jobCountToday'] as num?)?.toInt() ?? 0,
     );
   }
 
-  Future<void> addStaff({
+  Future<bool> addStaff({
     required String name,
     required String role,
     required String status,
-    String? phone,
     String? salonId,
   }) async {
     final currentState = state;
@@ -108,24 +109,30 @@ class PartnerTeamCubit extends Cubit<PartnerTeamState> {
       team.insert(0, _staffFromJson(saved));
       emit(PartnerTeamLoadedState(team));
       await _saveToPrefs(team);
-    } catch (_) {}
-  }
-
-  Future<void> deleteStaff(String staffId) async {
-    final currentState = state;
-    if (currentState is PartnerTeamLoadedState) {
-      final team = List<StaffMemberModel>.from(currentState.team);
-      team.removeWhere((t) => t.id == staffId);
-      emit(PartnerTeamLoadedState(team));
-      await _saveToPrefs(team);
-
-      try {
-        await apiClient.deletePartnerStaff(staffId);
-      } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
-  Future<void> toggleStaffStatus(String staffId) async {
+  Future<bool> deleteStaff(String staffId) async {
+    final currentState = state;
+    if (currentState is PartnerTeamLoadedState) {
+      try {
+        await apiClient.deletePartnerStaff(staffId);
+        final team = List<StaffMemberModel>.from(currentState.team)
+          ..removeWhere((t) => t.id == staffId);
+        emit(PartnerTeamLoadedState(team));
+        await _saveToPrefs(team);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  Future<bool> toggleStaffStatus(String staffId) async {
     final currentState = state;
     if (currentState is PartnerTeamLoadedState) {
       final team = List<StaffMemberModel>.from(currentState.team);
@@ -140,14 +147,18 @@ class PartnerTeamCubit extends Cubit<PartnerTeamState> {
         } else {
           next = 'Available';
         }
-        team[index].status = next;
-        emit(PartnerTeamLoadedState(team));
-        await _saveToPrefs(team);
         try {
           await apiClient.updatePartnerStaff(staffId, {'status': next});
-        } catch (_) {}
+          team[index].status = next;
+          emit(PartnerTeamLoadedState(team));
+          await _saveToPrefs(team);
+          return true;
+        } catch (_) {
+          return false;
+        }
       }
     }
+    return false;
   }
 
   Future<void> _saveToPrefs(List<StaffMemberModel> team) async {
@@ -160,6 +171,7 @@ class PartnerTeamCubit extends Cubit<PartnerTeamState> {
                 'name': t.name,
                 'role': t.role,
                 'status': t.status,
+                'jobCountToday': t.jobCountToday,
               })
           .toList();
       await prefs.setString(_keyTeam, json.encode(mapList));

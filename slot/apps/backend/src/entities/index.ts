@@ -21,3 +21,5 @@ export * from './refresh-token.entity';
 export * from './review.entity';
 export * from './ai-style-job.entity';
 export * from './ai-saved-look.entity';
+export * from './support-ticket.entity';
+export * from './support-ticket-message.entity';

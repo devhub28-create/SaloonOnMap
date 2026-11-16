@@ -18,6 +18,6 @@ void main() {
       ),
     );
     expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.text('Welcome to SLOT'), findsOneWidget);
+    expect(find.text('Your next great look\nstarts here.'), findsOneWidget);
   });
 }

@@ -24,7 +24,18 @@ import { BookingStateMachine } from "./booking-state-machine";
 import { normalizePhoneNumber } from "../auth/otp-provider";
 import { BookingHoldsService } from "../booking-holds/booking-holds.service";
 import { randomUUID } from "crypto";
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, IsPhoneNumber, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { NotificationsService } from "../notifications/notifications.service";
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  IsUUID,
+  MaxLength,
+  MinLength,
+} from "class-validator";
 
 const isValidUuid = (id?: string) =>
   typeof id === "string" &&
@@ -52,7 +63,7 @@ export class ConfirmBookingDto {
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(20)
-  @IsUUID('4', { each: true })
+  @IsUUID("4", { each: true })
   serviceIds?: string[];
 }
 
@@ -74,7 +85,7 @@ export class WalkInBookingDto {
   staffId?: string;
   @IsOptional()
   @IsArray()
-  @IsUUID('4', { each: true })
+  @IsUUID("4", { each: true })
   serviceIds?: string[];
   @IsOptional()
   totalPrice?: number;
@@ -92,6 +103,7 @@ export class BookingsService {
     private readonly dataSource: DataSource,
     private readonly eventsGateway: EventsGateway,
     private readonly bookingHoldsService: BookingHoldsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async confirmBooking(dto: ConfirmBookingDto) {
@@ -295,6 +307,21 @@ export class BookingsService {
 
     this.eventsGateway.notifyBookingUpdated(booking.salon_id, updated);
 
+    if (oldStatus !== targetStatus) {
+      await this.notificationsService.sendEventNotification(
+        booking.customer_id,
+        "BOOKING_STATUS",
+        "Booking status updated",
+        `${booking.reference_code} is now ${targetStatus.replaceAll("_", " ").toLowerCase()}.`,
+        {
+          bookingId: booking.id,
+          referenceCode: booking.reference_code,
+          previousStatus: oldStatus,
+          status: targetStatus,
+        },
+      );
+    }
+
     return updated;
   }
 
@@ -356,7 +383,11 @@ export class BookingsService {
 
     if (!seat) {
       seat = await this.dataSource.getRepository(Seat).findOne({
-        where: { salon_id: dto.salonId, is_active: true, status: SeatStatus.AVAILABLE },
+        where: {
+          salon_id: dto.salonId,
+          is_active: true,
+          status: SeatStatus.AVAILABLE,
+        },
         order: { seat_number: "ASC" },
       });
     }
@@ -388,14 +419,18 @@ export class BookingsService {
     // 2. Resolve serviceIds: explicit IDs -> available services -> auto-seed default services
     let serviceIds = (dto.serviceIds || []).filter(isValidUuid);
     if (serviceIds.length === 0) {
-      let availableSs = await this.dataSource.getRepository(SalonService).findOne({
-        where: { salon_id: dto.salonId, is_available: true },
-        relations: ["service"],
-      });
+      let availableSs = await this.dataSource
+        .getRepository(SalonService)
+        .findOne({
+          where: { salon_id: dto.salonId, is_available: true },
+          relations: ["service"],
+        });
       if (!availableSs) {
         const serviceRepo = this.dataSource.getRepository(Service);
         const salonServiceRepo = this.dataSource.getRepository(SalonService);
-        let defaultSvc = await serviceRepo.findOne({ where: { name: "Haircut & Styling" } });
+        let defaultSvc = await serviceRepo.findOne({
+          where: { name: "Haircut & Styling" },
+        });
         if (!defaultSvc) {
           defaultSvc = await serviceRepo.save(
             serviceRepo.create({
@@ -435,7 +470,8 @@ export class BookingsService {
 
     const phoneDisplay = hasValidPhone ? ` (${phone})` : "";
     const noteText = dto.notes?.trim() ? ` · Note: ${dto.notes.trim()}` : "";
-    const bookingNotes = `Walk-in: ${dto.customerName}${phoneDisplay}${noteText}`.trim();
+    const bookingNotes =
+      `Walk-in: ${dto.customerName}${phoneDisplay}${noteText}`.trim();
 
     const confirmed = await this.confirmBooking({
       holdId: hold.holdId,
@@ -581,7 +617,9 @@ export class BookingsService {
         .getMany();
 
       const foundComboIds = new Set(combos.map((c: Combo) => c.id));
-      const unresolvedIds = missingIds.filter((id: string) => !foundComboIds.has(id));
+      const unresolvedIds = missingIds.filter(
+        (id: string) => !foundComboIds.has(id),
+      );
       if (unresolvedIds.length > 0) {
         throw new BadRequestException(
           "One or more selected services are unavailable at this salon.",

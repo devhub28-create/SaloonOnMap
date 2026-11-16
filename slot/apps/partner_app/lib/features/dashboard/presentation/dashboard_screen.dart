@@ -42,6 +42,8 @@ class DashboardScreen extends StatelessWidget {
                       (data['waitingCustomers'] ?? 0).toString();
                   final String fallbackInServiceCount =
                       (data['inServiceCustomers'] ?? 0).toString();
+                  final int unreadNotifications =
+                      (data['unreadNotifications'] as num? ?? 0).toInt();
                   final List<dynamic> bookingsList =
                       data['recentBookings'] as List<dynamic>? ?? [];
 
@@ -93,41 +95,70 @@ class DashboardScreen extends StatelessWidget {
                                   ],
                                 ),
                                 Stack(
+                                  clipBehavior: Clip.none,
                                   children: [
                                     Container(
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                            color: AppColors.borderLight),
+                                          color: AppColors.borderLight,
+                                        ),
                                       ),
                                       child: IconButton(
+                                        tooltip: 'Notifications',
                                         icon: const Icon(
-                                            Icons.notifications_none_rounded,
-                                            color: AppColors.darkNeutral,
-                                            size: 20),
-                                        onPressed: () {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                                content: Text(
-                                                    'No new partner notifications.')),
+                                          Icons.notifications_none_rounded,
+                                          color: AppColors.darkNeutral,
+                                          size: 20,
+                                        ),
+                                        onPressed: () async {
+                                          await context.push(
+                                            '/partner/notifications',
                                           );
+                                          if (context.mounted) {
+                                            context
+                                                .read<PartnerDashboardCubit>()
+                                                .fetchDashboard();
+                                          }
                                         },
                                       ),
                                     ),
-                                    Positioned(
-                                      top: 8,
-                                      right: 8,
-                                      child: Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.green,
-                                          shape: BoxShape.circle,
+                                    if (unreadNotifications > 0)
+                                      Positioned(
+                                        top: -4,
+                                        right: -4,
+                                        child: Container(
+                                          constraints: const BoxConstraints(
+                                            minWidth: 18,
+                                            minHeight: 18,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                AppColors.statusDestructiveText,
+                                            borderRadius:
+                                                BorderRadius.circular(999),
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            unreadNotifications > 99
+                                                ? '99+'
+                                                : '$unreadNotifications',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ],

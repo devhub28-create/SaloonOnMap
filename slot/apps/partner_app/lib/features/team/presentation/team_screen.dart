@@ -10,6 +10,7 @@ class StaffMemberModel {
   final String name;
   final String role;
   String status;
+  final int jobCountToday;
 
   StaffMemberModel({
     required this.id,
@@ -17,6 +18,7 @@ class StaffMemberModel {
     required this.name,
     required this.role,
     this.status = 'Available',
+    this.jobCountToday = 0,
   });
 }
 
@@ -31,7 +33,6 @@ class _TeamScreenState extends State<TeamScreen> {
   void _showAddStaffModal(BuildContext context) {
     final nameController = TextEditingController();
     final roleController = TextEditingController(text: 'Stylist');
-    final phoneController = TextEditingController();
     String selectedStatus = 'Available';
 
     showModalBottomSheet(
@@ -55,67 +56,72 @@ class _TeamScreenState extends State<TeamScreen> {
             children: [
               const Text('Add Staff Member', style: AppTypography.screenTitle),
               const SizedBox(height: 16),
-              const Text('STAFF FULL NAME', style: AppTypography.sectionEyebrow),
+              const Text('STAFF FULL NAME',
+                  style: AppTypography.sectionEyebrow),
               const SizedBox(height: 6),
               TextField(
                 controller: nameController,
-                style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkNeutral),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, color: AppColors.darkNeutral),
                 decoration: InputDecoration(
                   hintText: 'e.g. Rahul Verma',
                   filled: true,
                   fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('ROLE & SPECIALTY', style: AppTypography.sectionEyebrow),
+              const Text('ROLE & SPECIALTY',
+                  style: AppTypography.sectionEyebrow),
               const SizedBox(height: 6),
               TextField(
                 controller: roleController,
-                style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkNeutral),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, color: AppColors.darkNeutral),
                 decoration: InputDecoration(
                   hintText: 'e.g. Master Stylist / Barber',
                   filled: true,
                   fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text('MOBILE PHONE', style: AppTypography.sectionEyebrow),
-              const SizedBox(height: 6),
-              TextField(
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-                style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkNeutral),
-                decoration: InputDecoration(
-                  hintText: '+91 98765 43210',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 24),
               SlotPrimaryButton(
                 text: 'Add to Salon Shift Team',
-                onPressed: () {
+                onPressed: () async {
                   final name = nameController.text.trim();
                   final role = roleController.text.trim();
 
                   if (name.isEmpty || role.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter staff name and role.')),
+                      const SnackBar(
+                          content: Text('Please enter staff name and role.')),
                     );
                     return;
                   }
 
-                  context.read<PartnerTeamCubit>().addStaff(
+                  final saved = await context.read<PartnerTeamCubit>().addStaff(
                         name: name,
                         role: role,
                         status: selectedStatus,
-                        phone: phoneController.text.trim(),
                       );
 
+                  if (!saved) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'Staff member could not be saved. Check your connection and try again.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+                  if (!modalContext.mounted) return;
                   Navigator.pop(modalContext);
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('$name added to salon team!')),
                   );
@@ -132,9 +138,16 @@ class _TeamScreenState extends State<TeamScreen> {
   Widget build(BuildContext context) {
     return BlocBuilder<PartnerTeamCubit, PartnerTeamState>(
       builder: (context, state) {
-        final team = state is PartnerTeamLoadedState ? state.team : <StaffMemberModel>[];
-        final onShiftCount = team.where((s) => s.status != 'Off Shift' && s.status != 'OFF_SHIFT').length;
-        final availableCount = team.where((s) => s.status == 'Available' || s.status == 'AVAILABLE').length;
+        final team =
+            state is PartnerTeamLoadedState ? state.team : <StaffMemberModel>[];
+        final onShiftCount = team
+            .where((s) => s.status != 'Off Shift' && s.status != 'OFF_SHIFT')
+            .length;
+        final availableCount = team
+            .where((s) => s.status == 'Available' || s.status == 'AVAILABLE')
+            .length;
+        final jobsToday =
+            team.fold<int>(0, (sum, member) => sum + member.jobCountToday);
 
         return Scaffold(
           backgroundColor: AppColors.background,
@@ -142,13 +155,16 @@ class _TeamScreenState extends State<TeamScreen> {
             backgroundColor: AppColors.background,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.darkNeutral, size: 20),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.darkNeutral, size: 20),
               onPressed: () => context.pop(),
             ),
-            title: const Text('Team & schedules', style: AppTypography.screenTitle),
+            title: const Text('Team & schedules',
+                style: AppTypography.screenTitle),
             actions: [
               IconButton(
-                icon: const Icon(Icons.close_rounded, color: AppColors.darkNeutral, size: 24),
+                icon: const Icon(Icons.close_rounded,
+                    color: AppColors.darkNeutral, size: 24),
                 onPressed: () => context.pop(),
               ),
             ],
@@ -164,7 +180,7 @@ class _TeamScreenState extends State<TeamScreen> {
                     const SizedBox(width: AppSpacing.md),
                     _statCard('$availableCount', 'Available'),
                     const SizedBox(width: AppSpacing.md),
-                    _statCard('${team.length * 3}', 'Jobs today'),
+                    _statCard('$jobsToday', 'Jobs today'),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xl),
@@ -182,11 +198,20 @@ class _TeamScreenState extends State<TeamScreen> {
                     child: const Center(
                       child: Column(
                         children: [
-                          Icon(Icons.badge_outlined, size: 40, color: AppColors.textMuted),
+                          Icon(Icons.badge_outlined,
+                              size: 40, color: AppColors.textMuted),
                           SizedBox(height: 12),
-                          Text('No staff members added yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkNeutral)),
+                          Text('No staff members added yet',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.darkNeutral)),
                           SizedBox(height: 4),
-                          Text('Tap + Add staff member below to add your stylists and barbers.', style: TextStyle(fontSize: 12, color: AppColors.textMuted), textAlign: TextAlign.center),
+                          Text(
+                              'Tap + Add staff member below to add your stylists and barbers.',
+                              style: TextStyle(
+                                  fontSize: 12, color: AppColors.textMuted),
+                              textAlign: TextAlign.center),
                         ],
                       ),
                     ),
@@ -194,25 +219,51 @@ class _TeamScreenState extends State<TeamScreen> {
                 else
                   for (var member in team)
                     GestureDetector(
-                      onTap: () {
-                        context.read<PartnerTeamCubit>().toggleStaffStatus(member.id);
+                      onTap: () async {
+                        final saved = await context
+                            .read<PartnerTeamCubit>()
+                            .toggleStaffStatus(member.id);
+                        if (!saved && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    'Status could not be updated. Please try again.'),
+                                backgroundColor: Colors.red),
+                          );
+                        }
                       },
                       child: _staffTile(
                         member.initials,
                         member.name,
                         member.role,
                         member.status,
-                        (member.status == 'Available' || member.status == 'AVAILABLE')
+                        (member.status == 'Available' ||
+                                member.status == 'AVAILABLE')
                             ? const Color(0xFFDCFCE7)
-                            : (member.status == 'In service' || member.status == 'IN_SERVICE')
+                            : (member.status == 'In service' ||
+                                    member.status == 'IN_SERVICE')
                                 ? const Color(0xFFE0F2FE)
                                 : const Color(0xFFF3F4F6),
-                        (member.status == 'Available' || member.status == 'AVAILABLE')
+                        (member.status == 'Available' ||
+                                member.status == 'AVAILABLE')
                             ? const Color(0xFF166534)
-                            : (member.status == 'In service' || member.status == 'IN_SERVICE')
+                            : (member.status == 'In service' ||
+                                    member.status == 'IN_SERVICE')
                                 ? const Color(0xFF0284C7)
                                 : AppColors.textMuted,
-                        onDelete: () => context.read<PartnerTeamCubit>().deleteStaff(member.id),
+                        onDelete: () async {
+                          final deleted = await context
+                              .read<PartnerTeamCubit>()
+                              .deleteStaff(member.id);
+                          if (!deleted && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'Staff member could not be removed. Please try again.'),
+                                  backgroundColor: Colors.red),
+                            );
+                          }
+                        },
                       ),
                     ),
                 const SizedBox(height: AppSpacing.xl),
@@ -240,16 +291,24 @@ class _TeamScreenState extends State<TeamScreen> {
         ),
         child: Column(
           children: [
-            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.darkNeutral)),
+            Text(value,
+                style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.darkNeutral)),
             const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+            Text(label,
+                style:
+                    const TextStyle(fontSize: 11, color: AppColors.textMuted)),
           ],
         ),
       ),
     );
   }
 
-  Widget _staffTile(String initials, String name, String role, String status, Color bg, Color textColor, {VoidCallback? onDelete}) {
+  Widget _staffTile(String initials, String name, String role, String status,
+      Color bg, Color textColor,
+      {VoidCallback? onDelete}) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -269,7 +328,11 @@ class _TeamScreenState extends State<TeamScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Center(
-              child: Text(initials, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryGoldDark)),
+              child: Text(initials,
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryGoldDark)),
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -277,9 +340,15 @@ class _TeamScreenState extends State<TeamScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.darkNeutral)),
+                Text(name,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.darkNeutral)),
                 const SizedBox(height: 2),
-                Text(role, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                Text(role,
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -291,13 +360,15 @@ class _TeamScreenState extends State<TeamScreen> {
             ),
             child: Text(
               status,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textColor),
+              style: TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.bold, color: textColor),
             ),
           ),
           if (onDelete != null) ...[
             const SizedBox(width: 4),
             IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+              icon: const Icon(Icons.delete_outline_rounded,
+                  color: Colors.redAccent, size: 20),
               onPressed: onDelete,
             ),
           ],

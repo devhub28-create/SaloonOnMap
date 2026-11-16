@@ -9,6 +9,14 @@ import 'features/salons/presentation/admin_salons_screen.dart';
 import 'features/users/presentation/admin_users_screen.dart';
 import 'features/bookings/presentation/admin_bookings_screen.dart';
 import 'features/audit_logs/presentation/admin_audit_logs_screen.dart';
+import 'features/offers/presentation/admin_offers_screen.dart';
+import 'features/reviews/presentation/admin_reviews_screen.dart';
+import 'features/notifications/presentation/admin_notifications_screen.dart';
+import 'features/ai_operations/presentation/admin_ai_operations_screen.dart';
+import 'features/analytics/presentation/admin_analytics_screen.dart';
+import 'features/support/presentation/admin_support_screen.dart';
+import 'features/system_health/presentation/admin_system_health_screen.dart';
+import 'core/auth/admin_permissions.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
@@ -43,6 +51,13 @@ GoRouter createAdminRouter(AdminAuthCubit authCubit) {
         return '/';
       }
 
+      if (authState is AdminAuthenticated &&
+          !isLoggingIn &&
+          !AdminPermissions.canViewRoute(
+              authState.role, state.matchedLocation)) {
+        return '/';
+      }
+
       return null;
     },
     routes: [
@@ -55,21 +70,57 @@ GoRouter createAdminRouter(AdminAuthCubit authCubit) {
         routes: [
           GoRoute(
               path: '/',
-              builder: (context, state) => const AdminDashboardScreen()),
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminDashboardScreen())),
           GoRoute(
               path: '/salons',
-              builder: (context, state) => const AdminSalonsScreen()),
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminSalonsScreen())),
           GoRoute(
               path: '/users',
-              builder: (context, state) => const AdminUsersScreen()),
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminUsersScreen())),
           GoRoute(
               path: '/bookings',
-              builder: (context, state) => const AdminBookingsScreen()),
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminBookingsScreen())),
+          GoRoute(
+              path: '/offers',
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminOffersScreen())),
+          GoRoute(
+              path: '/reviews',
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminReviewsScreen())),
+          GoRoute(
+              path: '/notifications',
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminNotificationsScreen())),
+          GoRoute(
+              path: '/ai-operations',
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminAiOperationsScreen())),
+          GoRoute(
+              path: '/analytics',
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminAnalyticsScreen())),
+          GoRoute(
+              path: '/support',
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminSupportScreen())),
+          GoRoute(
+              path: '/system-health',
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminSystemHealthScreen())),
           GoRoute(
               path: '/audit-logs',
-              builder: (context, state) => const AdminAuditLogsScreen()),
+              pageBuilder: (context, state) =>
+                  _noTransitionPage(state, const AdminAuditLogsScreen())),
         ],
       ),
     ],
   );
 }
+
+Page<void> _noTransitionPage(GoRouterState state, Widget child) =>
+    NoTransitionPage<void>(key: state.pageKey, child: child);

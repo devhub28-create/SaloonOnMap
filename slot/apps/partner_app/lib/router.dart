@@ -14,6 +14,8 @@ import 'features/profile/presentation/profile_screen.dart';
 import 'features/profile/presentation/salon_details_screen.dart';
 import 'features/reports/presentation/reports_screen.dart';
 import 'features/team/presentation/team_screen.dart';
+import 'features/profile/presentation/partner_support_screen.dart';
+import 'features/profile/presentation/partner_notifications_screen.dart';
 
 class PartnerShellScaffold extends StatefulWidget {
   final Widget child;
@@ -75,7 +77,8 @@ GoRouter createPartnerRouter(PartnerAuthCubit authCubit) {
     refreshListenable: GoRouterRefreshStream(authCubit.stream),
     redirect: (context, state) {
       final authState = authCubit.state;
-      final isAuthScreen = state.matchedLocation == '/login' || state.matchedLocation == '/register';
+      final isAuthScreen = state.matchedLocation == '/login' ||
+          state.matchedLocation == '/register';
       final isPendingScreen = state.matchedLocation == '/pending';
 
       if (authState is PartnerUnauthenticated && !isAuthScreen) {
@@ -105,22 +108,56 @@ GoRouter createPartnerRouter(PartnerAuthCubit authCubit) {
         path: '/pending',
         builder: (context, state) {
           final authState = authCubit.state;
-          return PendingApprovalScreen(state: authState as PartnerPendingApproval);
+          return PendingApprovalScreen(
+            state: authState as PartnerPendingApproval,
+          );
         },
       ),
       ShellRoute(
         builder: (context, state, child) => PartnerShellScaffold(child: child),
         routes: [
-          GoRoute(path: '/', builder: (context, state) => const DashboardScreen()),
-          GoRoute(path: '/bookings', builder: (context, state) => const BookingsScreen()),
-          GoRoute(path: '/seats', builder: (context, state) => const SeatsScreen()),
-          GoRoute(path: '/services', builder: (context, state) => const ServicesScreen()),
-          GoRoute(path: '/profile', builder: (context, state) => const PartnerProfileScreen()),
+          GoRoute(
+            path: '/',
+            builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: '/bookings',
+            builder: (context, state) => const BookingsScreen(),
+          ),
+          GoRoute(
+            path: '/seats',
+            builder: (context, state) => const SeatsScreen(),
+          ),
+          GoRoute(
+            path: '/services',
+            builder: (context, state) => const ServicesScreen(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const PartnerProfileScreen(),
+          ),
         ],
       ),
-      GoRoute(path: '/partner/reports', builder: (context, state) => const ReportsScreen()),
-      GoRoute(path: '/partner/team', builder: (context, state) => const TeamScreen()),
-      GoRoute(path: '/partner/salon-details', builder: (context, state) => const SalonDetailsScreen()),
+      GoRoute(
+        path: '/partner/reports',
+        builder: (context, state) => const ReportsScreen(),
+      ),
+      GoRoute(
+        path: '/partner/team',
+        builder: (context, state) => const TeamScreen(),
+      ),
+      GoRoute(
+        path: '/partner/salon-details',
+        builder: (context, state) => const SalonDetailsScreen(),
+      ),
+      GoRoute(
+        path: '/partner/support',
+        builder: (context, state) => const PartnerSupportScreen(),
+      ),
+      GoRoute(
+        path: '/partner/notifications',
+        builder: (context, state) => const PartnerNotificationsScreen(),
+      ),
     ],
   );
 }

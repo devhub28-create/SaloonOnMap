@@ -51,8 +51,8 @@ class PartnerServicesCubit extends Cubit<PartnerServicesState> {
       name: item['name']?.toString() ?? 'Combo Offer',
       description: item['description']?.toString() ?? '',
       price: (item['price'] as num?)?.toDouble() ?? 0.0,
-      originalPrice: (item['originalPrice'] ?? item['original_price'] as num?)
-          ?.toDouble(),
+      originalPrice:
+          (item['originalPrice'] ?? item['original_price'] as num?)?.toDouble(),
       discountTag: item['discountTag']?.toString() ?? '',
     );
   }
@@ -115,7 +115,7 @@ class PartnerServicesCubit extends Cubit<PartnerServicesState> {
         services: loadedServices, combos: loadedCombos));
   }
 
-  Future<void> addService({
+  Future<bool> addService({
     required String name,
     required String category,
     required double price,
@@ -141,10 +141,13 @@ class PartnerServicesCubit extends Cubit<PartnerServicesState> {
       services.insert(0, _serviceFromJson(saved));
       emit(PartnerServicesLoadedState(services: services, combos: combos));
       await _saveToPrefs(services, combos);
-    } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
-  Future<void> addCombo({
+  Future<bool> addCombo({
     required String name,
     required String description,
     required double price,
@@ -170,26 +173,34 @@ class PartnerServicesCubit extends Cubit<PartnerServicesState> {
       combos.insert(0, _comboFromJson(saved));
       emit(PartnerServicesLoadedState(services: services, combos: combos));
       await _saveToPrefs(services, combos);
-    } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
-  Future<void> toggleServiceAvailability(String serviceId) async {
+  Future<bool> toggleServiceAvailability(String serviceId) async {
     final currentState = state;
     if (currentState is PartnerServicesLoadedState) {
       final services = List<ServiceModel>.from(currentState.services);
       final index = services.indexWhere((s) => s.id == serviceId);
       if (index != -1) {
-        services[index].isAvailable = !services[index].isAvailable;
-        emit(PartnerServicesLoadedState(
-            services: services, combos: currentState.combos));
-        await _saveToPrefs(services, currentState.combos);
+        final nextAvailability = !services[index].isAvailable;
         try {
           await apiClient.updatePartnerService(serviceId, {
-            'isAvailable': services[index].isAvailable,
+            'isAvailable': nextAvailability,
           });
-        } catch (_) {}
+          services[index].isAvailable = nextAvailability;
+          emit(PartnerServicesLoadedState(
+              services: services, combos: currentState.combos));
+          await _saveToPrefs(services, currentState.combos);
+          return true;
+        } catch (_) {
+          return false;
+        }
       }
     }
+    return false;
   }
 
   Future<void> _saveToPrefs(

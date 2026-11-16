@@ -123,27 +123,16 @@ class AuthCubit extends Cubit<AuthState> {
       await apiClient.requestOtp(_currentPhone!);
       emit(AuthOtpRequestedState(_currentPhone!));
     } catch (e) {
-      // In dev mode with dummy OTP, still let user proceed to OTP entry
-      emit(AuthOtpRequestedState(_currentPhone!));
+      if (e is DioException && e.response?.statusCode == 429) {
+        emit(AuthRateLimitedState(
+            'Too many OTP requests. Please wait a minute and try again.'));
+      } else {
+        emit(AuthNetworkErrorState(_apiErrorMessage(
+          e,
+          fallback: 'Could not send the OTP. Please try again.',
+        )));
+      }
     }
-  }
-
-  /// Direct login bypassing OTP check flow (development mode / fast login)
-  Future<void> loginDirectly(
-    String phone, {
-    String? name,
-    String? email,
-  }) async {
-    String clean = phone.replaceAll(RegExp(r'[\s\-]'), '');
-    if (clean.length < 10) {
-      emit(AuthValidationErrorState('Please enter a valid 10-digit phone number.'));
-      return;
-    }
-    if (!clean.startsWith('+')) {
-      clean = '+91$clean';
-    }
-    _currentPhone = clean;
-    await verifyOtp('000000', name: name, email: email);
   }
 
   Future<void> verifyOtp(
@@ -153,7 +142,12 @@ class AuthCubit extends Cubit<AuthState> {
     String role = 'CUSTOMER',
   }) async {
     if (_currentPhone == null) {
-      emit(AuthValidationErrorState('Phone number is missing. Please enter phone number.'));
+      emit(AuthValidationErrorState(
+          'Phone number is missing. Please enter phone number.'));
+      return;
+    }
+    if (!RegExp(r'^\d{6}$').hasMatch(code.trim())) {
+      emit(AuthInvalidOtpState('Enter the complete 6-digit OTP.'));
       return;
     }
 
@@ -167,12 +161,15 @@ class AuthCubit extends Cubit<AuthState> {
         email: email,
       );
       _token = response['accessToken']?.toString();
-      _user = response['user'] is Map ? Map<String, dynamic>.from(response['user'] as Map) : null;
+      _user = response['user'] is Map
+          ? Map<String, dynamic>.from(response['user'] as Map)
+          : null;
 
       if (_token != null && _user != null) {
         final refreshToken = response['refreshToken']?.toString();
         if (refreshToken == null || refreshToken.isEmpty) {
-          emit(AuthNetworkErrorState('Authentication server did not return a secure session.'));
+          emit(AuthNetworkErrorState(
+              'Authentication server did not return a secure session.'));
           return;
         }
         await apiClient.saveSession(_token!, refreshToken);
@@ -185,15 +182,28 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (e) {
       final message = e.toString().toLowerCase();
       if (message.contains('expired')) {
-        emit(AuthExpiredOtpState('The OTP has expired. Request a new code or use 000000.'));
+        emit(AuthExpiredOtpState('The OTP has expired. Request a new code.'));
       } else if (message.contains('invalid') ||
           message.contains('unauthorized')) {
-        emit(AuthInvalidOtpState('The OTP is invalid. Try dummy OTP 000000.'));
+        emit(AuthInvalidOtpState('The OTP is invalid. Please try again.'));
       } else {
-        emit(AuthNetworkErrorState(
-            'Could not verify OTP. Please try again: $e'));
+        emit(AuthNetworkErrorState(_apiErrorMessage(
+          e,
+          fallback: 'Could not verify the OTP. Please try again.',
+        )));
       }
     }
+  }
+
+  String _apiErrorMessage(Object error, {required String fallback}) {
+    if (error is! DioException) return fallback;
+    final data = error.response?.data;
+    if (data is Map && data['message'] != null) {
+      final message = data['message'];
+      if (message is List) return message.join(' ');
+      if (message.toString().trim().isNotEmpty) return message.toString();
+    }
+    return fallback;
   }
 
   Future<void> logout() async {
