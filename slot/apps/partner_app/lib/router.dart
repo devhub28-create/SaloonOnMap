@@ -1,0 +1,126 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:design_system/design_system.dart';
+
+import 'features/auth/cubit/partner_auth_cubit.dart';
+import 'features/auth/presentation/partner_login_screen.dart';
+import 'features/auth/presentation/partner_register_screen.dart';
+import 'features/auth/presentation/pending_approval_screen.dart';
+import 'features/dashboard/presentation/dashboard_screen.dart';
+import 'features/bookings/presentation/bookings_screen.dart';
+import 'features/seats/presentation/seats_screen.dart';
+import 'features/services/presentation/services_screen.dart';
+import 'features/profile/presentation/profile_screen.dart';
+import 'features/profile/presentation/salon_details_screen.dart';
+import 'features/reports/presentation/reports_screen.dart';
+import 'features/team/presentation/team_screen.dart';
+
+class PartnerShellScaffold extends StatefulWidget {
+  final Widget child;
+  const PartnerShellScaffold({super.key, required this.child});
+
+  @override
+  State<PartnerShellScaffold> createState() => _PartnerShellScaffoldState();
+}
+
+class _PartnerShellScaffoldState extends State<PartnerShellScaffold> {
+  int _currentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: widget.child,
+      bottomNavigationBar: SlotBottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() => _currentIndex = index);
+          if (index == 0) context.go('/');
+          if (index == 1) context.go('/bookings');
+          if (index == 2) context.go('/seats');
+          if (index == 3) context.go('/services');
+          if (index == 4) context.go('/profile');
+        },
+        items: const [
+          SlotNavItem(icon: Icons.dashboard_outlined, label: 'Dashboard'),
+          SlotNavItem(icon: Icons.calendar_today_rounded, label: 'Bookings'),
+          SlotNavItem(icon: Icons.event_seat_rounded, label: 'Seats'),
+          SlotNavItem(icon: Icons.content_cut_rounded, label: 'Services'),
+          SlotNavItem(icon: Icons.person_outline_rounded, label: 'Profile'),
+        ],
+      ),
+    );
+  }
+}
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+          (dynamic _) => notifyListeners(),
+        );
+  }
+
+  late final dynamic _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+GoRouter createPartnerRouter(PartnerAuthCubit authCubit) {
+  return GoRouter(
+    initialLocation: '/',
+    refreshListenable: GoRouterRefreshStream(authCubit.stream),
+    redirect: (context, state) {
+      final authState = authCubit.state;
+      final isAuthScreen = state.matchedLocation == '/login' || state.matchedLocation == '/register';
+      final isPendingScreen = state.matchedLocation == '/pending';
+
+      if (authState is PartnerUnauthenticated && !isAuthScreen) {
+        return '/login';
+      }
+
+      if (authState is PartnerAuthenticated && isAuthScreen) {
+        return '/';
+      }
+
+      if (authState is PartnerPendingApproval && !isPendingScreen) {
+        return '/pending';
+      }
+
+      return null;
+    },
+    routes: [
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const PartnerLoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const PartnerRegisterScreen(),
+      ),
+      GoRoute(
+        path: '/pending',
+        builder: (context, state) {
+          final authState = authCubit.state;
+          return PendingApprovalScreen(state: authState as PartnerPendingApproval);
+        },
+      ),
+      ShellRoute(
+        builder: (context, state, child) => PartnerShellScaffold(child: child),
+        routes: [
+          GoRoute(path: '/', builder: (context, state) => const DashboardScreen()),
+          GoRoute(path: '/bookings', builder: (context, state) => const BookingsScreen()),
+          GoRoute(path: '/seats', builder: (context, state) => const SeatsScreen()),
+          GoRoute(path: '/services', builder: (context, state) => const ServicesScreen()),
+          GoRoute(path: '/profile', builder: (context, state) => const PartnerProfileScreen()),
+        ],
+      ),
+      GoRoute(path: '/partner/reports', builder: (context, state) => const ReportsScreen()),
+      GoRoute(path: '/partner/team', builder: (context, state) => const TeamScreen()),
+      GoRoute(path: '/partner/salon-details', builder: (context, state) => const SalonDetailsScreen()),
+    ],
+  );
+}
