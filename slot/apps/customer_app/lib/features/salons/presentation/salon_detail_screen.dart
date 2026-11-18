@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../auth/cubit/auth_cubit.dart';
 import '../../booking/cubit/booking_cubit.dart';
@@ -157,6 +159,36 @@ class _SalonDetailScreenState extends State<SalonDetailScreen> {
     context.push('/book-services');
   }
 
+  Future<void> _shareSalon(String name, String address) async {
+    await Share.share(
+        'Book $name on SLOT${address.isEmpty ? '' : ' · $address'}');
+  }
+
+  Future<void> _openDirections(String address) async {
+    final lat = _salon?['latitude'];
+    final lng = _salon?['longitude'];
+    final query = lat != null && lng != null
+        ? '${lat.toString()},${lng.toString()}'
+        : address;
+    if (query.trim().isEmpty) {
+      _showActionMessage('This salon has not added a location yet.');
+      return;
+    }
+    final uri = Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': query,
+    });
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      _showActionMessage('Could not open maps. Please try again.');
+    }
+  }
+
+  void _showActionMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = _salon?['name'] ?? 'Salon';
@@ -288,35 +320,48 @@ class _SalonDetailScreenState extends State<SalonDetailScreen> {
                   ),
                   const SizedBox(height: AppSpacing.md),
 
-                  // Quick Action Buttons (Share, Call, Directions)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _actionButton(Icons.share_outlined, 'Share', () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Sharing $name ($address)...'),
-                          ),
-                        );
-                      }),
-                      _actionButton(Icons.call_outlined, 'Call', () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Opening dialer for +91 98765 43210...',
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.verified_outlined,
+                          color: AppColors.primaryGoldDark,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '$reviews customer reviews · Choose services before selecting your time.',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.darkNeutral,
                             ),
                           ),
-                        );
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _actionButton(Icons.share_outlined, 'Share', () {
+                        _shareSalon(name.toString(), address);
                       }),
+                      const SizedBox(width: AppSpacing.xl),
                       _actionButton(
                         Icons.directions_outlined,
                         'Directions',
                         () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Opening Maps for $address...'),
-                            ),
-                          );
+                          _openDirections(address);
                         },
                       ),
                     ],

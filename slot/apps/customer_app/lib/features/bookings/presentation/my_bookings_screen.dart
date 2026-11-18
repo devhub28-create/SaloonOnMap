@@ -161,6 +161,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         itemCount: completedList.length,
                         itemBuilder: (context, index) {
                           final b = completedList[index];
+                          final salonId = b['salonId'] ??
+                              b['salon_id'] ??
+                              b['salon']?['id'];
                           return Container(
                             margin: const EdgeInsets.only(
                               bottom: AppSpacing.md,
@@ -182,36 +185,53 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: OutlinedButton.icon(
-                                    onPressed: () => _showReviewModal(b),
-                                    icon: const Icon(
-                                      Icons.star_rounded,
-                                      color: AppColors.primaryGoldDark,
-                                      size: 18,
-                                    ),
-                                    label: const Text(
-                                      '★ Rate & Review Visit',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        color: AppColors.darkNeutral,
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: () => _showReviewModal(b),
+                                        icon: const Icon(
+                                          Icons.star_rounded,
+                                          color: AppColors.primaryGoldDark,
+                                          size: 18,
+                                        ),
+                                        label: const Text(
+                                          'Rate visit',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                            color: AppColors.darkNeutral,
+                                          ),
+                                        ),
+                                        style: _visitActionStyle(),
                                       ),
                                     ),
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(
-                                        color: AppColors.borderLight,
+                                    if (salonId != null) ...[
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: () => context.push(
+                                            '/salon-detail',
+                                            extra: {'salonId': salonId},
+                                          ),
+                                          icon: const Icon(
+                                            Icons.replay_rounded,
+                                            size: 18,
+                                          ),
+                                          label: const Text(
+                                            'Book again',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          style: _visitActionStyle(
+                                            accent: AppColors.darkNeutral,
+                                          ),
+                                        ),
                                       ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 10,
-                                      ),
-                                      backgroundColor: Colors.white,
-                                    ),
-                                  ),
+                                    ],
+                                  ],
                                 ),
                               ],
                             ),
@@ -341,6 +361,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       ),
     );
   }
+
+  ButtonStyle _visitActionStyle({Color? accent}) => OutlinedButton.styleFrom(
+        side: BorderSide(color: accent ?? AppColors.borderLight),
+        foregroundColor: accent ?? AppColors.darkNeutral,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        backgroundColor: Colors.white,
+      );
 
   void _showBookingDetailsBottomSheet(Map<String, dynamic> booking) {
     final bookingId = (booking['id'] ?? '').toString();

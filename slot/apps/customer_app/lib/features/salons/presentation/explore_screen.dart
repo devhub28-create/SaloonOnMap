@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
@@ -19,6 +21,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool _isLoading = true;
   String? _error;
   int _selectedFilterIndex = 0;
+  String _sortBy = 'nearest';
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   String _selectedArea = 'Indiranagar, Bengaluru';
   double? _userLat = 12.9784;
@@ -27,7 +32,24 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     _detectUserLocation(showToast: false);
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController
+      ..removeListener(_onSearchChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 250), () {
+      if (mounted) setState(() {});
+    });
   }
 
   Future<void> _detectUserLocation({bool showToast = false}) async {
@@ -141,22 +163,87 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
-  List<dynamic> get _displayedSalons {
-    if (_selectedFilterIndex == 1) {
-      return _salons
-          .where(
-            (s) =>
-                (double.tryParse((s['rating'] ?? 4.9).toString()) ?? 0.0) >=
-                4.8,
-          )
-          .toList();
-    } else if (_selectedFilterIndex == 2) {
-      return _salons.where((s) => s['is_active'] == true).toList();
-    } else if (_selectedFilterIndex == 3) {
-      return _salons; // Under ₹500
-    }
-    return _salons;
+  bool _isOpenNow(Map<dynamic, dynamic> salon) {
+    final opening = _parseTime(salon['opening_time']?.toString());
+    final closing = _parseTime(salon['closing_time']?.toString());
+    if (opening == null || closing == null) return false;
+    final now = TimeOfDay.now();
+    final nowMinutes = now.hour * 60 + now.minute;
+    final opensAt = opening.$1 * 60 + opening.$2;
+    final closesAt = closing.$1 * 60 + closing.$2;
+    return closesAt >= opensAt
+        ? nowMinutes >= opensAt && nowMinutes < closesAt
+        : nowMinutes >= opensAt || nowMinutes < closesAt;
   }
+
+  (int, int)? _parseTime(String? value) {
+    if (value == null) return null;
+    final parts = value.split(':');
+    if (parts.length < 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null || hour > 23 || minute > 59) return null;
+    return (hour, minute);
+  }
+
+  String? _formatTime(String? raw) {
+    final parsed = _parseTime(raw);
+    if (parsed == null) return null;
+    final suffix = parsed.$1 >= 12 ? 'PM' : 'AM';
+    final hour = parsed.$1 % 12 == 0 ? 12 : parsed.$1 % 12;
+    return '$hour:${parsed.$2.toString().padLeft(2, '0')} $suffix';
+  }
+
+  List<dynamic> get _displayedSalons {
+    final search = _searchController.text.trim().toLowerCase();
+    final salons = _salons.where((salon) {
+      final data = salon as Map;
+      final matchesSearch = search.isEmpty ||
+          [data['name'], data['area'], data['city']]
+              .whereType<Object>()
+              .join(' ')
+              .toLowerCase()
+              .contains(search);
+      if (!matchesSearch) return false;
+      if (_selectedFilterIndex == 1) {
+        return (double.tryParse((data['rating'] ?? '').toString()) ?? 0) >= 4.5;
+      }
+      if (_selectedFilterIndex == 2) return _isOpenNow(data);
+      return true;
+    }).toList();
+
+    switch (_sortBy) {
+      case 'rating':
+        salons.sort(
+          (a, b) =>
+              (double.tryParse((b['rating'] ?? '').toString()) ?? 0).compareTo(
+            double.tryParse((a['rating'] ?? '').toString()) ?? 0,
+          ),
+        );
+      case 'name':
+        salons.sort(
+          (a, b) => (a['name'] ?? '').toString().compareTo(
+                (b['name'] ?? '').toString(),
+              ),
+        );
+      default:
+        salons.sort(
+          (a, b) => (double.tryParse((a['distanceKm'] ?? '').toString()) ??
+                  double.infinity)
+              .compareTo(
+            double.tryParse((b['distanceKm'] ?? '').toString()) ??
+                double.infinity,
+          ),
+        );
+    }
+    return salons;
+  }
+
+  String get _sortLabel => switch (_sortBy) {
+        'rating' => 'Top rated',
+        'name' => 'A–Z',
+        _ => 'Nearest',
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -234,27 +321,37 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      salonCount > 0
-                          ? 'Search $salonCount salons nearby'
-                          : 'Search salons nearby',
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                    child: TextField(
+                      controller: _searchController,
+                      textInputAction: TextInputAction.search,
+                      decoration: InputDecoration(
+                        hintText: salonCount > 0
+                            ? 'Search $salonCount salons nearby'
+                            : 'Search salons, areas',
+                        hintStyle: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.tune_rounded,
-                      color: AppColors.darkNeutral,
-                      size: 18,
+                  IconButton(
+                    tooltip: 'Sort salons',
+                    onPressed: _showSortSheet,
+                    icon: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F4F6),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.tune_rounded,
+                        color: AppColors.darkNeutral,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ],
@@ -270,7 +367,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   _filterChip(0, 'Nearby'),
                   _filterChip(1, 'Top rated'),
                   _filterChip(2, 'Open now'),
-                  _filterChip(3, 'Under ₹500'),
+                  _sortChip(),
                 ],
               ),
             ),
@@ -352,14 +449,33 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            // 4. Closest to you Header
-            const Text(
-              'Closest to you',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.darkNeutral,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _searchController.text.trim().isNotEmpty
+                        ? 'Search results'
+                        : _selectedFilterIndex == 1
+                            ? 'Highly rated near you'
+                            : _selectedFilterIndex == 2
+                                ? 'Open now'
+                                : 'Closest to you',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.darkNeutral,
+                    ),
+                  ),
+                ),
+                Text(
+                  '$salonCount ${salonCount == 1 ? 'salon' : 'salons'}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.md),
 
@@ -522,14 +638,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                const Text(
-                                  'Open until 9 PM',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF16A34A),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                _hoursLabel(salon),
                                 const SizedBox(height: 8),
                                 const Divider(
                                   height: 1,
@@ -540,24 +649,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text(
-                                      '₹299 onwards',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.darkNeutral,
-                                      ),
-                                    ),
-                                    Text(
-                                      index == 0
-                                          ? '2 slots today'
-                                          : '4 slots today',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFFD97706),
-                                      ),
-                                    ),
+                                    _priceLabel(salon),
+                                    _availabilityLabel(salon),
                                   ],
                                 ),
                               ],
@@ -637,6 +730,125 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ),
       ),
     );
+  }
+
+  Widget _sortChip() => Semantics(
+        button: true,
+        label: 'Sort salons by $_sortLabel',
+        child: InkWell(
+          onTap: _showSortSheet,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.borderLight),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.sort_rounded, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  _sortLabel,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  Widget _hoursLabel(Map<dynamic, dynamic> salon) {
+    final closing = _formatTime(salon['closing_time']?.toString());
+    final opening = _formatTime(salon['opening_time']?.toString());
+    if (closing == null || opening == null) {
+      return const Text(
+        'Check hours with salon',
+        style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+      );
+    }
+    final open = _isOpenNow(salon);
+    return Text(
+      open ? 'Open now · until $closing' : 'Closed · opens $opening',
+      style: TextStyle(
+        fontSize: 12,
+        color: open ? AppColors.statusAvailableText : AppColors.textMuted,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget _priceLabel(Map<dynamic, dynamic> salon) {
+    final price = salon['starting_price'] ?? salon['startingPrice'];
+    final numericPrice = double.tryParse(price?.toString() ?? '');
+    return Text(
+      numericPrice == null
+          ? 'View services'
+          : 'From ₹${numericPrice.toStringAsFixed(0)}',
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
+        color: AppColors.darkNeutral,
+      ),
+    );
+  }
+
+  Widget _availabilityLabel(Map<dynamic, dynamic> salon) {
+    final nextSlot = salon['next_available_time'] ?? salon['nextAvailableTime'];
+    return Text(
+      nextSlot == null ? 'See availability' : 'Next: $nextSlot',
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFFD97706),
+      ),
+    );
+  }
+
+  Future<void> _showSortSheet() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Sort salons', style: AppTypography.screenTitle),
+              const SizedBox(height: 8),
+              const Text(
+                'Choose how results are ordered.',
+                style: TextStyle(color: AppColors.textMuted),
+              ),
+              const SizedBox(height: 12),
+              for (final option in const [
+                ('nearest', 'Nearest', Icons.near_me_rounded),
+                ('rating', 'Top rated', Icons.star_rounded),
+                ('name', 'Name, A–Z', Icons.sort_by_alpha_rounded),
+              ])
+                ListTile(
+                  leading: Icon(option.$3),
+                  title: Text(option.$2),
+                  trailing: _sortBy == option.$1
+                      ? const Icon(
+                          Icons.check_circle_rounded,
+                          color: AppColors.primaryGoldDark,
+                        )
+                      : const Icon(Icons.circle_outlined),
+                  onTap: () => Navigator.pop(context, option.$1),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (selected != null && mounted) setState(() => _sortBy = selected);
   }
 }
 
