@@ -188,7 +188,23 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Book your chair', style: AppTypography.screenTitle),
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'STEP 2 OF 3',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1,
+              ),
+            ),
+            SizedBox(height: 2),
+            Text('Choose your appointment', style: AppTypography.screenTitle),
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(
@@ -198,7 +214,39 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Text(_error!),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.event_busy_outlined,
+                          size: 42,
+                          color: AppColors.textMuted,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'We could not load availability',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        OutlinedButton.icon(
+                          onPressed: _fetchSlots,
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('Try again'),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               : SingleChildScrollView(
@@ -206,34 +254,85 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Choose Date Header
-                      const Text(
-                        'Choose date',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.darkNeutral, Color(0xFF34333A)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0x1FFFFFFF),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Icon(
+                                Icons.event_seat_rounded,
+                                color: AppColors.primaryGold,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    bookingCubit.selectedSalonName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${bookingCubit.selectedServices.length} ${bookingCubit.selectedServices.length == 1 ? 'service' : 'services'} · ${formatDuration(bookingCubit.totalDuration)}',
+                                    style: const TextStyle(
+                                      color: Color(0xFFD1D5DB),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      _sectionHeader(
+                        icon: Icons.calendar_month_rounded,
+                        title: 'Pick a day',
+                        subtitle: 'Availability updates as you choose.',
                       ),
                       const SizedBox(height: AppSpacing.md),
-
-                      // Date horizontal list
                       Row(
                         children: List.generate(dates.length, (index) {
                           final d = dates[index];
-                          final dayName = weekdays[d.weekday % 7];
+                          final dayName =
+                              index == 0 ? 'TODAY' : weekdays[d.weekday % 7];
                           final dateNum = d.day.toString().padLeft(2, '0');
                           return _datePill(index, dayName, dateNum);
                         }),
                       ),
                       const SizedBox(height: AppSpacing.xl),
-
-                      // Available Times Header
-                      const Text(
-                        'Available times',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                      _sectionHeader(
+                        icon: Icons.schedule_rounded,
+                        title: 'Choose a time',
+                        subtitle: _selectedTime.isEmpty
+                            ? 'Select an available slot.'
+                            : '$_selectedTime is selected.',
                       ),
                       const SizedBox(height: AppSpacing.md),
-
-                      // Time Slots Grid
                       Wrap(
                         spacing: 12,
                         runSpacing: 12,
@@ -241,19 +340,17 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
                             _timeSlots.map((ts) => _timePill(ts)).toList(),
                       ),
                       const SizedBox(height: AppSpacing.xl),
-
-                      // Choose a Seat Header
-                      const Text(
-                        'Choose a seat',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                      _sectionHeader(
+                        icon: Icons.chair_alt_rounded,
+                        title: 'Choose your chair',
+                        subtitle: _selectedSeatLabel.isEmpty
+                            ? 'Pick an available chair for your time.'
+                            : '$_selectedSeatLabel is reserved for your selected time.',
                       ),
                       const SizedBox(height: AppSpacing.md),
-
-                      // Seat Selector
                       Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                        spacing: 10,
+                        runSpacing: 10,
                         children: _seats.map((seat) {
                           final sId = seat['id']?.toString() ?? '';
                           final sLabel = seat['label']?.toString() ?? 'Seat';
@@ -261,56 +358,110 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
                         }).toList(),
                       ),
                       const SizedBox(height: AppSpacing.xl),
-
-                      // Preferred Stylist
-                      const Text(
-                        'Preferred stylist',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                      _sectionHeader(
+                        icon: Icons.person_pin_rounded,
+                        title: 'Stylist preference',
+                        subtitle:
+                            'Choose a stylist or let the salon assign one.',
                       ),
                       const SizedBox(height: AppSpacing.md),
-
-                      Row(
-                        children: [
-                          ..._staffList.map((st) {
-                            final name = st['name']?.toString() ?? 'Staff';
-                            final avatar =
-                                name.isNotEmpty ? name[0].toUpperCase() : 'S';
-                            return _stylistPill(name, avatar);
-                          }),
-                          _stylistPill('No preference', '•'),
-                        ],
+                      SizedBox(
+                        height: 96,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            ..._staffList.map((st) {
+                              final name = st['name']?.toString() ?? 'Staff';
+                              final avatar =
+                                  name.isNotEmpty ? name[0].toUpperCase() : 'S';
+                              return _stylistPill(name, avatar);
+                            }),
+                            _stylistPill('No preference', '•'),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 100),
                     ],
                   ),
                 ),
       bottomSheet: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
         decoration: const BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: AppColors.borderLight)),
         ),
-        child: SlotPrimaryButton(
-          text: 'Review · ₹${totalPrice.toInt()} →',
-          onPressed: () {
-            if (_selectedSeatId == null || _selectedTime.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('No available seat or time is selected.'),
-                ),
-              );
-              return;
-            }
-            bookingCubit.selectDateTimeSeat(
-              date: selectedDateStr,
-              time: _selectedTime,
-              seatId: _selectedSeatId!,
-              seatLabel: _selectedSeatLabel,
-              stylist: _selectedStylist,
-            );
-            context.push('/review-booking');
-          },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF5D9),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.event_available_rounded,
+                      size: 18,
+                      color: AppColors.primaryGoldDark,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _selectedTime.isEmpty || _selectedSeatLabel.isEmpty
+                          ? 'Select a time and chair to continue'
+                          : '$_selectedTime · $_selectedSeatLabel · $_selectedStylist',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '₹${totalPrice.toInt()}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.darkNeutral,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SlotPrimaryButton(
+              text: 'Review appointment',
+              onPressed: () {
+                if (_selectedSeatId == null || _selectedTime.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No available chair or time is selected.'),
+                    ),
+                  );
+                  return;
+                }
+                bookingCubit.selectDateTimeSeat(
+                  date: selectedDateStr,
+                  time: _selectedTime,
+                  seatId: _selectedSeatId!,
+                  seatLabel: _selectedSeatLabel,
+                  stylist: _selectedStylist,
+                );
+                context.push('/review-booking');
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -359,6 +510,47 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
       ),
     );
   }
+
+  Widget _sectionHeader({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) =>
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF5D9),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: AppColors.primaryGoldDark),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.darkNeutral,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style:
+                      const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
 
   Widget _timePill(Map<String, dynamic> ts) {
     final time = ts['time']?.toString() ?? '';
@@ -533,11 +725,12 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
 
   Widget _stylistPill(String name, String avatar) {
     final isSelected = name == _selectedStylist;
-    return Expanded(
+    return SizedBox(
+      width: 112,
       child: GestureDetector(
         onTap: () => setState(() => _selectedStylist = name),
         child: Container(
-          margin: const EdgeInsets.only(right: 8),
+          margin: const EdgeInsets.only(right: 10),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: isSelected ? const Color(0xFFFEF9C3) : Colors.white,
