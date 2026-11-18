@@ -189,6 +189,77 @@ class _SalonDetailScreenState extends State<SalonDetailScreen> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
+  (int, int)? _parseTime(String? value) {
+    if (value == null) return null;
+    final parts = value.split(':');
+    if (parts.length < 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null || hour > 23 || minute > 59) return null;
+    return (hour, minute);
+  }
+
+  String _formatTime(String? value) {
+    final time = _parseTime(value);
+    if (time == null) return 'Hours unavailable';
+    final hour = time.$1 % 12 == 0 ? 12 : time.$1 % 12;
+    final period = time.$1 >= 12 ? 'PM' : 'AM';
+    return '$hour:${time.$2.toString().padLeft(2, '0')} $period';
+  }
+
+  bool _isOpenNow() {
+    final opening = _parseTime(_salon?['opening_time']?.toString());
+    final closing = _parseTime(_salon?['closing_time']?.toString());
+    if (opening == null || closing == null) return false;
+    final now = TimeOfDay.now();
+    final minutes = now.hour * 60 + now.minute;
+    final opens = opening.$1 * 60 + opening.$2;
+    final closes = closing.$1 * 60 + closing.$2;
+    return closes >= opens
+        ? minutes >= opens && minutes < closes
+        : minutes >= opens || minutes < closes;
+  }
+
+  int _selectedDuration() {
+    final selected = _getNormalizedSelectedItems();
+    return selected.fold<int>(
+      0,
+      (total, item) =>
+          total +
+          (int.tryParse(item['duration_minutes']?.toString() ?? '0') ?? 0),
+    );
+  }
+
+  Future<void> _toggleFavorite(String salonName) async {
+    final apiClient = context.read<AuthCubit>().apiClient;
+    final salonId = _salon?['id']?.toString();
+    if (salonId == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final favorites =
+        (prefs.getStringList('favorite_salon_ids') ?? const []).toSet();
+    if (_isFavorite) {
+      favorites.remove(salonId);
+    } else {
+      favorites.add(salonId);
+    }
+    try {
+      await apiClient.updateCustomerProfile({
+        'favoriteSalonIds': favorites.toList(),
+      });
+    } catch (_) {
+      _showActionMessage('Could not update favorites. Please try again.');
+      return;
+    }
+    await prefs.setStringList('favorite_salon_ids', favorites.toList());
+    if (!mounted) return;
+    setState(() => _isFavorite = !_isFavorite);
+    _showActionMessage(
+      _isFavorite
+          ? '$salonName added to Favorites.'
+          : '$salonName removed from Favorites.',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = _salon?['name'] ?? 'Salon';
@@ -198,7 +269,7 @@ class _SalonDetailScreenState extends State<SalonDetailScreen> {
     ].where((value) => value != null && value.toString().isNotEmpty).join(', ');
     final rating = (_salon?['rating'] ?? 0).toString();
     final reviews = (_salon?['review_count'] ?? 0).toString();
-    final closingTime = _salon?['closing_time'] ?? '';
+    final isOpen = _isOpenNow();
 
     final showCombos = _activeCategoryIndex == 0 || _activeCategoryIndex == 1;
     final showServices = _activeCategoryIndex == 0 || _activeCategoryIndex == 2;
@@ -211,68 +282,113 @@ class _SalonDetailScreenState extends State<SalonDetailScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 220,
+            expandedHeight: 310,
             pinned: true,
-            backgroundColor: AppColors.background,
-            actions: [
-              IconButton(
-                icon: Icon(
-                  _isFavorite
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  color: _isFavorite ? Colors.red : AppColors.darkNeutral,
-                ),
-                onPressed: () async {
-                  final apiClient = context.read<AuthCubit>().apiClient;
-                  final salonId = _salon?['id']?.toString();
-                  if (salonId == null) return;
-                  final prefs = await SharedPreferences.getInstance();
-                  final favorites =
-                      (prefs.getStringList('favorite_salon_ids') ?? const [])
-                          .toSet();
-                  if (_isFavorite) {
-                    favorites.remove(salonId);
-                  } else {
-                    favorites.add(salonId);
-                  }
-                  try {
-                    await apiClient.updateCustomerProfile({
-                      'favoriteSalonIds': favorites.toList(),
-                    });
-                  } catch (_) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Could not update favorites. Please try again.',
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-                  await prefs.setStringList(
-                    'favorite_salon_ids',
-                    favorites.toList(),
-                  );
-                  if (!context.mounted) return;
-                  setState(() => _isFavorite = !_isFavorite);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        _isFavorite
-                            ? '$name added to Favorites.'
-                            : '$name removed from Favorites.',
+            automaticallyImplyLeading: false,
+            backgroundColor: AppColors.darkNeutral,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    ApiConfig.formatImageUrl(
+                      _salon?['cover_image']?.toString(),
+                    ),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _fallbackCover(),
+                  ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0x8F101014),
+                          Color(0x16101014),
+                          Color(0xE8101014),
+                        ],
+                        stops: [0, .45, 1],
                       ),
                     ),
-                  );
-                },
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Image.network(
-                ApiConfig.formatImageUrl(_salon?['cover_image']?.toString()),
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _fallbackCover(),
+                  ),
+                  Positioned(
+                    top: MediaQuery.paddingOf(context).top + 10,
+                    left: 16,
+                    right: 16,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _heroIconButton(
+                          icon: Icons.arrow_back_ios_new_rounded,
+                          tooltip: 'Back',
+                          onTap: () => context.pop(),
+                        ),
+                        _heroIconButton(
+                          icon: _isFavorite
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          tooltip: _isFavorite
+                              ? 'Remove from favorites'
+                              : 'Save salon',
+                          iconColor:
+                              _isFavorite ? Colors.red.shade400 : Colors.white,
+                          onTap: () => _toggleFavorite(name.toString()),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    bottom: 26,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryGold,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Text(
+                            'SLOT SELECTED SALON',
+                            style: TextStyle(
+                              color: AppColors.darkNeutral,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 10,
+                              letterSpacing: .8,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          name.toString(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            height: 1.08,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          address.isEmpty ? 'Salon location' : address,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFFE5E7EB),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -282,93 +398,111 @@ class _SalonDetailScreenState extends State<SalonDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name, style: AppTypography.screenTitle),
-                  const SizedBox(height: 4),
-                  Text(address, style: AppTypography.bodyText),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        size: 16,
-                        color: AppColors.primaryGoldDark,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$rating ($reviews reviews)',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Icon(
-                        Icons.access_time_rounded,
-                        size: 14,
-                        color: AppColors.statusAvailableText,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Open until $closingTime',
-                        style: const TextStyle(
-                          color: AppColors.statusAvailableText,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(AppSpacing.md),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFFBEB),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFFDE68A)),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.borderLight),
+                      boxShadow: const [AppShadows.cardShadow],
                     ),
-                    child: Row(
+                    child: Column(
                       children: [
-                        const Icon(
-                          Icons.verified_outlined,
-                          color: AppColors.primaryGoldDark,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            '$reviews customer reviews · Choose services before selecting your time.',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.darkNeutral,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _statItem(
+                                icon: Icons.star_rounded,
+                                iconColor: AppColors.primaryGoldDark,
+                                value: rating,
+                                label: '$reviews reviews',
+                              ),
                             ),
-                          ),
+                            _statDivider(),
+                            Expanded(
+                              child: _statItem(
+                                icon: Icons.access_time_filled_rounded,
+                                iconColor: isOpen
+                                    ? AppColors.statusAvailableText
+                                    : AppColors.textMuted,
+                                value: isOpen ? 'Open now' : 'Closed now',
+                                label: isOpen
+                                    ? 'Until ${_formatTime(_salon?['closing_time']?.toString())}'
+                                    : 'Opens ${_formatTime(_salon?['opening_time']?.toString())}',
+                              ),
+                            ),
+                            _statDivider(),
+                            Expanded(
+                              child: _statItem(
+                                icon: Icons.verified_rounded,
+                                iconColor: AppColors.primaryGoldDark,
+                                value: 'Book online',
+                                label: 'Instant confirmation',
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              size: 16,
+                              color: AppColors.primaryGoldDark,
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Choose services first, then pick your preferred time and stylist.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textMuted,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
-
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _actionButton(Icons.share_outlined, 'Share', () {
-                        _shareSalon(name.toString(), address);
-                      }),
-                      const SizedBox(width: AppSpacing.xl),
-                      _actionButton(
-                        Icons.directions_outlined,
-                        'Directions',
-                        () {
-                          _openDirections(address);
-                        },
+                      Expanded(
+                        child: _actionButton(
+                          Icons.share_outlined,
+                          'Share salon',
+                          () => _shareSalon(name.toString(), address),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: _actionButton(
+                          Icons.directions_outlined,
+                          'Directions',
+                          () => _openDirections(address),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xl),
 
-                  // Filter / Category Tabs
+                  const Text(
+                    'Build your appointment',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.darkNeutral,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Add one or more services, then we’ll show available times.',
+                    style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -627,7 +761,12 @@ class _SalonDetailScreenState extends State<SalonDetailScreen> {
         ],
       ),
       bottomSheet: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
         decoration: const BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -639,11 +778,55 @@ class _SalonDetailScreenState extends State<SalonDetailScreen> {
           ],
           border: Border(top: BorderSide(color: AppColors.borderLight)),
         ),
-        child: SlotPrimaryButton(
-          text: selectedCount > 0
-              ? 'Book a seat ($selectedCount selected • ₹${totalPrice.toInt()})'
-              : 'Book a seat',
-          onPressed: () => _proceedToBooking(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selectedCount > 0)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF5D9),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 18,
+                        color: AppColors.primaryGoldDark,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '$selectedCount ${selectedCount == 1 ? 'service' : 'services'} · ${formatDuration(_selectedDuration())}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '₹${totalPrice.toInt()}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.darkNeutral,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            SlotPrimaryButton(
+              text: selectedCount > 0
+                  ? 'Choose date & time'
+                  : 'Select services to continue',
+              onPressed: () => _proceedToBooking(),
+            ),
+          ],
         ),
       ),
     );
@@ -657,8 +840,7 @@ class _SalonDetailScreenState extends State<SalonDetailScreen> {
     final isSelected = _activeCategoryIndex == index;
     return GestureDetector(
       onTap: () => setState(() => _activeCategoryIndex = index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.darkNeutral : Colors.white,
@@ -691,6 +873,66 @@ class _SalonDetailScreenState extends State<SalonDetailScreen> {
       ),
     );
   }
+
+  Widget _heroIconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+    Color? iconColor,
+  }) =>
+      Tooltip(
+        message: tooltip,
+        child: Material(
+          color: const Color(0x52000000),
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Icon(icon, color: iconColor ?? Colors.white, size: 21),
+            ),
+          ),
+        ),
+      );
+
+  Widget _statDivider() => Container(
+        height: 38,
+        width: 1,
+        color: AppColors.borderLight,
+      );
+
+  Widget _statItem({
+    required IconData icon,
+    required Color iconColor,
+    required String value,
+    required String label,
+  }) =>
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: iconColor),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: AppColors.darkNeutral,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 9, color: AppColors.textMuted),
+          ),
+        ],
+      );
 
   Widget _buildReviewCard(dynamic r) {
     final customerName = (r['customer_name'] ?? 'Customer').toString();
