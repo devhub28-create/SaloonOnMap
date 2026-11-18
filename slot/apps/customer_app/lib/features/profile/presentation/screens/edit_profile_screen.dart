@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../auth/cubit/auth_cubit.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -74,8 +75,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.darkNeutral, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.darkNeutral,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: const Text('Edit Profile', style: AppTypography.screenTitle),
@@ -103,9 +107,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: Text(
                         'AT',
                         style: TextStyle(
-                            color: AppColors.darkNeutral,
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold),
+                          color: AppColors.darkNeutral,
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -119,8 +124,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2),
                       ),
-                      child: const Icon(Icons.camera_alt_rounded,
-                          color: AppColors.primaryGold, size: 16),
+                      child: const Icon(
+                        Icons.camera_alt_rounded,
+                        color: AppColors.primaryGold,
+                        size: 16,
+                      ),
                     ),
                   ),
                 ],
@@ -129,36 +137,53 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const Text(
                 'Change Profile Photo',
                 style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textMuted,
-                    fontWeight: FontWeight.w500),
+                  fontSize: 13,
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: AppSpacing.xl),
 
               // Inputs
               _buildTextField(
-                  'Full Name', _nameController, Icons.person_outline_rounded),
+                'Full Name',
+                _nameController,
+                Icons.person_outline_rounded,
+              ),
               const SizedBox(height: AppSpacing.lg),
               _buildTextField(
-                  'Phone Number', _phoneController, Icons.phone_outlined,
-                  readOnly: true, suffixText: 'VERIFIED'),
+                'Phone Number',
+                _phoneController,
+                Icons.phone_outlined,
+                readOnly: true,
+                suffixText: 'VERIFIED',
+              ),
               const SizedBox(height: AppSpacing.lg),
               _buildTextField(
-                  'Email Address', _emailController, Icons.email_outlined),
+                'Email Address',
+                _emailController,
+                Icons.email_outlined,
+              ),
               const SizedBox(height: AppSpacing.lg),
-              _buildTextField('City & Location', _cityController,
-                  Icons.location_on_outlined),
+              _buildTextField(
+                'City & Location',
+                _cityController,
+                Icons.location_on_outlined,
+              ),
               const SizedBox(height: AppSpacing.lg),
 
               // Gender Selector
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Gender Preference',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: AppColors.darkNeutral)),
+                  const Text(
+                    'Gender Preference',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: AppColors.darkNeutral,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: ['Female', 'Male', 'Non-binary'].map((gender) {
@@ -175,9 +200,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   : Colors.white,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                  color: isSelected
-                                      ? AppColors.darkNeutral
-                                      : AppColors.borderLight),
+                                color: isSelected
+                                    ? AppColors.darkNeutral
+                                    : AppColors.borderLight,
+                              ),
                             ),
                             child: Center(
                               child: Text(
@@ -201,10 +227,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: AppSpacing.xxl),
 
               // Save Button
-              SlotPrimaryButton(
-                text: 'Save Changes',
-                onPressed: _saveProfile,
-              ),
+              SlotPrimaryButton(text: 'Save Changes', onPressed: _saveProfile),
               const SizedBox(height: AppSpacing.xl),
             ],
           ),
@@ -214,31 +237,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildTextField(
-      String label, TextEditingController controller, IconData icon,
-      {bool readOnly = false, String? suffixText}) {
+    String label,
+    TextEditingController controller,
+    IconData icon, {
+    bool readOnly = false,
+    String? suffixText,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: AppColors.darkNeutral)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: AppColors.darkNeutral,
+          ),
+        ),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           readOnly: readOnly,
           style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColors.darkNeutral,
-              fontSize: 14),
+            fontWeight: FontWeight.w600,
+            color: AppColors.darkNeutral,
+            fontSize: 14,
+          ),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: AppColors.textMuted, size: 20),
             suffixIcon: suffixText != null
                 ? Container(
                     margin: const EdgeInsets.all(12),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFDCFCE7),
                       borderRadius: BorderRadius.circular(6),
@@ -246,16 +279,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Text(
                       suffixText,
                       style: const TextStyle(
-                          color: Color(0xFF166534),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold),
+                        color: Color(0xFF166534),
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   )
                 : null,
             filled: true,
             fillColor: readOnly ? const Color(0xFFF3F4F6) : Colors.white,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(color: AppColors.borderLight),
@@ -267,7 +303,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(
-                  color: AppColors.primaryGoldDark, width: 1.5),
+                color: AppColors.primaryGoldDark,
+                width: 1.5,
+              ),
             ),
           ),
         ),

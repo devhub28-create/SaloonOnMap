@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+
 import '../cubit/auth_cubit.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -81,8 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
           } else if (state is AuthAuthenticatedState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content:
-                    Text('Welcome back, ${state.user['name'] ?? 'Customer'}!'),
+                content: Text(
+                  'Welcome back, ${state.user['name'] ?? 'Customer'}!',
+                ),
                 backgroundColor: Colors.green.shade800,
               ),
             );
@@ -90,27 +92,37 @@ class _LoginScreenState extends State<LoginScreen> {
           } else if (state is AuthValidationErrorState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text(state.message), backgroundColor: Colors.red),
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
             );
           } else if (state is AuthInvalidOtpState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text(state.message), backgroundColor: Colors.red),
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
             );
           } else if (state is AuthNetworkErrorState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text(state.message), backgroundColor: Colors.red),
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
             );
           } else if (state is AuthRateLimitedState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text(state.message), backgroundColor: Colors.red),
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
             );
           } else if (state is AuthExpiredOtpState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text(state.message), backgroundColor: Colors.red),
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
             );
           }
         },
@@ -126,7 +138,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   builder: (context, constraints) {
                     return SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
+                        horizontal: AppSpacing.xl,
+                        vertical: AppSpacing.lg,
+                      ),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           minHeight: constraints.maxHeight > (AppSpacing.lg * 2)
@@ -150,7 +164,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                        color: const Color(0xFFE2E8F0)),
+                                      color: const Color(0xFFE2E8F0),
+                                    ),
                                   ),
                                   child: Row(
                                     children: [
@@ -163,7 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           },
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(
-                                                vertical: 10),
+                                              vertical: 10,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: !_isSignUpMode
                                                   ? AppColors.darkNeutral
@@ -173,11 +189,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                               boxShadow: !_isSignUpMode
                                                   ? [
                                                       const BoxShadow(
-                                                        color:
-                                                            Color(0x1F000000),
+                                                        color: Color(
+                                                          0x1F000000,
+                                                        ),
                                                         blurRadius: 4,
                                                         offset: Offset(0, 2),
-                                                      )
+                                                      ),
                                                     ]
                                                   : null,
                                             ),
@@ -205,7 +222,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           },
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(
-                                                vertical: 10),
+                                              vertical: 10,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: _isSignUpMode
                                                   ? AppColors.darkNeutral
@@ -215,11 +233,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                               boxShadow: _isSignUpMode
                                                   ? [
                                                       const BoxShadow(
-                                                        color:
-                                                            Color(0x1F000000),
+                                                        color: Color(
+                                                          0x1F000000,
+                                                        ),
                                                         blurRadius: 4,
                                                         offset: Offset(0, 2),
-                                                      )
+                                                      ),
                                                     ]
                                                   : null,
                                             ),
@@ -274,58 +293,71 @@ class _LoginScreenState extends State<LoginScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const Text('Full Name *',
-                                          style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.darkNeutral)),
+                                      const Text(
+                                        'Full Name *',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.darkNeutral,
+                                        ),
+                                      ),
                                       const SizedBox(height: 8),
                                       Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(16),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                           border: Border.all(
-                                              color: AppColors.borderLight),
+                                            color: AppColors.borderLight,
+                                          ),
                                           boxShadow: const [
-                                            AppShadows.cardShadow
+                                            AppShadows.cardShadow,
                                           ],
                                         ),
                                         child: TextField(
                                           controller: _nameController,
                                           style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.darkNeutral,
-                                              fontSize: 15),
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.darkNeutral,
+                                            fontSize: 15,
+                                          ),
                                           decoration: const InputDecoration(
                                             hintText: 'e.g. Rahul Sharma',
                                             prefixIcon: Icon(
-                                                Icons.person_outline_rounded,
-                                                color: AppColors.textMuted),
+                                              Icons.person_outline_rounded,
+                                              color: AppColors.textMuted,
+                                            ),
                                             border: InputBorder.none,
                                             contentPadding:
                                                 EdgeInsets.symmetric(
-                                                    vertical: 16,
-                                                    horizontal: 16),
+                                              vertical: 16,
+                                              horizontal: 16,
+                                            ),
                                           ),
                                         ),
                                       ),
                                       const SizedBox(height: 16),
-                                      const Text('Email Address (Optional)',
-                                          style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.darkNeutral)),
+                                      const Text(
+                                        'Email Address (Optional)',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.darkNeutral,
+                                        ),
+                                      ),
                                       const SizedBox(height: 8),
                                       Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(16),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                           border: Border.all(
-                                              color: AppColors.borderLight),
+                                            color: AppColors.borderLight,
+                                          ),
                                           boxShadow: const [
-                                            AppShadows.cardShadow
+                                            AppShadows.cardShadow,
                                           ],
                                         ),
                                         child: TextField(
@@ -333,19 +365,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                           keyboardType:
                                               TextInputType.emailAddress,
                                           style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.darkNeutral,
-                                              fontSize: 15),
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.darkNeutral,
+                                            fontSize: 15,
+                                          ),
                                           decoration: const InputDecoration(
                                             hintText: 'e.g. rahul@example.com',
                                             prefixIcon: Icon(
-                                                Icons.email_outlined,
-                                                color: AppColors.textMuted),
+                                              Icons.email_outlined,
+                                              color: AppColors.textMuted,
+                                            ),
                                             border: InputBorder.none,
                                             contentPadding:
                                                 EdgeInsets.symmetric(
-                                                    vertical: 16,
-                                                    horizontal: 16),
+                                              vertical: 16,
+                                              horizontal: 16,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -358,53 +393,63 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('Mobile number *',
-                                        style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.darkNeutral)),
+                                    const Text(
+                                      'Mobile number *',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.darkNeutral,
+                                      ),
+                                    ),
                                     const SizedBox(height: 8),
                                     Container(
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(
-                                            color: AppColors.borderLight),
+                                          color: AppColors.borderLight,
+                                        ),
                                         boxShadow: const [
-                                          AppShadows.cardShadow
+                                          AppShadows.cardShadow,
                                         ],
                                       ),
                                       child: Row(
                                         children: [
                                           const Padding(
                                             padding: EdgeInsets.symmetric(
-                                                horizontal: 16),
-                                            child: Text('+91',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 15,
-                                                    color:
-                                                        AppColors.darkNeutral)),
+                                              horizontal: 16,
+                                            ),
+                                            child: Text(
+                                              '+91',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15,
+                                                color: AppColors.darkNeutral,
+                                              ),
+                                            ),
                                           ),
                                           Container(
-                                              height: 24,
-                                              width: 1,
-                                              color: AppColors.borderLight),
+                                            height: 24,
+                                            width: 1,
+                                            color: AppColors.borderLight,
+                                          ),
                                           const SizedBox(width: 12),
                                           Expanded(
                                             child: TextField(
                                               controller: _phoneController,
                                               keyboardType: TextInputType.phone,
                                               style: const TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppColors.darkNeutral,
-                                                  fontSize: 15),
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.darkNeutral,
+                                                fontSize: 15,
+                                              ),
                                               decoration: const InputDecoration(
                                                 hintText: '98765 43210',
                                                 border: InputBorder.none,
                                                 contentPadding:
                                                     EdgeInsets.symmetric(
-                                                        vertical: 16),
+                                                  vertical: 16,
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -429,7 +474,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   'By continuing, you agree to our Terms & Privacy Policy.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                      fontSize: 11, color: AppColors.textMuted),
+                                    fontSize: 11,
+                                    color: AppColors.textMuted,
+                                  ),
                                 ),
                               ] else ...[
                                 // OTP Verification Step
@@ -450,7 +497,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                        color: AppColors.borderLight),
+                                      color: AppColors.borderLight,
+                                    ),
                                     boxShadow: const [AppShadows.cardShadow],
                                   ),
                                   child: TextField(
@@ -469,7 +517,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       hintText: '••••••',
                                       border: InputBorder.none,
                                       contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 16),
+                                        horizontal: 16,
+                                        vertical: 16,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -487,8 +537,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 TextButton.icon(
                                   onPressed: isLoading ? null : _submitPhone,
-                                  icon: const Icon(Icons.refresh_rounded,
-                                      size: 18),
+                                  icon: const Icon(
+                                    Icons.refresh_rounded,
+                                    size: 18,
+                                  ),
                                   label: const Text('Resend OTP'),
                                 ),
 
@@ -499,10 +551,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                     });
                                   },
                                   child: const Text(
-                                      '← Change Mobile Number or Mode',
-                                      style: TextStyle(
-                                          color: AppColors.darkNeutral,
-                                          fontWeight: FontWeight.bold)),
+                                    '← Change Mobile Number or Mode',
+                                    style: TextStyle(
+                                      color: AppColors.darkNeutral,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ],

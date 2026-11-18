@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:api_client/api_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../presentation/services_screen.dart';
 
 abstract class PartnerServicesState {}
@@ -13,10 +15,12 @@ class PartnerServicesLoadingState extends PartnerServicesState {}
 class PartnerServicesLoadedState extends PartnerServicesState {
   final List<ServiceModel> services;
   final List<ComboModel> combos;
+  final bool isOffline;
 
   PartnerServicesLoadedState({
     required this.services,
     required this.combos,
+    this.isOffline = false,
   });
 }
 
@@ -72,8 +76,12 @@ class PartnerServicesCubit extends Cubit<PartnerServicesState> {
       loadedCombos = apiCombos.map(_comboFromJson).toList();
 
       await _saveToPrefs(loadedServices, loadedCombos);
-      emit(PartnerServicesLoadedState(
-          services: loadedServices, combos: loadedCombos));
+      emit(
+        PartnerServicesLoadedState(
+          services: loadedServices,
+          combos: loadedCombos,
+        ),
+      );
       return;
     } catch (_) {}
 
@@ -86,33 +94,42 @@ class PartnerServicesCubit extends Cubit<PartnerServicesState> {
       if (servicesJson != null && servicesJson.isNotEmpty) {
         final decoded = json.decode(servicesJson) as List<dynamic>;
         loadedServices = decoded
-            .map((item) => ServiceModel(
-                  id: item['id'] ?? '',
-                  name: item['name'] ?? '',
-                  category: item['category'] ?? 'Hair',
-                  price: (item['price'] as num?)?.toDouble() ?? 0.0,
-                  durationMinutes: item['durationMinutes'] as int? ?? 30,
-                  isAvailable: item['isAvailable'] as bool? ?? true,
-                ))
+            .map(
+              (item) => ServiceModel(
+                id: item['id'] ?? '',
+                name: item['name'] ?? '',
+                category: item['category'] ?? 'Hair',
+                price: (item['price'] as num?)?.toDouble() ?? 0.0,
+                durationMinutes: item['durationMinutes'] as int? ?? 30,
+                isAvailable: item['isAvailable'] as bool? ?? true,
+              ),
+            )
             .toList();
       }
 
       if (combosJson != null && combosJson.isNotEmpty) {
         final decoded = json.decode(combosJson) as List<dynamic>;
         loadedCombos = decoded
-            .map((item) => ComboModel(
-                  id: item['id'] ?? '',
-                  name: item['name'] ?? '',
-                  description: item['description'] ?? '',
-                  price: (item['price'] as num?)?.toDouble() ?? 0.0,
-                  discountTag: item['discountTag'] ?? '',
-                ))
+            .map(
+              (item) => ComboModel(
+                id: item['id'] ?? '',
+                name: item['name'] ?? '',
+                description: item['description'] ?? '',
+                price: (item['price'] as num?)?.toDouble() ?? 0.0,
+                discountTag: item['discountTag'] ?? '',
+              ),
+            )
             .toList();
       }
     } catch (_) {}
 
-    emit(PartnerServicesLoadedState(
-        services: loadedServices, combos: loadedCombos));
+    emit(
+      PartnerServicesLoadedState(
+        services: loadedServices,
+        combos: loadedCombos,
+        isOffline: true,
+      ),
+    );
   }
 
   Future<bool> addService({
@@ -191,8 +208,12 @@ class PartnerServicesCubit extends Cubit<PartnerServicesState> {
             'isAvailable': nextAvailability,
           });
           services[index].isAvailable = nextAvailability;
-          emit(PartnerServicesLoadedState(
-              services: services, combos: currentState.combos));
+          emit(
+            PartnerServicesLoadedState(
+              services: services,
+              combos: currentState.combos,
+            ),
+          );
           await _saveToPrefs(services, currentState.combos);
           return true;
         } catch (_) {
@@ -204,28 +225,34 @@ class PartnerServicesCubit extends Cubit<PartnerServicesState> {
   }
 
   Future<void> _saveToPrefs(
-      List<ServiceModel> services, List<ComboModel> combos) async {
+    List<ServiceModel> services,
+    List<ComboModel> combos,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final servicesMap = services
-          .map((s) => {
-                'id': s.id,
-                'name': s.name,
-                'category': s.category,
-                'price': s.price,
-                'durationMinutes': s.durationMinutes,
-                'isAvailable': s.isAvailable,
-              })
+          .map(
+            (s) => {
+              'id': s.id,
+              'name': s.name,
+              'category': s.category,
+              'price': s.price,
+              'durationMinutes': s.durationMinutes,
+              'isAvailable': s.isAvailable,
+            },
+          )
           .toList();
 
       final combosMap = combos
-          .map((c) => {
-                'id': c.id,
-                'name': c.name,
-                'description': c.description,
-                'price': c.price,
-                'discountTag': c.discountTag,
-              })
+          .map(
+            (c) => {
+              'id': c.id,
+              'name': c.name,
+              'description': c.description,
+              'price': c.price,
+              'discountTag': c.discountTag,
+            },
+          )
           .toList();
 
       await prefs.setString(_keyServices, json.encode(servicesMap));

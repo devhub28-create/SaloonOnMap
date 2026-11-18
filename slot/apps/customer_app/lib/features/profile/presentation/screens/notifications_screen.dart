@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../auth/cubit/auth_cubit.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -54,13 +55,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () => context.pop()),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => context.pop(),
+        ),
         title: const Text('Notifications', style: AppTypography.screenTitle),
         actions: [
           TextButton(
-              onPressed: _notifications.isEmpty ? null : _markAllRead,
-              child: const Text('Mark all read'))
+            onPressed: _notifications.isEmpty ? null : _markAllRead,
+            child: const Text('Mark all read'),
+          ),
         ],
       ),
       body: _loading
@@ -74,26 +77,32 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   itemBuilder: (context, index) {
                     final item = _notifications[index];
                     final read = item['is_read'] == true;
-                    final created =
-                        DateTime.tryParse(item['created_at']?.toString() ?? '')
-                            ?.toLocal();
+                    final created = DateTime.tryParse(
+                      item['created_at']?.toString() ?? '',
+                    )?.toLocal();
                     return ListTile(
                       leading: Icon(
-                          read
-                              ? Icons.notifications_none_rounded
-                              : Icons.notifications_active_rounded,
-                          color: AppColors.primaryGoldDark),
-                      title: Text(item['title']?.toString() ?? '',
-                          style: TextStyle(
-                              fontWeight:
-                                  read ? FontWeight.w500 : FontWeight.bold)),
+                        read
+                            ? Icons.notifications_none_rounded
+                            : Icons.notifications_active_rounded,
+                        color: AppColors.primaryGoldDark,
+                      ),
+                      title: Text(
+                        item['title']?.toString() ?? '',
+                        style: TextStyle(
+                          fontWeight: read ? FontWeight.w500 : FontWeight.bold,
+                        ),
+                      ),
                       subtitle: Text(item['body']?.toString() ?? ''),
                       trailing: Text(
-                          created == null
-                              ? ''
-                              : '${created.day}/${created.month}',
-                          style: const TextStyle(
-                              fontSize: 11, color: AppColors.textMuted)),
+                        created == null
+                            ? ''
+                            : '${created.day}/${created.month}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
                     );
                   },
                 ),

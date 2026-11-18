@@ -26,6 +26,18 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>SalonOnMap uses the camera only when you choose to capture a photo for your profile or AI Style Studio.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>SalonOnMap uses your location while the app is open to show nearby salons and travel distance.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SalonOnMap accesses only the photos you select for your profile or AI Style Studio.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>SalonOnMap can save a generated style image when you explicitly choose to save it.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

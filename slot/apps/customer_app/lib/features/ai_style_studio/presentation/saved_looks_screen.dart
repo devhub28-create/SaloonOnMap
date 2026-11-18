@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:api_client/api_client.dart';
+
 import '../cubit/ai_style_cubit.dart';
 import '../cubit/ai_style_state.dart';
 import 'look_detail_sheet.dart';
@@ -24,9 +25,15 @@ class _SavedLooksScreenState extends State<SavedLooksScreen> {
     final shareRes = await context.read<AiStyleCubit>().shareSavedLook(look.id);
     final summary = StringBuffer()
       ..writeln('✂️ SLOT SAVED BARBER LOOK: ${look.title}')
-      ..writeln('• Hair Length: ${look.hairLengthCm ?? look.hairStyle ?? "Custom taper"}')
-      ..writeln('• Beard Style: ${look.beardLengthMm ?? look.beardStyle ?? "Natural trim"}')
-      ..writeln('• Maintenance: ${(look.maintenanceLevel ?? "Medium").toUpperCase()}')
+      ..writeln(
+        '• Hair Length: ${look.hairLengthCm ?? look.hairStyle ?? "Custom taper"}',
+      )
+      ..writeln(
+        '• Beard Style: ${look.beardLengthMm ?? look.beardStyle ?? "Natural trim"}',
+      )
+      ..writeln(
+        '• Maintenance: ${(look.maintenanceLevel ?? "Medium").toUpperCase()}',
+      )
       ..writeln('• Notes: ${look.notes ?? "Show portrait preview to barber"}');
     if (shareRes != null && shareRes['shareToken'] != null) {
       summary.writeln('• Share Reference ID: ${shareRes['shareToken']}');
@@ -48,7 +55,10 @@ class _SavedLooksScreenState extends State<SavedLooksScreen> {
       appBar: AppBar(
         title: const Text(
           'My Saved AI Looks',
-          style: TextStyle(color: Color(0xFF1E1A15), fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Color(0xFF1E1A15),
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: const Color(0xFFFBF8F3),
         elevation: 0,
@@ -69,14 +79,24 @@ class _SavedLooksScreenState extends State<SavedLooksScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Colors.redAccent,
+                    ),
                     const SizedBox(height: 12),
                     Text(state.error, textAlign: TextAlign.center),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD49B28)),
-                      onPressed: () => context.read<AiStyleCubit>().loadSavedLooks(),
-                      child: const Text('Retry', style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD49B28),
+                      ),
+                      onPressed: () =>
+                          context.read<AiStyleCubit>().loadSavedLooks(),
+                      child: const Text(
+                        'Retry',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -96,10 +116,14 @@ class _SavedLooksScreenState extends State<SavedLooksScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD49B28).withOpacity(0.12),
+                        color: const Color(0xFFD49B28).withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.style_outlined, size: 56, color: Color(0xFFD49B28)),
+                      child: const Icon(
+                        Icons.style_outlined,
+                        size: 56,
+                        color: Color(0xFFD49B28),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     const Text(
@@ -166,7 +190,7 @@ class _SavedLooksScreenState extends State<SavedLooksScreen> {
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -180,7 +204,9 @@ class _SavedLooksScreenState extends State<SavedLooksScreen> {
                           fit: StackFit.expand,
                           children: [
                             ClipRRect(
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(18),
+                              ),
                               child: Image.network(
                                 imgUrl,
                                 fit: BoxFit.cover,
@@ -195,9 +221,13 @@ class _SavedLooksScreenState extends State<SavedLooksScreen> {
                                 top: 8,
                                 left: 8,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF1E3A5F).withOpacity(0.88),
+                                    color: const Color(0xFF1E3A5F)
+                                        .withValues(alpha: 0.88),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -223,19 +253,28 @@ class _SavedLooksScreenState extends State<SavedLooksScreen> {
                                         color: Colors.black54,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.share_outlined, color: Colors.white, size: 15),
+                                      child: const Icon(
+                                        Icons.share_outlined,
+                                        color: Colors.white,
+                                        size: 15,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 6),
                                   GestureDetector(
-                                    onTap: () => _confirmDelete(context, look.id),
+                                    onTap: () =>
+                                        _confirmDelete(context, look.id),
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: const BoxDecoration(
                                         color: Colors.black54,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.delete_outline, color: Colors.white, size: 15),
+                                      child: const Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.white,
+                                        size: 15,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -259,19 +298,26 @@ class _SavedLooksScreenState extends State<SavedLooksScreen> {
                                 color: Color(0xFF1E1A15),
                               ),
                             ),
-                            if (look.hairLengthCm != null && look.hairLengthCm!.isNotEmpty) ...[
+                            if (look.hairLengthCm != null &&
+                                look.hairLengthCm!.isNotEmpty) ...[
                               const SizedBox(height: 2),
                               Text(
                                 look.hairLengthCm!,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 11, color: Color(0xFF4A4238)),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF4A4238),
+                                ),
                               ),
                             ],
                             const SizedBox(height: 4),
                             Text(
                               '${look.createdAt.day}/${look.createdAt.month}/${look.createdAt.year}',
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF7A7265)),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF7A7265),
+                              ),
                             ),
                           ],
                         ),
@@ -292,7 +338,9 @@ class _SavedLooksScreenState extends State<SavedLooksScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Look?'),
-        content: const Text('Are you sure you want to delete this saved AI style?'),
+        content: const Text(
+          'Are you sure you want to delete this saved AI style?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),

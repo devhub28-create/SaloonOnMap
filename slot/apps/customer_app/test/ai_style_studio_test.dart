@@ -59,7 +59,8 @@ void main() {
       expect(v.barberInstructions.first, 'Low #2 taper on sides');
     });
 
-    test('AiStyleConfigState copyWith updates customer preferences cleanly', () {
+    test('AiStyleConfigState copyWith updates customer preferences cleanly',
+        () {
       final initial = AiStyleConfigState();
       final updated = initial.copyWith(
         maintenanceLevel: 'low',

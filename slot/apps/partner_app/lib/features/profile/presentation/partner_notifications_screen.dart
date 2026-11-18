@@ -83,10 +83,7 @@ class _PartnerNotificationsScreenState
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: _buildBody(),
-      ),
+      body: RefreshIndicator(onRefresh: _load, child: _buildBody()),
     );
   }
 
@@ -97,12 +94,7 @@ class _PartnerNotificationsScreenState
     if (_error != null) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          SizedBox(
-            height: 320,
-            child: Center(child: Text(_error!)),
-          ),
-        ],
+        children: [SizedBox(height: 320, child: Center(child: Text(_error!)))],
       );
     }
     if (_notifications.isEmpty) {

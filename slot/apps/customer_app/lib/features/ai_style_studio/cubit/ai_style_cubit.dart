@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:api_client/api_client.dart';
+
 import '../data/style_studio_repository.dart';
 import 'ai_style_state.dart';
 
@@ -35,30 +37,78 @@ class AiStyleCubit extends Cubit<AiStyleState> {
 
       final isOnline = healthData['online'] == true;
 
-      emit(AiStyleConfigState(
-        hairStyles: hairList,
-        beardStyles: beardList,
-        isServiceOnline: isOnline,
-      ));
+      emit(
+        AiStyleConfigState(
+          hairStyles: hairList,
+          beardStyles: beardList,
+          isServiceOnline: isOnline,
+        ),
+      );
     } catch (e) {
-      emit(AiStyleConfigState(
-        hairStyles: const [
-          AiStyleOption(id: 'classic_taper', name: 'Classic Taper', description: 'Balanced low taper with textured top'),
-          AiStyleOption(id: 'textured_crop', name: 'Textured Crop', description: 'Modern crop with point-cut top and mid taper'),
-          AiStyleOption(id: 'classic_side_part', name: 'Classic Side Part', description: 'Refined side part with structured top'),
-          AiStyleOption(id: 'modern_quiff', name: 'Modern Quiff', description: 'Lifted front quiff with tapered temples'),
-          AiStyleOption(id: 'buzz_cut', name: 'Crew / Buzz Cut', description: 'Athletic short crew cut with tight taper'),
-          AiStyleOption(id: 'textured_fringe', name: 'Textured Fringe', description: 'Forward-swept layered fringe'),
-        ],
-        beardStyles: const [
-          AiStyleOption(id: 'clean_shaven', name: 'Clean Shaven', description: 'Smooth, hair-free jawline'),
-          AiStyleOption(id: 'stubble', name: 'Designer Stubble', description: '2–3 mm refined designer stubble'),
-          AiStyleOption(id: 'short_beard', name: 'Short Boxed Beard', description: '4–6 mm manicured short beard'),
-          AiStyleOption(id: 'full_beard', name: 'Well-Groomed Beard', description: '6–8 mm sculpted medium beard'),
-          AiStyleOption(id: 'goatee', name: 'Tailored Goatee', description: '5–7 mm circle goatee with clean cheeks'),
-        ],
-        isServiceOnline: false,
-      ));
+      emit(
+        AiStyleConfigState(
+          hairStyles: const [
+            AiStyleOption(
+              id: 'classic_taper',
+              name: 'Classic Taper',
+              description: 'Balanced low taper with textured top',
+            ),
+            AiStyleOption(
+              id: 'textured_crop',
+              name: 'Textured Crop',
+              description: 'Modern crop with point-cut top and mid taper',
+            ),
+            AiStyleOption(
+              id: 'classic_side_part',
+              name: 'Classic Side Part',
+              description: 'Refined side part with structured top',
+            ),
+            AiStyleOption(
+              id: 'modern_quiff',
+              name: 'Modern Quiff',
+              description: 'Lifted front quiff with tapered temples',
+            ),
+            AiStyleOption(
+              id: 'buzz_cut',
+              name: 'Crew / Buzz Cut',
+              description: 'Athletic short crew cut with tight taper',
+            ),
+            AiStyleOption(
+              id: 'textured_fringe',
+              name: 'Textured Fringe',
+              description: 'Forward-swept layered fringe',
+            ),
+          ],
+          beardStyles: const [
+            AiStyleOption(
+              id: 'clean_shaven',
+              name: 'Clean Shaven',
+              description: 'Smooth, hair-free jawline',
+            ),
+            AiStyleOption(
+              id: 'stubble',
+              name: 'Designer Stubble',
+              description: '2–3 mm refined designer stubble',
+            ),
+            AiStyleOption(
+              id: 'short_beard',
+              name: 'Short Boxed Beard',
+              description: '4–6 mm manicured short beard',
+            ),
+            AiStyleOption(
+              id: 'full_beard',
+              name: 'Well-Groomed Beard',
+              description: '6–8 mm sculpted medium beard',
+            ),
+            AiStyleOption(
+              id: 'goatee',
+              name: 'Tailored Goatee',
+              description: '5–7 mm circle goatee with clean cheeks',
+            ),
+          ],
+          isServiceOnline: false,
+        ),
+      );
     }
   }
 
@@ -90,56 +140,77 @@ class AiStyleCubit extends Cubit<AiStyleState> {
         try {
           final summary = await repository.analyzePhoto(b64);
           final latest = state;
-          if (latest is AiStyleConfigState && latest.selectedImageBase64 == b64) {
-            emit(latest.copyWith(
-              photoAnalysis: summary,
-              isAnalyzingPhoto: false,
-              errorMessage: (!summary.faceDetected || !summary.isAcceptable)
-                  ? (summary.rejectionReason ?? 'Please choose a clear front-facing portrait.')
-                  : null,
-            ));
+          if (latest is AiStyleConfigState &&
+              latest.selectedImageBase64 == b64) {
+            emit(
+              latest.copyWith(
+                photoAnalysis: summary,
+                isAnalyzingPhoto: false,
+                errorMessage: (!summary.faceDetected || !summary.isAcceptable)
+                    ? (summary.rejectionReason ??
+                        'Please choose a clear front-facing portrait.')
+                    : null,
+              ),
+            );
           }
         } catch (e) {
           final latest = state;
           if (latest is AiStyleConfigState) {
-            emit(latest.copyWith(
-              isAnalyzingPhoto: false,
-              errorMessage: (e is DioException && e.response?.statusCode == 400)
-                  ? _formatError(e)
-                  : null,
-            ));
+            emit(
+              latest.copyWith(
+                isAnalyzingPhoto: false,
+                errorMessage:
+                    (e is DioException && e.response?.statusCode == 400)
+                        ? _formatError(e)
+                        : null,
+              ),
+            );
           }
         }
       }
     } catch (e) {
-      emit(currentState.copyWith(errorMessage: 'Failed to access camera/photo: $e'));
+      emit(
+        currentState.copyWith(
+          errorMessage: 'Failed to access camera/photo: $e',
+        ),
+      );
     }
   }
 
   void clearPhoto() {
     final currentState = state;
     if (currentState is! AiStyleConfigState) return;
-    emit(currentState.copyWith(clearImage: true, clearAnalysis: true, errorMessage: null));
+    emit(
+      currentState.copyWith(
+        clearImage: true,
+        clearAnalysis: true,
+        errorMessage: null,
+      ),
+    );
   }
 
   void selectHairStyle(String? id) {
     final currentState = state;
     if (currentState is! AiStyleConfigState) return;
-    emit(currentState.copyWith(
-      selectedHairStyle: id,
-      clearHairStyle: id == null,
-      errorMessage: null,
-    ));
+    emit(
+      currentState.copyWith(
+        selectedHairStyle: id,
+        clearHairStyle: id == null,
+        errorMessage: null,
+      ),
+    );
   }
 
   void selectBeardStyle(String? id) {
     final currentState = state;
     if (currentState is! AiStyleConfigState) return;
-    emit(currentState.copyWith(
-      selectedBeardStyle: id,
-      clearBeardStyle: id == null,
-      errorMessage: null,
-    ));
+    emit(
+      currentState.copyWith(
+        selectedBeardStyle: id,
+        clearBeardStyle: id == null,
+        errorMessage: null,
+      ),
+    );
   }
 
   void setMaintenanceLevel(String level) {
@@ -183,21 +254,32 @@ class AiStyleCubit extends Cubit<AiStyleState> {
     if (currentState is! AiStyleConfigState) return;
 
     if (currentState.selectedImageBase64 == null) {
-      emit(currentState.copyWith(errorMessage: 'Please upload or capture a portrait photo first.'));
+      emit(
+        currentState.copyWith(
+          errorMessage: 'Please upload or capture a portrait photo first.',
+        ),
+      );
       return;
     }
 
     if (!currentState.consentGiven) {
-      emit(currentState.copyWith(errorMessage: 'Consent is required before processing your photo.'));
+      emit(
+        currentState.copyWith(
+          errorMessage: 'Consent is required before processing your photo.',
+        ),
+      );
       return;
     }
 
     if (currentState.photoAnalysis != null &&
-        (!currentState.photoAnalysis!.faceDetected || !currentState.photoAnalysis!.isAcceptable)) {
-      emit(currentState.copyWith(
-        errorMessage: currentState.photoAnalysis!.rejectionReason ??
-            'No clear front-facing face detected. Please upload a clearer photo.',
-      ));
+        (!currentState.photoAnalysis!.faceDetected ||
+            !currentState.photoAnalysis!.isAcceptable)) {
+      emit(
+        currentState.copyWith(
+          errorMessage: currentState.photoAnalysis!.rejectionReason ??
+              'No clear front-facing face detected. Please upload a clearer photo.',
+        ),
+      );
       return;
     }
 
@@ -205,12 +287,14 @@ class AiStyleCubit extends Cubit<AiStyleState> {
     await Future<void>.delayed(const Duration(milliseconds: 120));
     emit(AiStyleAnalyzingState());
     await Future<void>.delayed(const Duration(milliseconds: 150));
-    emit(AiStyleGeneratingState(
-      message:
-          'Synthesizing ${currentState.variationsCount} personalized hair & beard styles on your portrait...',
-      stage: 'GENERATING',
-      progress: 0.65,
-    ));
+    emit(
+      AiStyleGeneratingState(
+        message:
+            'Synthesizing ${currentState.variationsCount} personalized hair & beard styles on your portrait...',
+        stage: 'GENERATING',
+        progress: 0.65,
+      ),
+    );
 
     try {
       final initialRes = await repository.createGeneration(
@@ -246,10 +330,14 @@ class AiStyleCubit extends Cubit<AiStyleState> {
             res = polled;
             status = res['status'] as String? ?? '';
             final stage = res['progress_stage'] as String? ?? 'GENERATING';
-            final compCount = (res['completed_variations'] as num?)?.toInt() ?? 0;
-            final targetCount = (res['variations_count'] as num?)?.toInt() ?? currentState.variationsCount;
+            final compCount =
+                (res['completed_variations'] as num?)?.toInt() ?? 0;
+            final targetCount = (res['variations_count'] as num?)?.toInt() ??
+                currentState.variationsCount;
 
-            if (status == 'COMPLETED' || status == 'PARTIALLY_COMPLETED' || status == 'FAILED') {
+            if (status == 'COMPLETED' ||
+                status == 'PARTIALLY_COMPLETED' ||
+                status == 'FAILED') {
               break;
             }
 
@@ -260,11 +348,13 @@ class AiStyleCubit extends Cubit<AiStyleState> {
                 ? 'Analyzing facial landmarks & cranial geometry...'
                 : 'Synthesizing variation ${compCount + 1} of $targetCount...';
 
-            emit(AiStyleGeneratingState(
-              message: stageMessage,
-              stage: stage,
-              progress: progressFraction,
-            ));
+            emit(
+              AiStyleGeneratingState(
+                message: stageMessage,
+                stage: stage,
+                progress: progressFraction,
+              ),
+            );
           } catch (_) {
             // Transient polling error, continue loop
           }
@@ -272,14 +362,16 @@ class AiStyleCubit extends Cubit<AiStyleState> {
       }
 
       if (status == 'FAILED') {
-        final errorMsg = res['error_message'] as String? ?? 'Local AI generation failed.';
+        final errorMsg =
+            res['error_message'] as String? ?? 'Local AI generation failed.';
         emit(AiStyleErrorState(errorMsg));
         return;
       }
 
       final origUrl = res['original_image_url'] as String? ?? '';
       final rawVariations = res['variations'] as List<dynamic>? ?? [];
-      final firstVarMap = rawVariations.isNotEmpty && rawVariations.first is Map<String, dynamic>
+      final firstVarMap = rawVariations.isNotEmpty &&
+              rawVariations.first is Map<String, dynamic>
           ? rawVariations.first as Map<String, dynamic>
           : <String, dynamic>{};
 
@@ -294,46 +386,69 @@ class AiStyleCubit extends Cubit<AiStyleState> {
       final bestOptionRaw = res['best_option'] ?? firstVarMap['best_option'];
       final bestOption = bestOptionRaw is Map<String, dynamic>
           ? bestOptionRaw
-          : (bestOptionRaw is Map ? Map<String, dynamic>.from(bestOptionRaw) : null);
+          : (bestOptionRaw is Map
+              ? Map<String, dynamic>.from(bestOptionRaw)
+              : null);
 
       final rawAnalysis = res['analysis'] ?? res['analysis_result'];
       final analysisSummary = rawAnalysis is Map
-          ? PhotoAnalysisSummary.fromJson(Map<String, dynamic>.from(rawAnalysis))
+          ? PhotoAnalysisSummary.fromJson(
+              Map<String, dynamic>.from(rawAnalysis),
+            )
           : currentState.photoAnalysis;
 
       final rawPrefs = res['preferences'];
-      final prefsMap = rawPrefs is Map ? Map<String, dynamic>.from(rawPrefs) : null;
+      final prefsMap =
+          rawPrefs is Map ? Map<String, dynamic>.from(rawPrefs) : null;
 
       final variations = rawVariations
-          .map((e) => AiVariation.fromJson(
-                e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map),
-              ))
+          .map(
+            (e) => AiVariation.fromJson(
+              e is Map<String, dynamic>
+                  ? e
+                  : Map<String, dynamic>.from(e as Map),
+            ),
+          )
           .toList();
 
       if (variations.isEmpty) {
-        emit(AiStyleErrorState('No variations were generated by the local AI service.'));
+        emit(
+          AiStyleErrorState(
+            'No variations were generated by the local AI service.',
+          ),
+        );
         return;
       }
 
-      emit(AiStyleSuccessState(
-        originalImageUrl: origUrl,
-        storyboardImageUrl: storyboardUrl,
-        variations: variations,
-        barberNotes: barberNotes,
-        bestOption: bestOption,
-        analysis: analysisSummary,
-        preferences: prefsMap,
-        hairStyle: currentState.selectedHairStyle,
-        beardStyle: currentState.selectedBeardStyle,
-        jobId: jobId,
-        isPartiallyCompleted: status == 'PARTIALLY_COMPLETED',
-      ));
+      emit(
+        AiStyleSuccessState(
+          originalImageUrl: origUrl,
+          storyboardImageUrl: storyboardUrl,
+          variations: variations,
+          barberNotes: barberNotes,
+          bestOption: bestOption,
+          analysis: analysisSummary,
+          preferences: prefsMap,
+          hairStyle: currentState.selectedHairStyle,
+          beardStyle: currentState.selectedBeardStyle,
+          jobId: jobId,
+          isPartiallyCompleted: status == 'PARTIALLY_COMPLETED',
+        ),
+      );
     } catch (e) {
-      emit(AiStyleErrorState(_formatError(e, fallbackPrefix: 'Style generation error')));
+      emit(
+        AiStyleErrorState(
+          _formatError(e, fallbackPrefix: 'Style generation error'),
+        ),
+      );
     }
   }
 
-  Future<bool> saveLook(AiVariation variation, {String? title, String? notes}) async {
+  Future<bool> saveLook(
+    AiVariation variation, {
+    String? title,
+    String? notes,
+  }) async {
     final currentState = state;
     if (currentState is! AiStyleSuccessState) return false;
 
@@ -356,7 +471,8 @@ class AiStyleCubit extends Cubit<AiStyleState> {
 
   Future<bool> saveStoryboard() async {
     final currentState = state;
-    if (currentState is! AiStyleSuccessState || currentState.storyboardImageUrl == null) {
+    if (currentState is! AiStyleSuccessState ||
+        currentState.storyboardImageUrl == null) {
       return false;
     }
 
@@ -395,7 +511,9 @@ class AiStyleCubit extends Cubit<AiStyleState> {
 
   Future<bool> deleteCurrentGeneration() async {
     final currentState = state;
-    if (currentState is! AiStyleSuccessState || currentState.jobId.isEmpty) return false;
+    if (currentState is! AiStyleSuccessState || currentState.jobId.isEmpty) {
+      return false;
+    }
     try {
       await repository.deleteGeneration(currentState.jobId);
       await initStudio();
@@ -415,7 +533,11 @@ class AiStyleCubit extends Cubit<AiStyleState> {
         emit(AiSavedLooksLoadedState(looks));
       }
     } catch (e) {
-      emit(AiStyleErrorState(_formatError(e, fallbackPrefix: 'Failed to load saved looks')));
+      emit(
+        AiStyleErrorState(
+          _formatError(e, fallbackPrefix: 'Failed to load saved looks'),
+        ),
+      );
     }
   }
 
@@ -445,7 +567,7 @@ class AiStyleCubit extends Cubit<AiStyleState> {
     if (e is DioException) {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout) {
-        return 'Unable to reach SLOT backend server. Please verify the backend is running at http://localhost:3000 or check your network.';
+        return 'Unable to connect right now. Check your internet connection and try again.';
       }
       if (e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {

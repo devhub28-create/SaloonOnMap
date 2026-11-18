@@ -15,7 +15,17 @@ import {
   LoginAdminDto,
 } from "./auth.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
-import { IsEmail, IsIn, IsOptional, IsString, Length, MinLength } from "class-validator";
+import {
+  IsArray,
+  IsBoolean,
+  IsEmail,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Length,
+  MinLength,
+} from "class-validator";
 import { Throttle } from "@nestjs/throttler";
 
 class RequestOtpDto {
@@ -45,6 +55,22 @@ class RefreshSessionDto {
   refreshToken: string;
 }
 
+class RequestPartnerPasswordResetDto {
+  @IsString()
+  @MinLength(3)
+  phoneOrEmail: string;
+}
+
+class ResetPartnerPasswordDto extends RequestPartnerPasswordResetDto {
+  @IsString()
+  @Length(6, 6)
+  code: string;
+
+  @IsString()
+  @MinLength(10)
+  newPassword: string;
+}
+
 class UpdateCustomerProfileDto {
   @IsOptional()
   @IsString()
@@ -56,6 +82,19 @@ class UpdateCustomerProfileDto {
   @IsOptional()
   @IsIn(["ALL", "MEN", "WOMEN"])
   preferredGender?: string;
+  @IsOptional()
+  @IsBoolean()
+  bookingReminders?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  holdAlerts?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  promotions?: boolean;
+  @IsOptional()
+  @IsArray()
+  @IsUUID("4", { each: true })
+  favoriteSalonIds?: string[];
 }
 
 @ApiTags("Auth")
@@ -83,7 +122,7 @@ export class AuthController {
     return this.authService.logout(req.user.id);
   }
 
-  @Post('refresh')
+  @Post("refresh")
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   async refresh(@Body() dto: RefreshSessionDto) {
     return this.authService.refreshSession(dto.refreshToken);
@@ -127,5 +166,23 @@ export class AuthController {
   })
   async loginPartner(@Body() dto: LoginPartnerDto) {
     return this.authService.loginPartner(dto);
+  }
+
+  @Post("partner/password-reset/request")
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async requestPartnerPasswordReset(
+    @Body() dto: RequestPartnerPasswordResetDto,
+  ) {
+    return this.authService.requestPartnerPasswordReset(dto.phoneOrEmail);
+  }
+
+  @Post("partner/password-reset/confirm")
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async resetPartnerPassword(@Body() dto: ResetPartnerPasswordDto) {
+    return this.authService.resetPartnerPassword(
+      dto.phoneOrEmail,
+      dto.code,
+      dto.newPassword,
+    );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:api_client/api_client.dart';
+
 import '../cubit/ai_style_state.dart';
 
 class StyleStudioRepository {
@@ -14,7 +15,9 @@ class StyleStudioRepository {
     final res = await apiClient.analyzeAiPhoto(imageBase64: imageBase64);
     final rawAnalysis = res['analysis'] is Map<String, dynamic>
         ? res['analysis'] as Map<String, dynamic>
-        : (res['analysis'] is Map ? Map<String, dynamic>.from(res['analysis']) : <String, dynamic>{});
+        : (res['analysis'] is Map
+            ? Map<String, dynamic>.from(res['analysis'])
+            : <String, dynamic>{});
     return PhotoAnalysisSummary.fromJson(rawAnalysis);
   }
 
@@ -72,10 +75,11 @@ class StyleStudioRepository {
       beardStyle: variation.beardStyle,
       title: customTitle ?? variation.styleLabel,
       notes: customNotes ??
-          [variation.hairDesc, variation.beardDesc, variation.lookDesc]
-              .whereType<String>()
-              .where((s) => s.isNotEmpty)
-              .join(' • '),
+          [
+            variation.hairDesc,
+            variation.beardDesc,
+            variation.lookDesc,
+          ].whereType<String>().where((s) => s.isNotEmpty).join(' • '),
       whyItSuits: variation.whyItSuits,
       suitabilityScore: variation.suitabilityScore,
       maintenanceLevel: variation.maintenanceLevel,
@@ -90,9 +94,11 @@ class StyleStudioRepository {
   Future<List<AiSavedLookItem>> getSavedLooks() async {
     final raw = await apiClient.getSavedAiLooks();
     return raw
-        .map((e) => AiSavedLookItem.fromJson(
-              e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map),
-            ))
+        .map(
+          (e) => AiSavedLookItem.fromJson(
+            e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map),
+          ),
+        )
         .toList();
   }
 

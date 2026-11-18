@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:api_client/api_client.dart';
+
 import '../../auth/cubit/auth_cubit.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -83,7 +83,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                    '📍 Location detected: $locationLabel! Salons updated by distance.'),
+                  '📍 Location detected: $locationLabel! Salons updated by distance.',
+                ),
                 backgroundColor: AppColors.darkNeutral,
               ),
             );
@@ -143,8 +144,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<dynamic> get _displayedSalons {
     if (_selectedFilterIndex == 1) {
       return _salons
-          .where((s) =>
-              (double.tryParse((s['rating'] ?? 4.9).toString()) ?? 0.0) >= 4.8)
+          .where(
+            (s) =>
+                (double.tryParse((s['rating'] ?? 4.9).toString()) ?? 0.0) >=
+                4.8,
+          )
           .toList();
     } else if (_selectedFilterIndex == 2) {
       return _salons.where((s) => s['is_active'] == true).toList();
@@ -169,12 +173,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('DISCOVER',
-                style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textMuted,
-                    letterSpacing: 1.1)),
+            Text(
+              'DISCOVER',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textMuted,
+                letterSpacing: 1.1,
+              ),
+            ),
             SizedBox(height: 2),
             Text('Salons near you', style: AppTypography.screenTitle),
           ],
@@ -189,8 +196,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
               boxShadow: const [AppShadows.cardShadow],
             ),
             child: IconButton(
-              icon: const Icon(Icons.my_location_rounded,
-                  color: AppColors.darkNeutral, size: 20),
+              icon: const Icon(
+                Icons.my_location_rounded,
+                color: AppColors.darkNeutral,
+                size: 20,
+              ),
               onPressed: () => _detectUserLocation(showToast: true),
             ),
           ),
@@ -203,8 +213,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
           children: [
             // 1. Search Bar with Filter Button (Matches media_1791349399167.png 100%)
             Container(
-              padding:
-                  const EdgeInsets.only(left: 16, right: 8, top: 6, bottom: 6),
+              padding: const EdgeInsets.only(
+                left: 16,
+                right: 8,
+                top: 6,
+                bottom: 6,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
@@ -213,8 +227,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search_rounded,
-                      color: AppColors.textMuted, size: 22),
+                  const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.textMuted,
+                    size: 22,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -222,9 +239,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           ? 'Search $salonCount salons nearby'
                           : 'Search salons nearby',
                       style: const TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500),
+                        color: AppColors.textMuted,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                   Container(
@@ -233,8 +251,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       color: const Color(0xFFF3F4F6),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(Icons.tune_rounded,
-                        color: AppColors.darkNeutral, size: 18),
+                    child: const Icon(
+                      Icons.tune_rounded,
+                      color: AppColors.darkNeutral,
+                      size: 18,
+                    ),
                   ),
                 ],
               ),
@@ -274,11 +295,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       painter: _MapGridPainter(),
                     ),
                     // Map Pin Markers (Scissors Pins)
-                    const Positioned(
-                      top: 40,
-                      left: 80,
-                      child: _MapPinMarker(),
-                    ),
+                    const Positioned(top: 40, left: 80, child: _MapPinMarker()),
                     const Positioned(
                       top: 25,
                       right: 90,
@@ -297,7 +314,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       child: Center(
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
@@ -306,17 +325,21 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.near_me_rounded,
-                                  size: 14, color: AppColors.darkNeutral),
+                              const Icon(
+                                Icons.near_me_rounded,
+                                size: 14,
+                                color: AppColors.darkNeutral,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 salonCount > 0
                                     ? '$salonCount salons around you'
                                     : 'No salons nearby yet',
                                 style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.darkNeutral),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.darkNeutral,
+                                ),
                               ),
                             ],
                           ),
@@ -330,28 +353,38 @@ class _ExploreScreenState extends State<ExploreScreen> {
             const SizedBox(height: AppSpacing.xl),
 
             // 4. Closest to you Header
-            const Text('Closest to you',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.darkNeutral)),
+            const Text(
+              'Closest to you',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkNeutral,
+              ),
+            ),
             const SizedBox(height: AppSpacing.md),
 
             // 5. Salon Cards List
             if (_isLoading)
               const Center(
-                  child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: CircularProgressIndicator()))
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              )
             else if (_error != null)
               Center(
-                  child: Text('Error loading salons: $_error',
-                      style: const TextStyle(color: Colors.red)))
+                child: Text(
+                  'Error loading salons: $_error',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              )
             else if (salonsToShow.isEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
-                    vertical: 32, horizontal: 20),
+                  vertical: 32,
+                  horizontal: 20,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -359,21 +392,27 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 ),
                 child: const Column(
                   children: [
-                    Icon(Icons.storefront_outlined,
-                        size: 40, color: AppColors.textMuted),
+                    Icon(
+                      Icons.storefront_outlined,
+                      size: 40,
+                      color: AppColors.textMuted,
+                    ),
                     SizedBox(height: 10),
                     Text(
                       'No partner salons registered yet',
                       style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.darkNeutral),
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.darkNeutral,
+                      ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       'Partner salons will appear here once registered.',
                       style: TextStyle(
-                          fontSize: 12, color: AppColors.textMuted),
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -394,8 +433,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   final distanceStr = salon['formattedDistance'] ?? 'Nearby';
 
                   return GestureDetector(
-                    onTap: () => context.push('/salon-detail',
-                        extra: {'salonId': salonId, 'salon': salon}),
+                    onTap: () => context.push(
+                      '/salon-detail',
+                      extra: {'salonId': salonId, 'salon': salon},
+                    ),
                     child: Container(
                       margin: const EdgeInsets.only(bottom: AppSpacing.md),
                       padding: const EdgeInsets.all(AppSpacing.md),
@@ -415,10 +456,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               height: 90,
                               child: Image.network(
                                 ApiConfig.formatImageUrl(
-                                    coverImage?.toString()),
+                                  coverImage?.toString(),
+                                ),
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    _fallbackCover(),
+                                errorBuilder: (_, __, ___) => _fallbackCover(),
                               ),
                             ),
                           ),
@@ -435,70 +476,87 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                       child: Text(
                                         name,
                                         style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.darkNeutral),
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.darkNeutral,
+                                        ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFFEF9C3),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Row(
                                         children: [
-                                          const Icon(Icons.star_rounded,
-                                              size: 14,
-                                              color: AppColors.primaryGoldDark),
+                                          const Icon(
+                                            Icons.star_rounded,
+                                            size: 14,
+                                            color: AppColors.primaryGoldDark,
+                                          ),
                                           const SizedBox(width: 2),
-                                          Text(rating,
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color:
-                                                      AppColors.darkNeutral)),
+                                          Text(
+                                            rating,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.darkNeutral,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 2),
-                                Text('$area · $distanceStr',
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textMuted)),
+                                Text(
+                                  '$area · $distanceStr',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
                                 const SizedBox(height: 4),
                                 const Text(
                                   'Open until 9 PM',
                                   style: TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF16A34A),
-                                      fontWeight: FontWeight.bold),
+                                    fontSize: 12,
+                                    color: Color(0xFF16A34A),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 const Divider(
-                                    height: 1, color: AppColors.borderLight),
+                                  height: 1,
+                                  color: AppColors.borderLight,
+                                ),
                                 const SizedBox(height: 8),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text('₹299 onwards',
-                                        style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.darkNeutral)),
+                                    const Text(
+                                      '₹299 onwards',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.darkNeutral,
+                                      ),
+                                    ),
                                     Text(
                                       index == 0
                                           ? '2 slots today'
                                           : '4 slots today',
                                       style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFFD97706)),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFD97706),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -527,7 +585,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           SlotNavItem(icon: Icons.explore_outlined, label: 'Explore'),
           SlotNavItem(icon: Icons.calendar_today_rounded, label: 'Bookings'),
           SlotNavItem(
-              icon: Icons.confirmation_number_outlined, label: 'Offers'),
+            icon: Icons.confirmation_number_outlined,
+            label: 'Offers',
+          ),
           SlotNavItem(icon: Icons.person_outline_rounded, label: 'Profile'),
         ],
       ),
@@ -543,8 +603,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
           end: Alignment.bottomRight,
         ),
       ),
-      child:
-          const Center(child: Icon(Icons.storefront_rounded, size: 36, color: AppColors.primaryGold)),
+      child: const Center(
+        child: Icon(
+          Icons.storefront_rounded,
+          size: 36,
+          color: AppColors.primaryGold,
+        ),
+      ),
     );
   }
 
@@ -559,7 +624,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
           color: active ? AppColors.darkNeutral : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: active ? AppColors.darkNeutral : AppColors.borderLight),
+            color: active ? AppColors.darkNeutral : AppColors.borderLight,
+          ),
         ),
         child: Text(
           label,
@@ -613,8 +679,11 @@ class _MapPinMarker extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [AppShadows.cardShadow],
       ),
-      child: const Icon(Icons.content_cut_rounded,
-          color: AppColors.primaryGold, size: 16),
+      child: const Icon(
+        Icons.content_cut_rounded,
+        color: AppColors.primaryGold,
+        size: 16,
+      ),
     );
   }
 }

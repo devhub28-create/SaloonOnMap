@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:api_client/api_client.dart';
+
 import '../cubit/ai_style_state.dart';
 
 class LookDetailSheet extends StatefulWidget {
@@ -60,11 +61,21 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
     final v = widget.variation;
     final buffer = StringBuffer()
       ..writeln('✂️ SLOT BARBER CONSULTATION CARD')
-      ..writeln('Style: ${v.styleLabel} (Face Suitability: ${v.suitabilityScore}%)')
-      ..writeln('• Top & Sides Length: ${v.hairLengthCm ?? v.hairDesc ?? "Balanced taper"}')
-      ..writeln('• Facial Hair / Beard: ${v.beardLengthMm ?? v.beardDesc ?? "Natural trim"}')
-      ..writeln('• Maintenance Level: ${(v.maintenanceLevel ?? "Medium").toUpperCase()}')
-      ..writeln('• Styling Product: ${v.stylingProducts ?? "Matte styling clay"}');
+      ..writeln(
+        'Style: ${v.styleLabel} (Face Suitability: ${v.suitabilityScore}%)',
+      )
+      ..writeln(
+        '• Top & Sides Length: ${v.hairLengthCm ?? v.hairDesc ?? "Balanced taper"}',
+      )
+      ..writeln(
+        '• Facial Hair / Beard: ${v.beardLengthMm ?? v.beardDesc ?? "Natural trim"}',
+      )
+      ..writeln(
+        '• Maintenance Level: ${(v.maintenanceLevel ?? "Medium").toUpperCase()}',
+      )
+      ..writeln(
+        '• Styling Product: ${v.stylingProducts ?? "Matte styling clay"}',
+      );
     if (v.barberInstructions.isNotEmpty) {
       buffer.writeln('\nBarber Instructions:');
       for (final step in v.barberInstructions) {
@@ -74,7 +85,9 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
     Clipboard.setData(ClipboardData(text: buffer.toString()));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Barber instructions copied! Ready to share with your stylist.'),
+        content: Text(
+          'Barber instructions copied! Ready to share with your stylist.',
+        ),
         backgroundColor: Color(0xFF1F3D3A),
       ),
     );
@@ -119,7 +132,10 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                           if (v.isRecommended)
                             Container(
                               margin: const EdgeInsets.only(right: 8),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFD49B28),
                                 borderRadius: BorderRadius.circular(6),
@@ -134,9 +150,13 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                               ),
                             ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E3A5F).withOpacity(0.12),
+                              color: const Color(0xFF1E3A5F)
+                                  .withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -197,22 +217,25 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                             child: Image.network(
                               origUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: Colors.grey.shade300,
-                              ),
+                              errorBuilder: (_, __, ___) =>
+                                  Container(color: Colors.grey.shade300),
                             ),
                           ),
                           Positioned.fill(
                             child: LayoutBuilder(
                               builder: (ctx, constraints) {
-                                final lineX = constraints.maxWidth * _splitPosition;
+                                final lineX =
+                                    constraints.maxWidth * _splitPosition;
                                 return Stack(
                                   children: [
                                     Positioned(
                                       left: lineX - 1.5,
                                       top: 0,
                                       bottom: 0,
-                                      child: Container(width: 3, color: Colors.white),
+                                      child: Container(
+                                        width: 3,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                     Positioned(
                                       left: lineX - 16,
@@ -223,12 +246,22 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFD49B28),
                                           shape: BoxShape.circle,
-                                          border: Border.all(color: Colors.white, width: 2),
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
                                           boxShadow: const [
-                                            BoxShadow(color: Colors.black26, blurRadius: 4),
+                                            BoxShadow(
+                                              color: Colors.black26,
+                                              blurRadius: 4,
+                                            ),
                                           ],
                                         ),
-                                        child: const Icon(Icons.compare_arrows, color: Colors.white, size: 18),
+                                        child: const Icon(
+                                          Icons.compare_arrows,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -240,9 +273,11 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                             child: GestureDetector(
                               behavior: HitTestBehavior.translucent,
                               onHorizontalDragUpdate: (details) {
-                                final RenderBox box = context.findRenderObject() as RenderBox;
-                                final newSplit =
-                                    (_splitPosition + details.delta.dx / box.size.width).clamp(0.0, 1.0);
+                                final RenderBox box =
+                                    context.findRenderObject() as RenderBox;
+                                final newSplit = (_splitPosition +
+                                        details.delta.dx / box.size.width)
+                                    .clamp(0.0, 1.0);
                                 setState(() {
                                   _splitPosition = newSplit;
                                 });
@@ -253,14 +288,21 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                             top: 12,
                             left: 12,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.black54,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Text(
                                 'ORIGINAL',
-                                style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -268,14 +310,22 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                             top: 12,
                             right: 12,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFD49B28).withOpacity(0.92),
+                                color: const Color(0xFFD49B28)
+                                    .withValues(alpha: 0.92),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Text(
                                 'PERSONALIZED PREVIEW',
-                                style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -300,21 +350,31 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
 
                   // Honest Angle Availability Notice
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E3A5F).withOpacity(0.06),
+                      color: const Color(0xFF1E3A5F).withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.verified_user_outlined, size: 16, color: Color(0xFF1E3A5F)),
+                        const Icon(
+                          Icons.verified_user_outlined,
+                          size: 16,
+                          color: Color(0xFF1E3A5F),
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             v.sideViewAvailable || v.backViewAvailable
                                 ? 'Generated from your uploaded multi-angle photos.'
                                 : 'Genuine front portrait transformation on your photo (no stock side/back templates used).',
-                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF1E3A5F)),
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: Color(0xFF1E3A5F),
+                            ),
                           ),
                         ),
                       ],
@@ -337,7 +397,11 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                         children: [
                           const Row(
                             children: [
-                              Icon(Icons.psychology_outlined, size: 18, color: Color(0xFFB37D14)),
+                              Icon(
+                                Icons.psychology_outlined,
+                                size: 18,
+                                color: Color(0xFFB37D14),
+                              ),
                               SizedBox(width: 6),
                               Text(
                                 'Why This Style Suits Your Face',
@@ -352,7 +416,11 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                           const SizedBox(height: 6),
                           Text(
                             v.whyItSuits!,
-                            style: const TextStyle(fontSize: 12.5, color: Color(0xFF4A4238), height: 1.4),
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: Color(0xFF4A4238),
+                              height: 1.4,
+                            ),
                           ),
                         ],
                       ),
@@ -377,7 +445,11 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                           children: [
                             const Row(
                               children: [
-                                Icon(Icons.content_cut, size: 18, color: Color(0xFF1E3A5F)),
+                                Icon(
+                                  Icons.content_cut,
+                                  size: 18,
+                                  color: Color(0xFF1E3A5F),
+                                ),
                                 SizedBox(width: 8),
                                 Text(
                                   'Barber Specification Card',
@@ -392,23 +464,39 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                             TextButton.icon(
                               onPressed: _copyBarberCard,
                               icon: const Icon(Icons.copy_rounded, size: 15),
-                              label: const Text('Copy Specs', style: TextStyle(fontSize: 12)),
+                              label: const Text(
+                                'Copy Specs',
+                                style: TextStyle(fontSize: 12),
+                              ),
                             ),
                           ],
                         ),
                         const Divider(height: 16),
-                        _buildSpecRow('Hair Length & Cut', v.hairLengthCm ?? v.hairDesc ?? 'Custom taper'),
+                        _buildSpecRow(
+                          'Hair Length & Cut',
+                          v.hairLengthCm ?? v.hairDesc ?? 'Custom taper',
+                        ),
                         const SizedBox(height: 8),
-                        _buildSpecRow('Facial Hair / Beard', v.beardLengthMm ?? v.beardDesc ?? 'Groomed trim'),
+                        _buildSpecRow(
+                          'Facial Hair / Beard',
+                          v.beardLengthMm ?? v.beardDesc ?? 'Groomed trim',
+                        ),
                         if (v.lookDesc != null && v.lookDesc!.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           _buildSpecRow('Styling Details', v.lookDesc!),
                         ],
                         const SizedBox(height: 8),
-                        _buildSpecRow('Maintenance Level', (v.maintenanceLevel ?? 'Medium').toUpperCase()),
-                        if (v.stylingProducts != null && v.stylingProducts!.isNotEmpty) ...[
+                        _buildSpecRow(
+                          'Maintenance Level',
+                          (v.maintenanceLevel ?? 'Medium').toUpperCase(),
+                        ),
+                        if (v.stylingProducts != null &&
+                            v.stylingProducts!.isNotEmpty) ...[
                           const SizedBox(height: 8),
-                          _buildSpecRow('Recommended Product', v.stylingProducts!),
+                          _buildSpecRow(
+                            'Recommended Product',
+                            v.stylingProducts!,
+                          ),
                         ],
                         if (v.barberInstructions.isNotEmpty) ...[
                           const SizedBox(height: 12),
@@ -427,11 +515,20 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  const Text(
+                                    '• ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   Expanded(
                                     child: Text(
                                       inst,
-                                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF3A352F), height: 1.35),
+                                      style: const TextStyle(
+                                        fontSize: 12.5,
+                                        color: Color(0xFF3A352F),
+                                        height: 1.35,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -457,12 +554,21 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       side: const BorderSide(color: Color(0xFF1E3A5F)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
-                    icon: const Icon(Icons.share_outlined, color: Color(0xFF1E3A5F), size: 18),
+                    icon: const Icon(
+                      Icons.share_outlined,
+                      color: Color(0xFF1E3A5F),
+                      size: 18,
+                    ),
                     label: const Text(
                       'Copy Barber Card',
-                      style: TextStyle(color: Color(0xFF1E3A5F), fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Color(0xFF1E3A5F),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     onPressed: _copyBarberCard,
                   ),
@@ -474,20 +580,33 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFD49B28),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       icon: _isSaving
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
-                          : const Icon(Icons.bookmark_add, color: Colors.white, size: 18),
+                          : const Icon(
+                              Icons.bookmark_add,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                       label: const Text(
                         'Save Look',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      onPressed: _isSaving ? null : () => _showSaveDialog(context),
+                      onPressed:
+                          _isSaving ? null : () => _showSaveDialog(context),
                     ),
                   ),
                 ],
@@ -507,13 +626,21 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
           width: 135,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF7A7265), fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF7A7265),
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 12.5, color: Color(0xFF1E1A15), fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: Color(0xFF1E1A15),
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -553,18 +680,21 @@ class _LookDetailSheetState extends State<LookDetailSheet> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD49B28)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD49B28),
+            ),
             onPressed: () async {
               Navigator.of(ctx).pop();
               setState(() => _isSaving = true);
               await widget.onSave?.call(
                 _titleController.text.trim(),
-                _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+                _notesController.text.trim().isEmpty
+                    ? null
+                    : _notesController.text.trim(),
               );
-              if (mounted) {
-                setState(() => _isSaving = false);
-                Navigator.of(context).pop();
-              }
+              if (!mounted) return;
+              setState(() => _isSaving = false);
+              Navigator.of(this.context).pop();
             },
             child: const Text('Save', style: TextStyle(color: Colors.white)),
           ),

@@ -23,11 +23,12 @@ class PartnerDashboardCubit extends Cubit<PartnerDashboardState> {
   PartnerDashboardCubit({required this.apiClient})
       : super(PartnerDashboardInitialState());
 
-  Future<void> fetchDashboard({String? salonId}) async {
-    emit(PartnerDashboardLoadingState());
+  Future<void> fetchDashboard({String? salonId, bool silent = false}) async {
+    if (!silent) emit(PartnerDashboardLoadingState());
     try {
       final data = Map<String, dynamic>.from(
-          await apiClient.getPartnerDashboard(salonId: salonId));
+        await apiClient.getPartnerDashboard(salonId: salonId),
+      );
       try {
         data['unreadNotifications'] =
             await apiClient.getUnreadNotificationCount();
@@ -36,8 +37,11 @@ class PartnerDashboardCubit extends Cubit<PartnerDashboardState> {
       }
       emit(PartnerDashboardLoadedState(data));
     } catch (e) {
-      emit(PartnerDashboardErrorState(
-          'Failed to load partner dashboard: ${e.toString()}'));
+      emit(
+        PartnerDashboardErrorState(
+          'Could not refresh the dashboard. Check your connection and try again.',
+        ),
+      );
     }
   }
 }

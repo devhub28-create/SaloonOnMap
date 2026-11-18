@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
+
 import '../../auth/cubit/partner_auth_cubit.dart';
 import '../../seats/cubit/partner_seats_cubit.dart';
 import '../../services/cubit/partner_services_cubit.dart';
@@ -16,11 +19,22 @@ class BookingsScreen extends StatefulWidget {
 
 class _BookingsScreenState extends State<BookingsScreen> {
   int _selectedFilter = 0; // 0: All, 1: Waiting, 2: In service, 3: Completed
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadAllData();
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _loadBookings(silent: true),
+    );
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   void _loadAllData() {
@@ -34,11 +48,13 @@ class _BookingsScreenState extends State<BookingsScreen> {
     }
   }
 
-  void _loadBookings() {
+  void _loadBookings({bool silent = false}) {
     final authState = context.read<PartnerAuthCubit>().state;
     final salonId =
         authState is PartnerAuthenticated ? authState.salonId : null;
-    context.read<PartnerBookingsCubit>().fetchBookings(salonId: salonId);
+    context
+        .read<PartnerBookingsCubit>()
+        .fetchBookings(salonId: salonId, silent: silent);
   }
 
   void _updateStatus(Map<String, dynamic> booking, String targetStatus) async {
@@ -59,9 +75,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(targetStatus == 'DONE'
-              ? '✅ Service marked as Completed!'
-              : '⚡ Service started! Seat is now In-Service.'),
+          content: Text(
+            targetStatus == 'DONE'
+                ? '✅ Service marked as Completed!'
+                : '⚡ Service started! Seat is now In-Service.',
+          ),
           backgroundColor: AppColors.darkNeutral,
         ),
       );
@@ -96,17 +114,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
             final count =
                 state is PartnerBookingsLoadedState ? state.bookings.length : 0;
             final dateStr =
-                'TODAY · ${DateTime.now().day} ${_monthName(DateTime.now().month)}';
+                'TODAY · ${formatAppDate(DateTime.now(), locale: Localizations.localeOf(context).toString()).toUpperCase()}';
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(dateStr,
-                    style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textMuted,
-                        letterSpacing: 1.1)),
+                Text(
+                  dateStr,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textMuted,
+                    letterSpacing: 1.1,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text('$count bookings', style: AppTypography.screenTitle),
               ],
@@ -123,8 +144,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
               boxShadow: const [AppShadows.cardShadow],
             ),
             child: IconButton(
-              icon: const Icon(Icons.refresh_rounded,
-                  color: AppColors.darkNeutral, size: 20),
+              tooltip: 'Refresh bookings',
+              icon: const Icon(
+                Icons.refresh_rounded,
+                color: AppColors.darkNeutral,
+                size: 20,
+              ),
               onPressed: _loadBookings,
             ),
           ),
@@ -139,7 +164,9 @@ class _BookingsScreenState extends State<BookingsScreen> {
               // Filter Chips
               Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
+                ),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -159,8 +186,10 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   builder: (context, state) {
                     if (state is PartnerBookingsLoadingState) {
                       return const Center(
-                          child: CircularProgressIndicator(
-                              color: AppColors.primaryGoldDark));
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryGoldDark,
+                        ),
+                      );
                     }
 
                     if (state is PartnerBookingsErrorState) {
@@ -170,13 +199,19 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.info_outline_rounded,
-                                  color: AppColors.textMuted, size: 40),
+                              const Icon(
+                                Icons.info_outline_rounded,
+                                color: AppColors.textMuted,
+                                size: 40,
+                              ),
                               const SizedBox(height: 12),
-                              Text(state.message,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      color: AppColors.textMuted)),
+                              Text(
+                                state.message,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
                               const SizedBox(height: 16),
                               ElevatedButton(
                                 onPressed: _loadBookings,
@@ -215,20 +250,28 @@ class _BookingsScreenState extends State<BookingsScreen> {
                             child: const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.calendar_today_rounded,
-                                    size: 48, color: AppColors.textMuted),
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 48,
+                                  color: AppColors.textMuted,
+                                ),
                                 SizedBox(height: 16),
-                                Text('No bookings found',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.darkNeutral)),
+                                Text(
+                                  'No bookings found',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.darkNeutral,
+                                  ),
+                                ),
                                 SizedBox(height: 6),
                                 Text(
-                                  'New customer bookings or walk-ins added using + Add walk-in will appear here in real time.',
+                                  'New customer bookings and walk-ins appear here. This list refreshes every 30 seconds.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                      fontSize: 13, color: AppColors.textMuted),
+                                    fontSize: 13,
+                                    color: AppColors.textMuted,
+                                  ),
                                 ),
                               ],
                             ),
@@ -240,7 +283,9 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     return ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.sm,
+                      ),
                       itemCount: filteredBookings.length,
                       itemBuilder: (context, index) {
                         final b = filteredBookings[index];
@@ -252,12 +297,14 @@ class _BookingsScreenState extends State<BookingsScreen> {
                             : 'CU';
                         final serviceName = b['serviceName'] ??
                             b['services']?[0]?['name'] ??
-                            'Styling Service';
-                        final seatLabel =
-                            b['seatLabel'] ?? b['seat']?['label'] ?? 'Seat 1';
+                            'Service unavailable';
+                        final seatLabel = b['seatLabel'] ??
+                            b['seat']?['label'] ??
+                            'Unassigned';
                         final status = b['status'] ?? 'CONFIRMED';
-                        final price = b['total_price'] ?? b['price'] ?? 450;
-                        final time = b['start_time'] ?? b['time'] ?? 'Today';
+                        final price = b['total_price'] ?? b['price'];
+                        final time =
+                            b['start_time'] ?? b['time'] ?? 'Time unavailable';
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -273,11 +320,14 @@ class _BookingsScreenState extends State<BookingsScreen> {
                               CircleAvatar(
                                 radius: 20,
                                 backgroundColor: AppColors.darkNeutral,
-                                child: Text(initials,
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primaryGold)),
+                                child: Text(
+                                  initials,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryGold,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: AppSpacing.md),
                               Expanded(
@@ -288,45 +338,69 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(customerName,
-                                            style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.darkNeutral)),
-                                        Text('₹$price',
-                                            style: const TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.bold,
-                                                color:
-                                                    AppColors.primaryGoldDark)),
+                                        Text(
+                                          customerName,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.darkNeutral,
+                                          ),
+                                        ),
+                                        Text(
+                                          price == null
+                                              ? 'Price unavailable'
+                                              : formatCurrency(
+                                                  price,
+                                                  locale:
+                                                      Localizations.localeOf(
+                                                    context,
+                                                  ).toString(),
+                                                ),
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primaryGoldDark,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 2),
-                                    Text('$serviceName · $time',
-                                        style: const TextStyle(
-                                            fontSize: 12,
-                                            color: AppColors.textMuted)),
+                                    Text(
+                                      '$serviceName · $time',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
                                     const SizedBox(height: 6),
                                     Row(
                                       children: [
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 2),
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
                                           decoration: BoxDecoration(
-                                              color: const Color(0xFFF5F5F4),
-                                              borderRadius:
-                                                  BorderRadius.circular(6)),
-                                          child: Text(seatLabel,
-                                              style: const TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                  color:
-                                                      AppColors.darkNeutral)),
+                                            color: const Color(0xFFF5F5F4),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            seatLabel,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.darkNeutral,
+                                            ),
+                                          ),
                                         ),
                                         const SizedBox(width: 6),
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 2),
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: status
                                                         .toString()
@@ -334,8 +408,9 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                                     'COMPLETED'
                                                 ? const Color(0xFFDCFCE7)
                                                 : const Color(0xFFFEF9C3),
-                                            borderRadius:
-                                                BorderRadius.circular(6),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
                                           ),
                                           child: Text(
                                             status,
@@ -353,7 +428,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                         ),
                                       ],
                                     ),
-                                    if (status.toString().toUpperCase() != 'CANCELLED') ...[
+                                    if (status.toString().toUpperCase() !=
+                                        'CANCELLED') ...[
                                       const SizedBox(height: 10),
                                       const Divider(height: 1),
                                       const SizedBox(height: 8),
@@ -361,58 +437,106 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.end,
                                         children: [
-                                          if (status.toString().toUpperCase() == 'CONFIRMED' ||
-                                              status.toString().toUpperCase() == 'WAITING') ...[
+                                          if (status.toString().toUpperCase() ==
+                                                  'CONFIRMED' ||
+                                              status.toString().toUpperCase() ==
+                                                  'WAITING') ...[
                                             OutlinedButton.icon(
-                                              onPressed: () => _updateStatus(b, 'IN_SERVICE'),
-                                              icon: const Icon(Icons.play_arrow_rounded, size: 16),
+                                              onPressed: () => _updateStatus(
+                                                b,
+                                                'IN_SERVICE',
+                                              ),
+                                              icon: const Icon(
+                                                Icons.play_arrow_rounded,
+                                                size: 16,
+                                              ),
                                               label: const Text('Start'),
                                               style: OutlinedButton.styleFrom(
-                                                visualDensity: VisualDensity.compact,
-                                                foregroundColor: AppColors.darkNeutral,
-                                                side: const BorderSide(color: AppColors.borderLight),
+                                                visualDensity:
+                                                    VisualDensity.compact,
+                                                foregroundColor:
+                                                    AppColors.darkNeutral,
+                                                side: const BorderSide(
+                                                  color: AppColors.borderLight,
+                                                ),
                                                 shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(10)),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
                                               ),
                                             ),
                                             const SizedBox(width: 8),
                                             ElevatedButton.icon(
-                                              onPressed: () => _updateStatus(b, 'DONE'),
-                                              icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
+                                              onPressed: () =>
+                                                  _updateStatus(b, 'DONE'),
+                                              icon: const Icon(
+                                                Icons
+                                                    .check_circle_outline_rounded,
+                                                size: 16,
+                                              ),
                                               label: const Text('Complete'),
                                               style: ElevatedButton.styleFrom(
-                                                visualDensity: VisualDensity.compact,
-                                                backgroundColor: const Color(0xFF16A34A),
+                                                visualDensity:
+                                                    VisualDensity.compact,
+                                                backgroundColor: const Color(
+                                                  0xFF16A34A,
+                                                ),
                                                 foregroundColor: Colors.white,
                                                 shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(10)),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
                                               ),
                                             ),
-                                          ] else if (status.toString().toUpperCase() == 'IN_SERVICE') ...[
+                                          ] else if (status
+                                                  .toString()
+                                                  .toUpperCase() ==
+                                              'IN_SERVICE') ...[
                                             ElevatedButton.icon(
-                                              onPressed: () => _updateStatus(b, 'DONE'),
-                                              icon: const Icon(Icons.check_circle_rounded, size: 16),
-                                              label: const Text('Complete Service'),
+                                              onPressed: () =>
+                                                  _updateStatus(b, 'DONE'),
+                                              icon: const Icon(
+                                                Icons.check_circle_rounded,
+                                                size: 16,
+                                              ),
+                                              label: const Text(
+                                                'Complete Service',
+                                              ),
                                               style: ElevatedButton.styleFrom(
-                                                visualDensity: VisualDensity.compact,
-                                                backgroundColor: const Color(0xFF16A34A),
+                                                visualDensity:
+                                                    VisualDensity.compact,
+                                                backgroundColor: const Color(
+                                                  0xFF16A34A,
+                                                ),
                                                 foregroundColor: Colors.white,
                                                 shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(10)),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
                                               ),
                                             ),
-                                          ] else if (status.toString().toUpperCase() == 'COMPLETED' ||
-                                              status.toString().toUpperCase() == 'DONE') ...[
+                                          ] else if (status
+                                                      .toString()
+                                                      .toUpperCase() ==
+                                                  'COMPLETED' ||
+                                              status.toString().toUpperCase() ==
+                                                  'DONE') ...[
                                             const Row(
                                               children: [
-                                                Icon(Icons.check_circle_rounded,
-                                                    color: Color(0xFF16A34A), size: 16),
+                                                Icon(
+                                                  Icons.check_circle_rounded,
+                                                  color: Color(0xFF16A34A),
+                                                  size: 16,
+                                                ),
                                                 SizedBox(width: 4),
-                                                Text('Completed',
-                                                    style: TextStyle(
-                                                        fontSize: 12,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: Color(0xFF16A34A))),
+                                                Text(
+                                                  'Completed',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF16A34A),
+                                                  ),
+                                                ),
                                               ],
                                             ),
                                           ],
@@ -456,8 +580,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
           color: isSelected ? AppColors.darkNeutral : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color:
-                  isSelected ? AppColors.darkNeutral : AppColors.borderLight),
+            color: isSelected ? AppColors.darkNeutral : AppColors.borderLight,
+          ),
         ),
         child: Text(
           label,
@@ -469,24 +593,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
         ),
       ),
     );
-  }
-
-  String _monthName(int month) {
-    const months = [
-      'JAN',
-      'FEB',
-      'MAR',
-      'APR',
-      'MAY',
-      'JUN',
-      'JUL',
-      'AUG',
-      'SEP',
-      'OCT',
-      'NOV',
-      'DEC'
-    ];
-    return months[month - 1];
   }
 }
 
@@ -526,7 +632,8 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
   }
 
   void _recalculateTotal(List<ServiceModel> services) {
-    final selected = services.where((s) => _selectedServiceIds.contains(s.id)).toList();
+    final selected =
+        services.where((s) => _selectedServiceIds.contains(s.id)).toList();
     final total = selected.fold(0.0, (sum, s) => sum + s.price);
     final totalMinutes = selected.fold(0, (sum, s) => sum + s.durationMinutes);
     _priceController.text = total > 0 ? total.toInt().toString() : '0';
@@ -571,7 +678,8 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
             }
 
             if (seatItems.isNotEmpty) {
-              if (_selectedSeatId == null || !seatItems.any((s) => s['id'] == _selectedSeatId)) {
+              if (_selectedSeatId == null ||
+                  !seatItems.any((s) => s['id'] == _selectedSeatId)) {
                 final firstAvailable = seatItems.firstWhere(
                   (s) => s['isAvailable'] == true,
                   orElse: () => seatItems.first,
@@ -580,7 +688,9 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
               }
             }
 
-            final isLoadingData = servicesState is PartnerServicesLoadingState && services.isEmpty;
+            final isLoadingData =
+                servicesState is PartnerServicesLoadingState &&
+                    services.isEmpty;
 
             return Padding(
               padding: EdgeInsets.only(
@@ -597,73 +707,143 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Add Walk-in Customer', style: AppTypography.screenTitle),
+                        const Text(
+                          'Add Walk-in Customer',
+                          style: AppTypography.screenTitle,
+                        ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textMuted,
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-
                     if (isLoadingData)
                       const Center(
                         child: Padding(
                           padding: EdgeInsets.all(24),
-                          child: CircularProgressIndicator(color: AppColors.primaryGoldDark),
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryGoldDark,
+                          ),
                         ),
                       )
                     else ...[
-                      const Text('CUSTOMER NAME', style: AppTypography.sectionEyebrow),
+                      const Text(
+                        'CUSTOMER NAME',
+                        style: AppTypography.sectionEyebrow,
+                      ),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _nameController,
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkNeutral),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.darkNeutral,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'e.g. Rahul Sharma',
-                          prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.textMuted),
+                          prefixIcon: const Icon(
+                            Icons.person_outline_rounded,
+                            color: AppColors.textMuted,
+                          ),
                           filled: true,
                           fillColor: Colors.white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.borderLight,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.borderLight,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
-                      const Text('MOBILE NUMBER (OPTIONAL)', style: AppTypography.sectionEyebrow),
+                      const Text(
+                        'MOBILE NUMBER (OPTIONAL)',
+                        style: AppTypography.sectionEyebrow,
+                      ),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkNeutral),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.darkNeutral,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'e.g. 98765 43210 (Optional)',
-                          prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.textMuted),
+                          prefixIcon: const Icon(
+                            Icons.phone_outlined,
+                            color: AppColors.textMuted,
+                          ),
                           filled: true,
                           fillColor: Colors.white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.borderLight,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.borderLight,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
-                      const Text('NOTES / SPECIAL REQUESTS (OPTIONAL)', style: AppTypography.sectionEyebrow),
+                      const Text(
+                        'NOTES / SPECIAL REQUESTS (OPTIONAL)',
+                        style: AppTypography.sectionEyebrow,
+                      ),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _notesController,
                         maxLines: 2,
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkNeutral, fontSize: 13),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.darkNeutral,
+                          fontSize: 13,
+                        ),
                         decoration: InputDecoration(
-                          hintText: 'e.g. Low fade taper, sensitive skin, beard oil, preferred styling...',
-                          hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted, fontWeight: FontWeight.normal),
+                          hintText:
+                              'e.g. Low fade taper, sensitive skin, beard oil, preferred styling...',
+                          hintStyle: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                            fontWeight: FontWeight.normal,
+                          ),
                           prefixIcon: const Padding(
                             padding: EdgeInsets.only(bottom: 20),
-                            child: Icon(Icons.edit_note_rounded, color: AppColors.textMuted),
+                            child: Icon(
+                              Icons.edit_note_rounded,
+                              color: AppColors.textMuted,
+                            ),
                           ),
                           filled: true,
                           fillColor: Colors.white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.borderLight,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: AppColors.borderLight,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -672,11 +852,19 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('SELECT SERVICES', style: AppTypography.sectionEyebrow),
+                          const Text(
+                            'SELECT SERVICES',
+                            style: AppTypography.sectionEyebrow,
+                          ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
-                              color: _selectedServiceIds.isNotEmpty ? const Color(0xFFFEF9C3) : Colors.grey.shade100,
+                              color: _selectedServiceIds.isNotEmpty
+                                  ? const Color(0xFFFEF9C3)
+                                  : Colors.grey.shade100,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -699,19 +887,25 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: _selectedServiceIds.isEmpty ? AppColors.statusDestructiveText : AppColors.borderLight,
+                            color: _selectedServiceIds.isEmpty
+                                ? AppColors.statusDestructiveText
+                                : AppColors.borderLight,
                           ),
                         ),
                         child: services.isEmpty
                             ? const Padding(
                                 padding: EdgeInsets.all(8.0),
-                                child: Text('No active services found. Pull down on Bookings to reload.', style: TextStyle(color: AppColors.textMuted)),
+                                child: Text(
+                                  'No active services found. Pull down on Bookings to reload.',
+                                  style: TextStyle(color: AppColors.textMuted),
+                                ),
                               )
                             : Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: services.map((svc) {
-                                  final isSelected = _selectedServiceIds.contains(svc.id);
+                                  final isSelected =
+                                      _selectedServiceIds.contains(svc.id);
                                   return InkWell(
                                     onTap: () {
                                       setState(() {
@@ -725,13 +919,22 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
                                     },
                                     borderRadius: BorderRadius.circular(12),
                                     child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 180),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      duration: const Duration(
+                                        milliseconds: 180,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: isSelected ? AppColors.darkNeutral : const Color(0xFFF9FAFB),
+                                        color: isSelected
+                                            ? AppColors.darkNeutral
+                                            : const Color(0xFFF9FAFB),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: isSelected ? AppColors.primaryGoldDark : AppColors.borderLight,
+                                          color: isSelected
+                                              ? AppColors.primaryGoldDark
+                                              : AppColors.borderLight,
                                           width: isSelected ? 1.5 : 1.0,
                                         ),
                                       ),
@@ -739,13 +942,19 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(
-                                            isSelected ? Icons.check_circle_rounded : Icons.add_circle_outline_rounded,
+                                            isSelected
+                                                ? Icons.check_circle_rounded
+                                                : Icons
+                                                    .add_circle_outline_rounded,
                                             size: 16,
-                                            color: isSelected ? AppColors.primaryGold : AppColors.textMuted,
+                                            color: isSelected
+                                                ? AppColors.primaryGold
+                                                : AppColors.textMuted,
                                           ),
                                           const SizedBox(width: 6),
                                           Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Text(
@@ -753,14 +962,18 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 12,
-                                                  color: isSelected ? Colors.white : AppColors.darkNeutral,
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : AppColors.darkNeutral,
                                                 ),
                                               ),
                                               Text(
                                                 '₹${svc.price.toInt()} · ${svc.durationMinutes}m',
                                                 style: TextStyle(
                                                   fontSize: 10,
-                                                  color: isSelected ? AppColors.primaryGold : AppColors.textMuted,
+                                                  color: isSelected
+                                                      ? AppColors.primaryGold
+                                                      : AppColors.textMuted,
                                                 ),
                                               ),
                                             ],
@@ -782,23 +995,35 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('SALON CHAIR / SEAT', style: AppTypography.sectionEyebrow),
+                                const Text(
+                                  'SALON CHAIR / SEAT',
+                                  style: AppTypography.sectionEyebrow,
+                                ),
                                 const SizedBox(height: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: AppColors.borderLight),
+                                    border: Border.all(
+                                      color: AppColors.borderLight,
+                                    ),
                                   ),
                                   child: DropdownButtonHideUnderline(
                                     child: DropdownButton<String>(
                                       value: _selectedSeatId,
                                       isExpanded: true,
                                       hint: const Text('Select Chair'),
-                                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.darkNeutral),
+                                      icon: const Icon(
+                                        Icons.keyboard_arrow_down_rounded,
+                                        color: AppColors.darkNeutral,
+                                      ),
                                       items: seatItems.map((seat) {
-                                        final isAvail = seat['isAvailable'] == true;
+                                        final isAvail =
+                                            seat['isAvailable'] == true;
                                         return DropdownMenuItem<String>(
                                           value: seat['id'] as String,
                                           child: Row(
@@ -806,17 +1031,22 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
                                               Icon(
                                                 Icons.circle,
                                                 size: 8,
-                                                color: isAvail ? const Color(0xFF16A34A) : const Color(0xFFEAB308),
+                                                color: isAvail
+                                                    ? const Color(0xFF16A34A)
+                                                    : const Color(0xFFEAB308),
                                               ),
                                               const SizedBox(width: 6),
                                               Expanded(
                                                 child: Text(
                                                   'Chair ${seat['number']} (${seat['status']})',
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.w600,
                                                     fontSize: 12,
-                                                    color: isAvail ? AppColors.darkNeutral : AppColors.textMuted,
+                                                    color: isAvail
+                                                        ? AppColors.darkNeutral
+                                                        : AppColors.textMuted,
                                                   ),
                                                 ),
                                               ),
@@ -826,7 +1056,9 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
                                       }).toList(),
                                       onChanged: (newSeatId) {
                                         if (newSeatId != null) {
-                                          setState(() => _selectedSeatId = newSeatId);
+                                          setState(
+                                            () => _selectedSeatId = newSeatId,
+                                          );
                                         }
                                       },
                                     ),
@@ -841,17 +1073,33 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('TOTAL PRICE (₹)', style: AppTypography.sectionEyebrow),
+                                const Text(
+                                  'TOTAL PRICE (₹)',
+                                  style: AppTypography.sectionEyebrow,
+                                ),
                                 const SizedBox(height: 6),
                                 TextField(
                                   controller: _priceController,
                                   keyboardType: TextInputType.number,
-                                  style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.darkNeutral),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.darkNeutral,
+                                  ),
                                   decoration: InputDecoration(
                                     filled: true,
                                     fillColor: Colors.white,
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
-                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderLight)),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: const BorderSide(
+                                        color: AppColors.borderLight,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: const BorderSide(
+                                        color: AppColors.borderLight,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -862,7 +1110,9 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
                       const SizedBox(height: 24),
 
                       SlotPrimaryButton(
-                        text: _isSubmitting ? 'Seating Customer...' : '⚡ Confirm & Seat Walk-in Customer',
+                        text: _isSubmitting
+                            ? 'Seating Customer...'
+                            : '⚡ Confirm & Seat Walk-in Customer',
                         onPressed: _isSubmitting ? null : _submitWalkIn,
                       ),
                     ],
@@ -883,14 +1133,20 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter customer name.'), backgroundColor: AppColors.statusDestructiveText),
+        const SnackBar(
+          content: Text('Please enter customer name.'),
+          backgroundColor: AppColors.statusDestructiveText,
+        ),
       );
       return;
     }
 
     if (_selectedServiceIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one service.'), backgroundColor: AppColors.statusDestructiveText),
+        const SnackBar(
+          content: Text('Please select at least one service.'),
+          backgroundColor: AppColors.statusDestructiveText,
+        ),
       );
       return;
     }
@@ -931,7 +1187,9 @@ class _WalkInModalContentState extends State<_WalkInModalContent> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Walk-in created! Customer $name seated successfully.'),
+            content: Text(
+              '✅ Walk-in created! Customer $name seated successfully.',
+            ),
             backgroundColor: AppColors.darkNeutral,
           ),
         );

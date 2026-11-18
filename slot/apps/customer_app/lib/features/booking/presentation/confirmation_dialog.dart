@@ -27,19 +27,25 @@ class ConfirmationDialog extends StatelessWidget {
             const CircleAvatar(
               radius: 36,
               backgroundColor: AppColors.statusAvailableBg,
-              child: Icon(Icons.check_rounded,
-                  size: 40, color: AppColors.statusAvailableText),
+              child: Icon(
+                Icons.check_rounded,
+                size: 40,
+                color: AppColors.statusAvailableText,
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            const Text('BOOKING CONFIRMED',
-                style: AppTypography.sectionEyebrow),
+            const Text(
+              'BOOKING CONFIRMED',
+              style: AppTypography.sectionEyebrow,
+            ),
             const SizedBox(height: 6),
             const Text(
               'Your chair is saved.',
               style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.darkNeutral),
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkNeutral,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.md),

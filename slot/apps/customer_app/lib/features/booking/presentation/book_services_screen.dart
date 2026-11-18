@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+
 import '../cubit/booking_cubit.dart';
 
 class BookServicesScreen extends StatefulWidget {
@@ -41,21 +42,21 @@ class _BookServicesScreenState extends State<BookServicesScreen> {
         .where((item) => _selectedMap[item['id']?.toString()] == true)
         .toList();
     final totalDuration = selectedItems.fold<int>(
-        0,
-        (sum, item) =>
-            sum +
-            (int.tryParse(item['duration_minutes']?.toString() ?? '0') ??
-                (item['duration_minutes'] is num
-                    ? (item['duration_minutes'] as num).toInt()
-                    : 0)));
+      0,
+      (sum, item) =>
+          sum +
+          (int.tryParse(item['duration_minutes']?.toString() ?? '0') ??
+              (item['duration_minutes'] is num
+                  ? (item['duration_minutes'] as num).toInt()
+                  : 0)),
+    );
     final totalPrice = selectedItems.fold<int>(
-        0,
-        (sum, item) =>
-            sum +
-            (double.tryParse(item['price']?.toString() ?? '0')?.toInt() ??
-                (item['price'] is num
-                    ? (item['price'] as num).toInt()
-                    : 0)));
+      0,
+      (sum, item) =>
+          sum +
+          (double.tryParse(item['price']?.toString() ?? '0')?.toInt() ??
+              (item['price'] is num ? (item['price'] as num).toInt() : 0)),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -93,8 +94,10 @@ class _BookServicesScreenState extends State<BookServicesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('SELECTED SERVICES',
-                      style: AppTypography.sectionEyebrow),
+                  const Text(
+                    'SELECTED SERVICES',
+                    style: AppTypography.sectionEyebrow,
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   if (_isLoading)
                     const Padding(
@@ -118,16 +121,22 @@ class _BookServicesScreenState extends State<BookServicesScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('${formatDuration(totalDuration)} total duration',
-                          style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textMuted)),
-                      Text('₹$totalPrice',
-                          style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.darkNeutral)),
+                      Text(
+                        '${formatDuration(totalDuration)} total duration',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      Text(
+                        '₹$totalPrice',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkNeutral,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -147,8 +156,9 @@ class _BookServicesScreenState extends State<BookServicesScreen> {
           text: 'Choose date & time →',
           onPressed: () {
             if (selectedItems.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Select at least one service.')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Select at least one service.')),
+              );
               return;
             }
             context.read<BookingCubit>().selectedServices = selectedItems;
@@ -160,7 +170,11 @@ class _BookServicesScreenState extends State<BookServicesScreen> {
   }
 
   Widget _selectableItem(
-      String id, String name, String duration, String price) {
+    String id,
+    String name,
+    String duration,
+    String price,
+  ) {
     final isSelected = _selectedMap[id] ?? false;
     return InkWell(
       onTap: () {
@@ -184,20 +198,28 @@ class _BookServicesScreenState extends State<BookServicesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      style: TextStyle(
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.w500,
-                          fontSize: 14)),
-                  Text(duration,
-                      style: const TextStyle(
-                          fontSize: 12, color: AppColors.textMuted)),
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    duration,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
                 ],
               ),
             ),
-            Text(price,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(
+              price,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
           ],
         ),
       ),
@@ -220,10 +242,6 @@ class _BookServicesScreenState extends State<BookServicesScreen> {
   }
 
   Widget _stepLine() {
-    return Container(
-      width: 40,
-      height: 2,
-      color: const Color(0xFFEFECE6),
-    );
+    return Container(width: 40, height: 2, color: const Color(0xFFEFECE6));
   }
 }

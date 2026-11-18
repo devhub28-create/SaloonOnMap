@@ -29,15 +29,24 @@ class PartnerBookingsCubit extends Cubit<PartnerBookingsState> {
   PartnerBookingsCubit({required this.apiClient})
       : super(PartnerBookingsInitialState());
 
-  Future<void> fetchBookings({String? salonId, String? status}) async {
-    emit(PartnerBookingsLoadingState());
+  Future<void> fetchBookings({
+    String? salonId,
+    String? status,
+    bool silent = false,
+  }) async {
+    if (!silent) emit(PartnerBookingsLoadingState());
     try {
-      final list =
-          await apiClient.getPartnerBookings(salonId: salonId, status: status);
+      final list = await apiClient.getPartnerBookings(
+        salonId: salonId,
+        status: status,
+      );
       emit(PartnerBookingsLoadedState(list));
     } catch (e) {
-      emit(PartnerBookingsErrorState(
-          'Failed to load bookings: ${e.toString()}'));
+      emit(
+        PartnerBookingsErrorState(
+          'Could not refresh bookings. Check your connection and try again.',
+        ),
+      );
     }
   }
 
@@ -74,8 +83,11 @@ class PartnerBookingsCubit extends Cubit<PartnerBookingsState> {
       emit(PartnerWalkInSuccessState(result));
       await fetchBookings(salonId: salonId);
     } catch (e) {
-      emit(PartnerBookingsErrorState(
-          'Failed to create walk-in booking: ${e.toString()}'));
+      emit(
+        PartnerBookingsErrorState(
+          'Failed to create walk-in booking: ${e.toString()}',
+        ),
+      );
     }
   }
 
@@ -93,9 +105,11 @@ class PartnerBookingsCubit extends Cubit<PartnerBookingsState> {
       );
       await fetchBookings(salonId: salonId);
     } catch (e) {
-      emit(PartnerBookingsErrorState(
-          'Failed to update booking status: ${e.toString()}'));
+      emit(
+        PartnerBookingsErrorState(
+          'Failed to update booking status: ${e.toString()}',
+        ),
+      );
     }
   }
 }
-

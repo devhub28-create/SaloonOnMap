@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,19 +28,23 @@ import 'features/profile/presentation/screens/privacy_terms_screen.dart';
 import 'features/ai_style_studio/presentation/ai_style_studio_screen.dart';
 import 'features/ai_style_studio/presentation/saved_looks_screen.dart';
 
-GoRouter createCustomerRouter(AuthCubit authCubit) {
+GoRouter createCustomerRouter(
+  AuthCubit authCubit, {
+  required bool hasCompletedOnboarding,
+}) {
   return GoRouter(
-    initialLocation: authCubit.isAuthenticated ? '/' : '/login',
+    initialLocation: !hasCompletedOnboarding
+        ? '/onboarding'
+        : authCubit.isAuthenticated
+            ? '/'
+            : '/login',
     refreshListenable: _BlocListenable(authCubit),
     redirect: (context, state) {
       final isAuthenticated = authCubit.isAuthenticated;
       final isLoggingIn = state.matchedLocation == '/login';
       final isOnboarding = state.matchedLocation == '/onboarding';
 
-      // Always permit viewing login/signup screen when navigated to
-      if (isLoggingIn) {
-        return null;
-      }
+      if (isAuthenticated && isLoggingIn) return '/';
 
       if (!isAuthenticated && !isOnboarding) {
         return '/login';
@@ -48,12 +54,15 @@ GoRouter createCustomerRouter(AuthCubit authCubit) {
     },
     routes: [
       GoRoute(
-          path: '/onboarding',
-          builder: (context, state) => const OnboardingScreen()),
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
       GoRoute(
-          path: '/explore', builder: (context, state) => const ExploreScreen()),
+        path: '/explore',
+        builder: (context, state) => const ExploreScreen(),
+      ),
       GoRoute(
         path: '/salon-detail',
         builder: (context, state) => SalonDetailScreen(
@@ -63,61 +72,87 @@ GoRouter createCustomerRouter(AuthCubit authCubit) {
         ),
       ),
       GoRoute(
-          path: '/book-services',
-          builder: (context, state) => const BookServicesScreen()),
+        path: '/book-services',
+        builder: (context, state) => const BookServicesScreen(),
+      ),
       GoRoute(
-          path: '/book-seat',
-          builder: (context, state) => const BookSeatScreen()),
+        path: '/book-seat',
+        builder: (context, state) => const BookSeatScreen(),
+      ),
       GoRoute(
-          path: '/review-booking',
-          builder: (context, state) => const ReviewBookingScreen()),
+        path: '/review-booking',
+        builder: (context, state) => const ReviewBookingScreen(),
+      ),
       GoRoute(
-          path: '/my-bookings',
-          builder: (context, state) => const MyBookingsScreen()),
+        path: '/my-bookings',
+        builder: (context, state) => const MyBookingsScreen(),
+      ),
       GoRoute(
-          path: '/offers', builder: (context, state) => const OffersScreen()),
+        path: '/offers',
+        builder: (context, state) => const OffersScreen(),
+      ),
       GoRoute(
-          path: '/profile', builder: (context, state) => const ProfileScreen()),
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
 
       // Profile internal sub-routes
       GoRoute(
-          path: '/profile/edit',
-          builder: (context, state) => const EditProfileScreen()),
+        path: '/profile/edit',
+        builder: (context, state) => const EditProfileScreen(),
+      ),
       GoRoute(
-          path: '/profile/settings',
-          builder: (context, state) => const SettingsScreen()),
+        path: '/profile/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
       GoRoute(
-          path: '/profile/favorites',
-          builder: (context, state) => const FavoriteSalonsScreen()),
+        path: '/profile/favorites',
+        builder: (context, state) => const FavoriteSalonsScreen(),
+      ),
       GoRoute(
-          path: '/profile/invite',
-          builder: (context, state) => const InviteFriendsScreen()),
+        path: '/profile/invite',
+        builder: (context, state) => const InviteFriendsScreen(),
+      ),
       GoRoute(
-          path: '/profile/notifications',
-          builder: (context, state) => const NotificationsScreen()),
+        path: '/profile/notifications',
+        builder: (context, state) => const NotificationsScreen(),
+      ),
       GoRoute(
-          path: '/profile/payment-methods',
-          builder: (context, state) => const PaymentMethodsScreen()),
+        path: '/profile/payment-methods',
+        builder: (context, state) => const PaymentMethodsScreen(),
+      ),
       GoRoute(
-          path: '/profile/help',
-          builder: (context, state) => const HelpSupportScreen()),
+        path: '/profile/help',
+        builder: (context, state) => const HelpSupportScreen(),
+      ),
       GoRoute(
-          path: '/profile/privacy',
-          builder: (context, state) => const PrivacyTermsScreen()),
+        path: '/profile/privacy',
+        builder: (context, state) => const PrivacyTermsScreen(),
+      ),
       GoRoute(
-          path: '/ai-style-studio',
-          builder: (context, state) => const AiStyleStudioScreen()),
+        path: '/ai-style-studio',
+        builder: (context, state) => const AiStyleStudioScreen(),
+      ),
       GoRoute(
-          path: '/saved-ai-looks',
-          builder: (context, state) => const SavedLooksScreen()),
+        path: '/saved-ai-looks',
+        builder: (context, state) => const SavedLooksScreen(),
+      ),
     ],
   );
 }
 
 class _BlocListenable extends ChangeNotifier {
+  late final StreamSubscription<AuthState> _subscription;
+
   _BlocListenable(AuthCubit cubit) {
-    cubit.stream.listen((_) {
+    _subscription = cubit.stream.listen((_) {
       notifyListeners();
     });
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
   }
 }

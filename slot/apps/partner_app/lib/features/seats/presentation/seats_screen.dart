@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
+
 import '../../auth/cubit/partner_auth_cubit.dart';
 import '../cubit/partner_seats_cubit.dart';
 
@@ -44,12 +45,15 @@ class _SeatsScreenState extends State<SeatsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('LIVE FLOOR',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textMuted,
-                        letterSpacing: 1.1)),
+                const Text(
+                  'AUTO-SYNC FLOOR',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textMuted,
+                    letterSpacing: 1.1,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text('$salonName Seats', style: AppTypography.screenTitle),
               ],
@@ -61,10 +65,33 @@ class _SeatsScreenState extends State<SeatsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  BlocBuilder<PartnerSeatsCubit, PartnerSeatsState>(
+                    builder: (context, state) {
+                      if (state is! PartnerSeatsLoadedState ||
+                          !state.isOffline) {
+                        return const SizedBox.shrink();
+                      }
+                      return Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Offline: seat status may be out of date.',
+                          style: TextStyle(color: Color(0xFF9A3412)),
+                        ),
+                      );
+                    },
+                  ),
                   // Seat Manager Bar (+ / - seat count)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
@@ -76,21 +103,30 @@ class _SeatsScreenState extends State<SeatsScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.event_seat_rounded,
-                                color: AppColors.primaryGoldDark, size: 20),
+                            const Icon(
+                              Icons.event_seat_rounded,
+                              color: AppColors.primaryGoldDark,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('$totalSeats Seats Registered',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        color: AppColors.darkNeutral)),
-                                const Text('Manage chair capacity',
-                                    style: TextStyle(
-                                        fontSize: 10,
-                                        color: AppColors.textMuted)),
+                                Text(
+                                  '$totalSeats Seats Registered',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: AppColors.darkNeutral,
+                                  ),
+                                ),
+                                const Text(
+                                  'Manage chair capacity',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -110,8 +146,10 @@ class _SeatsScreenState extends State<SeatsScreen> {
                                               : null;
                                       context
                                           .read<PartnerSeatsCubit>()
-                                          .loadSeats(newCount,
-                                              salonId: salonId);
+                                          .loadSeats(
+                                            newCount,
+                                            salonId: salonId,
+                                          );
                                     }
                                   : null,
                               borderRadius: BorderRadius.circular(10),
@@ -123,20 +161,26 @@ class _SeatsScreenState extends State<SeatsScreen> {
                                       : Colors.grey.shade200,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: Icon(Icons.remove,
-                                    size: 16,
-                                    color: totalSeats > 1
-                                        ? AppColors.statusDestructiveText
-                                        : Colors.grey),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 16,
+                                  color: totalSeats > 1
+                                      ? AppColors.statusDestructiveText
+                                      : Colors.grey,
+                                ),
                               ),
                             ),
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              child: Text('$totalSeats',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              child: Text(
+                                '$totalSeats',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
                             ),
                             InkWell(
                               onTap: () {
@@ -148,9 +192,10 @@ class _SeatsScreenState extends State<SeatsScreen> {
                                     authState is PartnerAuthenticated
                                         ? authState.salonId
                                         : null;
-                                context
-                                    .read<PartnerSeatsCubit>()
-                                    .loadSeats(newCount, salonId: salonId);
+                                context.read<PartnerSeatsCubit>().loadSeats(
+                                      newCount,
+                                      salonId: salonId,
+                                    );
                               },
                               borderRadius: BorderRadius.circular(10),
                               child: Container(
@@ -159,9 +204,11 @@ class _SeatsScreenState extends State<SeatsScreen> {
                                   color: const Color(0xFFDCFCE7),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(Icons.add,
-                                    size: 16,
-                                    color: AppColors.statusAvailableText),
+                                child: const Icon(
+                                  Icons.add,
+                                  size: 16,
+                                  color: AppColors.statusAvailableText,
+                                ),
                               ),
                             ),
                           ],
@@ -206,10 +253,11 @@ class _SeatsScreenState extends State<SeatsScreen> {
                           child: const Text(
                             'MIRROR WALL',
                             style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                                color: AppColors.textMuted),
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                              color: AppColors.textMuted,
+                            ),
                           ),
                         ),
                         const SizedBox(height: AppSpacing.lg),
@@ -251,16 +299,20 @@ class _SeatsScreenState extends State<SeatsScreen> {
                                   onTap: () {
                                     context
                                         .read<PartnerSeatsCubit>()
-                                        .toggleSeatStatus(seatNum,
-                                            totalSeats: totalSeats);
+                                        .toggleSeatStatus(
+                                          seatNum,
+                                          totalSeats: totalSeats,
+                                        );
                                     ScaffoldMessenger.of(context)
                                         .hideCurrentSnackBar();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                            'Seat $seatNum status updated.'),
-                                        duration:
-                                            const Duration(milliseconds: 800),
+                                          'Seat $seatNum status updated.',
+                                        ),
+                                        duration: const Duration(
+                                          milliseconds: 800,
+                                        ),
                                       ),
                                     );
                                   },
@@ -292,10 +344,11 @@ class _SeatsScreenState extends State<SeatsScreen> {
                           child: const Text(
                             'RECEPTION & WAITING AREA',
                             style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                                color: AppColors.textMuted),
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                              color: AppColors.textMuted,
+                            ),
                           ),
                         ),
                       ],
@@ -319,11 +372,14 @@ class _SeatsScreenState extends State<SeatsScreen> {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(label,
-            style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
@@ -367,9 +423,10 @@ class _ChairCard extends StatelessWidget {
               Text(
                 'Seat $number',
                 style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: AppColors.darkNeutral),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: AppColors.darkNeutral,
+                ),
               ),
               Icon(Icons.event_seat_rounded, color: color, size: 20),
             ],
@@ -380,13 +437,18 @@ class _ChairCard extends StatelessWidget {
               Text(
                 status,
                 style: TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 12, color: color),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: color,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtext,
-                style:
-                    const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                ),
               ),
             ],
           ),

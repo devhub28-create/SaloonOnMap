@@ -1,13 +1,46 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../auth/cubit/partner_auth_cubit.dart';
 import '../cubit/partner_dashboard_cubit.dart';
 import '../../seats/cubit/partner_seats_cubit.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _refresh(silent: true),
+    );
+  }
+
+  Future<void> _refresh({bool silent = false}) async {
+    final auth = context.read<PartnerAuthCubit>().state;
+    final salonId = auth is PartnerAuthenticated ? auth.salonId : null;
+    await context
+        .read<PartnerDashboardCubit>()
+        .fetchDashboard(salonId: salonId, silent: silent);
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,8 +48,7 @@ class DashboardScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () =>
-              context.read<PartnerDashboardCubit>().fetchDashboard(),
+          onRefresh: _refresh,
           child: BlocBuilder<PartnerAuthCubit, PartnerAuthState>(
             builder: (context, authState) {
               final salonName = authState is PartnerAuthenticated
@@ -33,7 +65,7 @@ class DashboardScreen extends StatelessWidget {
                       : <String, dynamic>{};
                   final num revenue = data['todayRevenue'] ?? 0;
                   final String comparison =
-                      data['revenueComparison'] ?? 'Desk Active & Live';
+                      data['revenueComparison'] ?? 'Updated automatically';
                   final String bookingsCount =
                       (data['todayBookings'] ?? 0).toString();
                   final String fallbackAvailableSeats =
@@ -77,20 +109,22 @@ class DashboardScreen extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '${salonName.toUpperCase()} · LIVE',
+                                      '${salonName.toUpperCase()} · AUTO-SYNC',
                                       style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.textMuted,
-                                          letterSpacing: 1.1),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textMuted,
+                                        letterSpacing: 1.1,
+                                      ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       'Good day, $ownerName',
                                       style: const TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.darkNeutral),
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.darkNeutral,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -139,8 +173,9 @@ class DashboardScreen extends StatelessWidget {
                                           decoration: BoxDecoration(
                                             color:
                                                 AppColors.statusDestructiveText,
-                                            borderRadius:
-                                                BorderRadius.circular(999),
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
                                             border: Border.all(
                                               color: Colors.white,
                                               width: 2,
@@ -185,39 +220,52 @@ class DashboardScreen extends StatelessWidget {
                                       const Text(
                                         "TODAY'S REVENUE",
                                         style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.primaryGold,
-                                            letterSpacing: 1.1),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primaryGold,
+                                          letterSpacing: 1.1,
+                                        ),
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        '₹${revenue.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                                        formatCurrency(
+                                          revenue,
+                                          locale: Localizations.localeOf(
+                                            context,
+                                          ).toString(),
+                                        ),
                                         style: const TextStyle(
-                                            fontSize: 32,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white),
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                       const SizedBox(height: 6),
                                       Row(
                                         children: [
-                                          const Icon(Icons.north_east_rounded,
-                                              size: 14,
-                                              color: Color(0xFF16A34A)),
+                                          const Icon(
+                                            Icons.north_east_rounded,
+                                            size: 14,
+                                            color: Color(0xFF16A34A),
+                                          ),
                                           const SizedBox(width: 4),
                                           Text(
                                             comparison,
                                             style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Color(0xFF16A34A),
-                                                fontWeight: FontWeight.bold),
+                                              fontSize: 12,
+                                              color: Color(0xFF16A34A),
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ],
                                       ),
                                     ],
                                   ),
-                                  const Icon(Icons.bar_chart_rounded,
-                                      color: AppColors.primaryGold, size: 48),
+                                  const Icon(
+                                    Icons.bar_chart_rounded,
+                                    color: AppColors.primaryGold,
+                                    size: 48,
+                                  ),
                                 ],
                               ),
                             ),
@@ -227,36 +275,40 @@ class DashboardScreen extends StatelessWidget {
                             Row(
                               children: [
                                 _metricTile(
-                                    bookingsCount,
-                                    'Bookings',
-                                    Icons.calendar_today_rounded,
-                                    const Color(0xFFFEF9C3),
-                                    AppColors.primaryGoldDark),
+                                  bookingsCount,
+                                  'Bookings',
+                                  Icons.calendar_today_rounded,
+                                  const Color(0xFFFEF9C3),
+                                  AppColors.primaryGoldDark,
+                                ),
                                 const SizedBox(width: AppSpacing.md),
                                 _metricTile(
-                                    availableSeats,
-                                    'Available seats',
-                                    Icons.event_seat_rounded,
-                                    const Color(0xFFDCFCE7),
-                                    const Color(0xFF16A34A)),
+                                  availableSeats,
+                                  'Available seats',
+                                  Icons.event_seat_rounded,
+                                  const Color(0xFFDCFCE7),
+                                  const Color(0xFF16A34A),
+                                ),
                               ],
                             ),
                             const SizedBox(height: AppSpacing.md),
                             Row(
                               children: [
                                 _metricTile(
-                                    waitingCount,
-                                    'Waiting',
-                                    Icons.people_outline_rounded,
-                                    const Color(0xFFFCE7F3),
-                                    const Color(0xFFEC4899)),
+                                  waitingCount,
+                                  'Waiting',
+                                  Icons.people_outline_rounded,
+                                  const Color(0xFFFCE7F3),
+                                  const Color(0xFFEC4899),
+                                ),
                                 const SizedBox(width: AppSpacing.md),
                                 _metricTile(
-                                    inServiceCount,
-                                    'In service',
-                                    Icons.content_cut_rounded,
-                                    const Color(0xFFE0F2FE),
-                                    const Color(0xFF0284C7)),
+                                  inServiceCount,
+                                  'In service',
+                                  Icons.content_cut_rounded,
+                                  const Color(0xFFE0F2FE),
+                                  const Color(0xFF0284C7),
+                                ),
                               ],
                             ),
                             const SizedBox(height: AppSpacing.xl),
@@ -265,22 +317,31 @@ class DashboardScreen extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Live floor',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.darkNeutral)),
+                                const Text(
+                                  'Live floor',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.darkNeutral,
+                                  ),
+                                ),
                                 GestureDetector(
                                   onTap: () => context.go('/seats'),
                                   child: const Row(
                                     children: [
-                                      Text('Manage',
-                                          style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.textMuted)),
-                                      Icon(Icons.arrow_forward_ios_rounded,
-                                          size: 12, color: AppColors.textMuted),
+                                      Text(
+                                        'Manage',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textMuted,
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 12,
+                                        color: AppColors.textMuted,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -313,22 +374,31 @@ class DashboardScreen extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Up next',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.darkNeutral)),
+                                const Text(
+                                  'Up next',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.darkNeutral,
+                                  ),
+                                ),
                                 GestureDetector(
                                   onTap: () => context.go('/bookings'),
                                   child: const Row(
                                     children: [
-                                      Text('View all',
-                                          style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.textMuted)),
-                                      Icon(Icons.arrow_forward_ios_rounded,
-                                          size: 12, color: AppColors.textMuted),
+                                      Text(
+                                        'View all',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textMuted,
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 12,
+                                        color: AppColors.textMuted,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -342,26 +412,35 @@ class DashboardScreen extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(20),
-                                  border:
-                                      Border.all(color: AppColors.borderLight),
+                                  border: Border.all(
+                                    color: AppColors.borderLight,
+                                  ),
                                 ),
                                 child: const Center(
                                   child: Column(
                                     children: [
-                                      Icon(Icons.calendar_today_rounded,
-                                          size: 32, color: AppColors.textMuted),
+                                      Icon(
+                                        Icons.calendar_today_rounded,
+                                        size: 32,
+                                        color: AppColors.textMuted,
+                                      ),
                                       SizedBox(height: 8),
-                                      Text('No bookings scheduled yet today',
-                                          style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.darkNeutral)),
+                                      Text(
+                                        'No bookings scheduled yet today',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.darkNeutral,
+                                        ),
+                                      ),
                                       SizedBox(height: 4),
                                       Text(
-                                          'New customer bookings & walk-ins will appear here live.',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: AppColors.textMuted)),
+                                        'New customer bookings and walk-ins appear here after the next automatic refresh.',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.textMuted,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -370,16 +449,16 @@ class DashboardScreen extends StatelessWidget {
                               for (var item in bookingsList)
                                 Padding(
                                   padding: const EdgeInsets.only(
-                                      bottom: AppSpacing.md),
+                                    bottom: AppSpacing.md,
+                                  ),
                                   child: _queueCard(
-                                    (item['customerName'] ?? 'CU')
-                                        .substring(0, 2)
-                                        .toUpperCase(),
+                                    _initials(item['customerName']),
                                     item['customerName'] ?? 'Customer',
-                                    item['serviceName'] ?? 'Styling Service',
-                                    item['seatLabel'] ?? 'Seat 1',
-                                    item['status'] ?? 'Confirmed',
-                                    item['time'] ?? 'Today',
+                                    item['serviceName'] ??
+                                        'Service unavailable',
+                                    item['seatLabel'] ?? 'Unassigned',
+                                    item['status'] ?? 'Status unavailable',
+                                    item['time'] ?? 'Time unavailable',
                                   ),
                                 ),
                             ],
@@ -391,8 +470,9 @@ class DashboardScreen extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(20),
-                                border:
-                                    Border.all(color: AppColors.borderLight),
+                                border: Border.all(
+                                  color: AppColors.borderLight,
+                                ),
                                 boxShadow: const [AppShadows.cardShadow],
                               ),
                               child: Row(
@@ -403,9 +483,11 @@ class DashboardScreen extends StatelessWidget {
                                       color: const Color(0xFFFEF9C3),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
-                                    child: const Icon(Icons.storefront_rounded,
-                                        color: AppColors.primaryGoldDark,
-                                        size: 24),
+                                    child: const Icon(
+                                      Icons.storefront_rounded,
+                                      color: AppColors.primaryGoldDark,
+                                      size: 24,
+                                    ),
                                   ),
                                   const SizedBox(width: AppSpacing.md),
                                   Expanded(
@@ -413,17 +495,22 @@ class DashboardScreen extends StatelessWidget {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text('$salonName Status',
-                                            style: const TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.darkNeutral)),
+                                        Text(
+                                          '$salonName Status',
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.darkNeutral,
+                                          ),
+                                        ),
                                         const SizedBox(height: 2),
                                         const Text(
-                                            'Salon desk active & open for customer bookings',
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: AppColors.textMuted)),
+                                          'Salon desk active & open for customer bookings',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.textMuted,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -445,8 +532,23 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  String _initials(dynamic value) {
+    final name = value?.toString().trim() ?? '';
+    if (name.isEmpty) return 'CU';
+    final parts = name.split(RegExp(r'\s+'));
+    if (parts.length > 1) {
+      return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.substring(0, name.length > 1 ? 2 : 1).toUpperCase();
+  }
+
   Widget _metricTile(
-      String value, String label, IconData icon, Color bg, Color iconColor) {
+    String value,
+    String label,
+    IconData icon,
+    Color bg,
+    Color iconColor,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -462,21 +564,29 @@ class DashboardScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                  color: bg, borderRadius: BorderRadius.circular(12)),
+                color: bg,
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Icon(icon, color: iconColor, size: 20),
             ),
             const SizedBox(height: 12),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.darkNeutral)),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkNeutral,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textMuted,
-                    fontWeight: FontWeight.w500)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),
@@ -497,24 +607,38 @@ class DashboardScreen extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 22),
             const SizedBox(height: 4),
-            Text('Seat $num',
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.darkNeutral)),
+            Text(
+              'Seat $num',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkNeutral,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(status,
-                style: TextStyle(
-                    fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+            Text(
+              status,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _queueCard(String initials, String name, String service, String seat,
-      String status, String time,
-      {bool isWaiting = false}) {
+  Widget _queueCard(
+    String initials,
+    String name,
+    String service,
+    String seat,
+    String status,
+    String time, {
+    bool isWaiting = false,
+  }) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -529,13 +653,15 @@ class DashboardScreen extends StatelessWidget {
             radius: 20,
             backgroundColor:
                 isWaiting ? const Color(0xFFFCE7F3) : AppColors.darkNeutral,
-            child: Text(initials,
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isWaiting
-                        ? const Color(0xFFEC4899)
-                        : AppColors.primaryGold)),
+            child: Text(
+              initials,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color:
+                    isWaiting ? const Color(0xFFEC4899) : AppColors.primaryGold,
+              ),
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -545,41 +671,59 @@ class DashboardScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(name,
-                        style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.darkNeutral)),
-                    Text(time,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textMuted)),
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.darkNeutral,
+                      ),
+                    ),
+                    Text(
+                      time,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text(service,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.textMuted)),
+                Text(
+                  service,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textMuted,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F4),
-                          borderRadius: BorderRadius.circular(6)),
-                      child: Text(seat,
-                          style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.darkNeutral)),
+                        color: const Color(0xFFF5F5F4),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        seat,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkNeutral,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: isWaiting
                             ? const Color(0xFFFCE7F3)
@@ -589,11 +733,12 @@ class DashboardScreen extends StatelessWidget {
                       child: Text(
                         status,
                         style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: isWaiting
-                                ? const Color(0xFFEC4899)
-                                : const Color(0xFF16A34A)),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isWaiting
+                              ? const Color(0xFFEC4899)
+                              : const Color(0xFF16A34A),
+                        ),
                       ),
                     ),
                   ],

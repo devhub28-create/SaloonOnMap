@@ -16,22 +16,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, String>> _pages = [
     {
-      'image': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=1000',
+      'image':
+          'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=1000',
       'eyebrow': 'Your chair is ready',
       'headline': 'Great hair days,\nbooked in a tap.',
       'subtitle': 'Discover trusted salons nearby and skip the waiting room.',
     },
     {
-      'image': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=1000',
+      'image':
+          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=1000',
       'eyebrow': 'Everything in one place',
       'headline': 'One service or your\nwhole ritual.',
       'subtitle': 'Build your visit with transparent prices and smart combos.',
     },
     {
-      'image': 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=1000',
+      'image':
+          'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&q=80&w=1000',
       'eyebrow': 'Your time, protected',
       'headline': 'Pick a real seat. Own\nyour slot.',
-      'subtitle': 'See live availability, choose your stylist, and arrive right on time.',
+      'subtitle':
+          'See live availability, choose your stylist, and arrive right on time.',
     },
   ];
 
@@ -72,7 +76,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   Image.network(
                     page['image']!,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(color: const Color(0xFF1C1917)),
+                    errorBuilder: (_, __, ___) =>
+                        Container(color: const Color(0xFF1C1917)),
                   ),
                   // Dark Dual Gradient Overlay
                   Container(
@@ -92,7 +97,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   // Content Overlay
                   SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xl,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -107,12 +114,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primaryGold.withValues(alpha: 0.4),
+                                      color: AppColors.primaryGold.withValues(
+                                        alpha: 0.4,
+                                      ),
                                       blurRadius: 10,
                                     ),
                                   ],
                                 ),
-                                child: const Icon(Icons.content_cut_rounded, color: AppColors.darkNeutral, size: 20),
+                                child: const Icon(
+                                  Icons.content_cut_rounded,
+                                  color: AppColors.darkNeutral,
+                                  size: 20,
+                                ),
                               ),
                               const SizedBox(width: 10),
                               const Text(
@@ -193,12 +206,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           width: isActive ? 28 : 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: isActive ? AppColors.primaryGold : Colors.white38,
+                            color: isActive
+                                ? AppColors.primaryGold
+                                : Colors.white38,
                             borderRadius: BorderRadius.circular(4),
                             boxShadow: isActive
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primaryGold.withValues(alpha: 0.5),
+                                      color: AppColors.primaryGold.withValues(
+                                        alpha: 0.5,
+                                      ),
                                       blurRadius: 6,
                                       offset: const Offset(0, 2),
                                     ),
@@ -212,7 +229,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                     // Primary Gold Button
                     SlotPrimaryButton(
-                      text: _currentPage == _pages.length - 1 ? 'Get started →' : 'Continue →',
+                      text: _currentPage == _pages.length - 1
+                          ? 'Get started →'
+                          : 'Continue →',
                       onPressed: () {
                         if (_currentPage < _pages.length - 1) {
                           _pageController.nextPage(

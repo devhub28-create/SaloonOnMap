@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
+
 import '../cubit/partner_services_cubit.dart';
 
 class ServiceModel {
@@ -74,21 +75,26 @@ class _ServicesScreenState extends State<ServicesScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Add New Salon Service',
-                  style: AppTypography.screenTitle),
+              const Text(
+                'Add New Salon Service',
+                style: AppTypography.screenTitle,
+              ),
               const SizedBox(height: 16),
               const Text('SERVICE NAME', style: AppTypography.sectionEyebrow),
               const SizedBox(height: 6),
               TextField(
                 controller: nameController,
                 style: const TextStyle(
-                    fontWeight: FontWeight.w600, color: AppColors.darkNeutral),
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.darkNeutral,
+                ),
                 decoration: InputDecoration(
                   hintText: 'e.g. Royal Beard Trim',
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -98,21 +104,25 @@ class _ServicesScreenState extends State<ServicesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('PRICE (₹)',
-                            style: AppTypography.sectionEyebrow),
+                        const Text(
+                          'PRICE (₹)',
+                          style: AppTypography.sectionEyebrow,
+                        ),
                         const SizedBox(height: 6),
                         TextField(
                           controller: priceController,
                           keyboardType: TextInputType.number,
                           style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.darkNeutral),
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.darkNeutral,
+                          ),
                           decoration: InputDecoration(
                             hintText: '350',
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ],
@@ -123,21 +133,25 @@ class _ServicesScreenState extends State<ServicesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('DURATION (MINS)',
-                            style: AppTypography.sectionEyebrow),
+                        const Text(
+                          'DURATION (MINS)',
+                          style: AppTypography.sectionEyebrow,
+                        ),
                         const SizedBox(height: 6),
                         TextField(
                           controller: durationController,
                           keyboardType: TextInputType.number,
                           style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.darkNeutral),
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.darkNeutral,
+                          ),
                           decoration: InputDecoration(
                             hintText: '30',
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ],
@@ -155,8 +169,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   if (name.isEmpty || price == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text(
-                              'Please enter service name and valid price.')),
+                        content: Text(
+                          'Please enter service name and valid price.',
+                        ),
+                      ),
                     );
                     return;
                   }
@@ -177,9 +193,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text(
-                              'Service could not be saved. Check your connection and try again.'),
-                          backgroundColor: Colors.red),
+                        content: Text(
+                          'Service could not be saved. Check your connection and try again.',
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
                     );
                     return;
                   }
@@ -224,8 +242,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 .toList();
             final autoDescription =
                 selectedServices.map((s) => s.name).join(' + ');
-            final originalTotalPrice =
-                selectedServices.fold(0.0, (sum, s) => sum + s.price);
+            final originalTotalPrice = selectedServices.fold(
+              0.0,
+              (sum, s) => sum + s.price,
+            );
 
             return Padding(
               padding: EdgeInsets.only(
@@ -239,30 +259,38 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Create Power Combo Offer',
-                        style: AppTypography.screenTitle),
+                    const Text(
+                      'Create Power Combo Offer',
+                      style: AppTypography.screenTitle,
+                    ),
                     const SizedBox(height: 16),
-                    const Text('COMBO NAME',
-                        style: AppTypography.sectionEyebrow),
+                    const Text(
+                      'COMBO NAME',
+                      style: AppTypography.sectionEyebrow,
+                    ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: nameController,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.darkNeutral),
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.darkNeutral,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'e.g. Executive Grooming Package',
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
 
                     // Predefined Service Checkbox Selector
-                    const Text('SELECT INCLUDED SERVICES',
-                        style: AppTypography.sectionEyebrow),
+                    const Text(
+                      'SELECT INCLUDED SERVICES',
+                      style: AppTypography.sectionEyebrow,
+                    ),
                     const SizedBox(height: 6),
                     Container(
                       constraints: const BoxConstraints(maxHeight: 200),
@@ -275,22 +303,31 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         shrinkWrap: true,
                         itemCount: servicesList.length,
                         separatorBuilder: (_, __) => const Divider(
-                            height: 1, color: AppColors.borderLight),
+                          height: 1,
+                          color: AppColors.borderLight,
+                        ),
                         itemBuilder: (context, index) {
                           final service = servicesList[index];
-                          final isSelected =
-                              selectedServiceIds.contains(service.id);
+                          final isSelected = selectedServiceIds.contains(
+                            service.id,
+                          );
                           return CheckboxListTile(
                             activeColor: AppColors.primaryGoldDark,
-                            title: Text(service.name,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: AppColors.darkNeutral)),
+                            title: Text(
+                              service.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: AppColors.darkNeutral,
+                              ),
+                            ),
                             subtitle: Text(
-                                '₹${service.price.toInt()} · ${service.durationMinutes} mins',
-                                style: const TextStyle(
-                                    fontSize: 12, color: AppColors.textMuted)),
+                              '₹${service.price.toInt()} · ${service.durationMinutes} mins',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
                             value: isSelected,
                             onChanged: (bool? checked) {
                               setModalState(() {
@@ -301,11 +338,14 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                 }
 
                                 final newSel = servicesList
-                                    .where((s) =>
-                                        selectedServiceIds.contains(s.id))
+                                    .where(
+                                      (s) => selectedServiceIds.contains(s.id),
+                                    )
                                     .toList();
-                                final newTotal =
-                                    newSel.fold(0.0, (sum, s) => sum + s.price);
+                                final newTotal = newSel.fold(
+                                  0.0,
+                                  (sum, s) => sum + s.price,
+                                );
                                 if (newTotal > 0) {
                                   final discounted =
                                       (newTotal * 0.8).roundToDouble();
@@ -334,15 +374,18 @@ class _ServicesScreenState extends State<ServicesScreen> {
                             Text(
                               'Includes: $autoDescription',
                               style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.darkNeutral),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.darkNeutral,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               'Original Sum: ₹${originalTotalPrice.toInt()}',
                               style: const TextStyle(
-                                  fontSize: 11, color: AppColors.textMuted),
+                                fontSize: 11,
+                                color: AppColors.textMuted,
+                              ),
                             ),
                           ],
                         ),
@@ -356,21 +399,25 @@ class _ServicesScreenState extends State<ServicesScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('OFFER PRICE (₹)',
-                                  style: AppTypography.sectionEyebrow),
+                              const Text(
+                                'OFFER PRICE (₹)',
+                                style: AppTypography.sectionEyebrow,
+                              ),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: priceController,
                                 keyboardType: TextInputType.number,
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.darkNeutral),
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.darkNeutral,
+                                ),
                                 decoration: InputDecoration(
                                   hintText: '699',
                                   filled: true,
                                   fillColor: Colors.white,
                                   border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12)),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
                             ],
@@ -381,20 +428,24 @@ class _ServicesScreenState extends State<ServicesScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('DISCOUNT TAG',
-                                  style: AppTypography.sectionEyebrow),
+                              const Text(
+                                'DISCOUNT TAG',
+                                style: AppTypography.sectionEyebrow,
+                              ),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: discountController,
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.darkNeutral),
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.darkNeutral,
+                                ),
                                 decoration: InputDecoration(
                                   hintText: 'SAVE 20%',
                                   filled: true,
                                   fillColor: Colors.white,
                                   border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12)),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
                             ],
@@ -407,16 +458,19 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       text: 'Publish Combo Offer',
                       onPressed: () async {
                         final name = nameController.text.trim();
-                        final price =
-                            double.tryParse(priceController.text.trim());
+                        final price = double.tryParse(
+                          priceController.text.trim(),
+                        );
 
                         if (name.isEmpty ||
                             price == null ||
                             selectedServiceIds.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text(
-                                    'Please select at least 1 service, enter combo name and valid offer price.')),
+                              content: Text(
+                                'Please select at least 1 service, enter combo name and valid offer price.',
+                              ),
+                            ),
                           );
                           return;
                         }
@@ -435,9 +489,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text(
-                                    'Combo could not be published. Check your connection and try again.'),
-                                backgroundColor: Colors.red),
+                              content: Text(
+                                'Combo could not be published. Check your connection and try again.',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
                           );
                           return;
                         }
@@ -479,12 +535,15 @@ class _ServicesScreenState extends State<ServicesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('MENU MANAGEMENT',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textMuted,
-                        letterSpacing: 1.1)),
+                Text(
+                  'MENU MANAGEMENT',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textMuted,
+                    letterSpacing: 1.1,
+                  ),
+                ),
                 SizedBox(height: 2),
                 Text('Services & Combos', style: AppTypography.screenTitle),
               ],
@@ -499,8 +558,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   boxShadow: const [AppShadows.cardShadow],
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.add_rounded,
-                      color: AppColors.darkNeutral, size: 22),
+                  icon: const Icon(
+                    Icons.add_rounded,
+                    color: AppColors.darkNeutral,
+                    size: 22,
+                  ),
                   onPressed: () {
                     if (_selectedTab == 0) {
                       _showAddServiceModal(context);
@@ -517,6 +579,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (state is PartnerServicesLoadedState && state.isOffline) ...[
+                  const _OfflineDataBanner(),
+                  const SizedBox(height: AppSpacing.md),
+                ],
                 // Tabs: Services vs Combos
                 Row(
                   children: [
@@ -583,22 +649,29 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 40),
                         child: Column(
                           children: [
-                            Icon(Icons.content_cut_rounded,
-                                size: 48,
-                                color:
-                                    AppColors.textMuted.withValues(alpha: 0.5)),
+                            Icon(
+                              Icons.content_cut_rounded,
+                              size: 48,
+                              color: AppColors.textMuted.withValues(alpha: 0.5),
+                            ),
                             const SizedBox(height: 12),
-                            const Text('No Services Added Yet',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.darkNeutral)),
+                            const Text(
+                              'No Services Added Yet',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.darkNeutral,
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             const Text(
-                                'Tap the + button in the top right to add your salon service & price.',
-                                style: TextStyle(
-                                    fontSize: 12, color: AppColors.textMuted),
-                                textAlign: TextAlign.center),
+                              'Tap the + button in the top right to add your salon service & price.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ],
                         ),
                       ),
@@ -620,17 +693,22 @@ class _ServicesScreenState extends State<ServicesScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(service.name,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                        color: AppColors.darkNeutral)),
+                                Text(
+                                  service.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: AppColors.darkNeutral,
+                                  ),
+                                ),
                                 const SizedBox(height: 2),
                                 Text(
-                                    '₹${service.price.toInt()} · ${service.durationMinutes} mins',
-                                    style: const TextStyle(
-                                        fontSize: 13,
-                                        color: AppColors.textMuted)),
+                                  '₹${service.price.toInt()} · ${service.durationMinutes} mins',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
                               ],
                             ),
                             Switch(
@@ -643,9 +721,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                 if (!saved && context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                        content: Text(
-                                            'Availability could not be updated. Please try again.'),
-                                        backgroundColor: Colors.red),
+                                      content: Text(
+                                        'Availability could not be updated. Please try again.',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
                                   );
                                 }
                               },
@@ -661,22 +741,29 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 40),
                         child: Column(
                           children: [
-                            Icon(Icons.auto_awesome_rounded,
-                                size: 48,
-                                color:
-                                    AppColors.textMuted.withValues(alpha: 0.5)),
+                            Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 48,
+                              color: AppColors.textMuted.withValues(alpha: 0.5),
+                            ),
                             const SizedBox(height: 12),
-                            const Text('No Power Combos Created Yet',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.darkNeutral)),
+                            const Text(
+                              'No Power Combos Created Yet',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.darkNeutral,
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             const Text(
-                                'Tap the + button in the top right to bundle services into a combo offer.',
-                                style: TextStyle(
-                                    fontSize: 12, color: AppColors.textMuted),
-                                textAlign: TextAlign.center),
+                              'Tap the + button in the top right to bundle services into a combo offer.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ],
                         ),
                       ),
@@ -699,7 +786,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.primaryGold,
                                     borderRadius: BorderRadius.circular(8),
@@ -707,9 +796,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                   child: Text(
                                     combo.discountTag,
                                     style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.darkNeutral),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.darkNeutral,
+                                    ),
                                   ),
                                 ),
                                 Row(
@@ -743,15 +833,22 @@ class _ServicesScreenState extends State<ServicesScreen> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            Text(combo.name,
-                                style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
+                            Text(
+                              combo.name,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            Text(combo.description,
-                                style: const TextStyle(
-                                    fontSize: 13, color: Colors.white70)),
+                            Text(
+                              combo.description,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.white70,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -761,6 +858,34 @@ class _ServicesScreenState extends State<ServicesScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _OfflineDataBanner extends StatelessWidget {
+  const _OfflineDataBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.cloud_off_rounded, size: 18, color: Color(0xFFC2410C)),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Offline: showing saved data. Changes require a connection.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF9A3412)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

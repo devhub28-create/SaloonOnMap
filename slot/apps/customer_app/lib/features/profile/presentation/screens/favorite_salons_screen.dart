@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:api_client/api_client.dart';
+
 import '../../../auth/cubit/auth_cubit.dart';
 
 class FavoriteSalonsScreen extends StatefulWidget {
@@ -26,8 +27,14 @@ class _FavoriteSalonsScreenState extends State<FavoriteSalonsScreen> {
   Future<void> _loadFavorites() async {
     final apiClient = context.read<AuthCubit>().apiClient;
     final prefs = await SharedPreferences.getInstance();
-    final ids = (prefs.getStringList('favorite_salon_ids') ?? const []).toSet();
+    var ids = (prefs.getStringList('favorite_salon_ids') ?? const []).toSet();
     try {
+      final profile = await apiClient.getCustomerProfile();
+      final remoteIds = profile['favoriteSalonIds'];
+      if (remoteIds is List) {
+        ids = remoteIds.map((id) => id.toString()).toSet();
+        await prefs.setStringList('favorite_salon_ids', ids.toList());
+      }
       final salons = await apiClient.getSalons();
       if (!mounted) return;
       setState(() {
@@ -44,9 +51,24 @@ class _FavoriteSalonsScreenState extends State<FavoriteSalonsScreen> {
 
   Future<void> _removeFavorite(int index) async {
     final salon = _favorites[index];
+    final apiClient = context.read<AuthCubit>().apiClient;
     final prefs = await SharedPreferences.getInstance();
     final ids = (prefs.getStringList('favorite_salon_ids') ?? const []).toSet();
     ids.remove(salon['id']?.toString());
+    try {
+      await apiClient.updateCustomerProfile({
+        'favoriteSalonIds': ids.toList(),
+      });
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not update favorites. Please try again.'),
+          ),
+        );
+      }
+      return;
+    }
     await prefs.setStringList('favorite_salon_ids', ids.toList());
     if (mounted) setState(() => _favorites.removeAt(index));
   }
@@ -59,8 +81,11 @@ class _FavoriteSalonsScreenState extends State<FavoriteSalonsScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.darkNeutral, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.darkNeutral,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: const Text('Favorite Salons', style: AppTypography.screenTitle),
@@ -72,20 +97,26 @@ class _FavoriteSalonsScreenState extends State<FavoriteSalonsScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.favorite_border_rounded,
-                          size: 64,
-                          color: AppColors.textMuted.withValues(alpha: 0.5)),
+                      Icon(
+                        Icons.favorite_border_rounded,
+                        size: 64,
+                        color: AppColors.textMuted.withValues(alpha: 0.5),
+                      ),
                       const SizedBox(height: 16),
-                      const Text('No Saved Salons Yet',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.darkNeutral)),
+                      const Text(
+                        'No Saved Salons Yet',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkNeutral,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       const Text(
-                          'Tap the heart icon on any salon to save it for quick booking.',
-                          style: TextStyle(
-                              fontSize: 13, color: AppColors.textMuted)),
+                        'Tap the heart icon on any salon to save it for quick booking.',
+                        style:
+                            TextStyle(fontSize: 13, color: AppColors.textMuted),
+                      ),
                     ],
                   ),
                 )
@@ -108,10 +139,12 @@ class _FavoriteSalonsScreenState extends State<FavoriteSalonsScreen> {
                             children: [
                               ClipRRect(
                                 borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(AppRadius.card)),
+                                  top: Radius.circular(AppRadius.card),
+                                ),
                                 child: Image.network(
                                   ApiConfig.formatImageUrl(
-                                      salon['cover_image']?.toString()),
+                                    salon['cover_image']?.toString(),
+                                  ),
                                   height: 140,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
@@ -119,8 +152,11 @@ class _FavoriteSalonsScreenState extends State<FavoriteSalonsScreen> {
                                     height: 140,
                                     color: AppColors.darkNeutral,
                                     child: const Center(
-                                      child: Icon(Icons.storefront_rounded,
-                                          color: AppColors.primaryGold, size: 36),
+                                      child: Icon(
+                                        Icons.storefront_rounded,
+                                        color: AppColors.primaryGold,
+                                        size: 36,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -133,8 +169,10 @@ class _FavoriteSalonsScreenState extends State<FavoriteSalonsScreen> {
                                     _removeFavorite(index);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                          content: Text(
-                                              '${salon['name']} removed from favorites')),
+                                        content: Text(
+                                          '${salon['name']} removed from favorites',
+                                        ),
+                                      ),
                                     );
                                   },
                                   child: Container(
@@ -143,8 +181,11 @@ class _FavoriteSalonsScreenState extends State<FavoriteSalonsScreen> {
                                       color: Colors.white,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.favorite_rounded,
-                                        color: Colors.red, size: 18),
+                                    child: const Icon(
+                                      Icons.favorite_rounded,
+                                      color: Colors.red,
+                                      size: 18,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -159,60 +200,79 @@ class _FavoriteSalonsScreenState extends State<FavoriteSalonsScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(salon['name'],
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              color: AppColors.darkNeutral)),
+                                      Text(
+                                        salon['name'],
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: AppColors.darkNeutral,
+                                        ),
+                                      ),
                                       const SizedBox(height: 4),
-                                      Text(salon['address'],
-                                          style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppColors.textMuted)),
+                                      Text(
+                                        salon['address'],
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.textMuted,
+                                        ),
+                                      ),
                                       const SizedBox(height: 6),
                                       Row(
                                         children: [
-                                          const Icon(Icons.star_rounded,
-                                              color: AppColors.primaryGoldDark,
-                                              size: 16),
+                                          const Icon(
+                                            Icons.star_rounded,
+                                            color: AppColors.primaryGoldDark,
+                                            size: 16,
+                                          ),
                                           const SizedBox(width: 4),
                                           Text(
-                                              '${salon['rating'] ?? 0} (${salon['review_count'] ?? 0})',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12)),
+                                            '${salon['rating'] ?? 0} (${salon['review_count'] ?? 0})',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
                                           const SizedBox(width: 12),
                                           Text(
-                                              salon['formattedDistance']
-                                                      ?.toString() ??
-                                                  '',
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: AppColors.textMuted)),
+                                            salon['formattedDistance']
+                                                    ?.toString() ??
+                                                '',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.textMuted,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ],
                                   ),
                                 ),
                                 ElevatedButton(
-                                  onPressed: () => context.go('/salon-detail',
-                                      extra: {
-                                        'salonId': salon['id'],
-                                        'salon': salon
-                                      }),
+                                  onPressed: () => context.go(
+                                    '/salon-detail',
+                                    extra: {
+                                      'salonId': salon['id'],
+                                      'salon': salon
+                                    },
+                                  ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.darkNeutral,
                                     foregroundColor: AppColors.primaryGold,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 10),
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
                                   ),
-                                  child: const Text('Book Now',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13)),
+                                  child: const Text(
+                                    'Book Now',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),

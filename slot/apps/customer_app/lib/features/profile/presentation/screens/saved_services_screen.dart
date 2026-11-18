@@ -21,8 +21,11 @@ class _SavedServicesScreenState extends State<SavedServicesScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.darkNeutral, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.darkNeutral,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
         title: const Text('Saved Services', style: AppTypography.screenTitle),
@@ -34,20 +37,26 @@ class _SavedServicesScreenState extends State<SavedServicesScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.content_cut_rounded,
-                          size: 64,
-                          color: AppColors.textMuted.withValues(alpha: 0.5)),
+                      Icon(
+                        Icons.content_cut_rounded,
+                        size: 64,
+                        color: AppColors.textMuted.withValues(alpha: 0.5),
+                      ),
                       const SizedBox(height: 16),
-                      const Text('No Saved Services Yet',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.darkNeutral)),
+                      const Text(
+                        'No Saved Services Yet',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkNeutral,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       const Text(
-                          'Bookmark services from salon profiles for quick access.',
-                          style: TextStyle(
-                              fontSize: 13, color: AppColors.textMuted)),
+                        'Bookmark services from salon profiles for quick access.',
+                        style:
+                            TextStyle(fontSize: 13, color: AppColors.textMuted),
+                      ),
                     ],
                   ),
                 )
@@ -73,52 +82,72 @@ class _SavedServicesScreenState extends State<SavedServicesScreen> {
                               color: const Color(0xFFFEF9C3),
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: const Icon(Icons.content_cut_rounded,
-                                color: AppColors.primaryGoldDark, size: 24),
+                            child: const Icon(
+                              Icons.content_cut_rounded,
+                              color: AppColors.primaryGoldDark,
+                              size: 24,
+                            ),
                           ),
                           const SizedBox(width: AppSpacing.md),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(service['title'],
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        color: AppColors.darkNeutral)),
+                                Text(
+                                  service['title'],
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: AppColors.darkNeutral,
+                                  ),
+                                ),
                                 const SizedBox(height: 2),
-                                Text(service['salon'],
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textMuted)),
+                                Text(
+                                  service['salon'],
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
                                 const SizedBox(height: 6),
                                 Row(
                                   children: [
-                                    Text(service['duration'],
-                                        style: const TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.textMuted)),
+                                    Text(
+                                      service['duration'],
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
                                     const SizedBox(width: 8),
-                                    Text(service['price'],
-                                        style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.darkNeutral)),
+                                    Text(
+                                      service['price'],
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.darkNeutral,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ],
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.bookmark_remove_outlined,
-                                color: Colors.redAccent, size: 20),
+                            icon: const Icon(
+                              Icons.bookmark_remove_outlined,
+                              color: Colors.redAccent,
+                              size: 20,
+                            ),
                             onPressed: () {
                               setState(() => _savedServices.removeAt(index));
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                    content: Text(
-                                        '${service['title']} removed from saved services')),
+                                  content: Text(
+                                    '${service['title']} removed from saved services',
+                                  ),
+                                ),
                               );
                             },
                           ),

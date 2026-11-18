@@ -20,10 +20,14 @@ class AiConsentDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFD49B28).withOpacity(0.15),
+              color: const Color(0xFFD49B28).withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.shield_outlined, color: Color(0xFFD49B28), size: 24),
+            child: const Icon(
+              Icons.shield_outlined,
+              color: Color(0xFFD49B28),
+              size: 24,
+            ),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -45,7 +49,11 @@ class AiConsentDialog extends StatelessWidget {
           children: [
             const Text(
               'SLOT AI Style Studio uses a FREE open-weight neural inpainting model running locally on the private system.',
-              style: TextStyle(fontSize: 14, color: Color(0xFF4A443B), height: 1.4),
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF4A443B),
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 16),
             _buildPoint(
@@ -76,13 +84,18 @@ class AiConsentDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancel', style: TextStyle(color: Color(0xFF7A7265))),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: Color(0xFF7A7265)),
+          ),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFD49B28),
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           onPressed: () => Navigator.of(context).pop(true),
           child: const Text('I Agree & Consent'),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../auth/cubit/auth_cubit.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -14,7 +15,7 @@ class ProfileScreen extends StatelessWidget {
         ? authState.user
         : <String, dynamic>{};
     final userName = user['name'] ?? 'Customer';
-    final userPhone = user['phone'] ?? '+91 98765 43210';
+    final userPhone = user['phone'] ?? '';
     final userInitials = userName.isNotEmpty
         ? userName.split(' ').map((e) => e[0]).take(2).join('').toUpperCase()
         : 'C';
@@ -43,8 +44,12 @@ class ProfileScreen extends StatelessWidget {
               border: Border.all(color: AppColors.borderLight),
             ),
             child: IconButton(
-              icon: const Icon(Icons.settings_outlined,
-                  color: AppColors.darkNeutral, size: 20),
+              tooltip: 'Settings',
+              icon: const Icon(
+                Icons.settings_outlined,
+                color: AppColors.darkNeutral,
+                size: 20,
+              ),
               onPressed: () => context.push('/profile/settings'),
             ),
           ),
@@ -75,9 +80,10 @@ class ProfileScreen extends StatelessWidget {
                       child: Text(
                         userInitials,
                         style: const TextStyle(
-                            color: AppColors.darkNeutral,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold),
+                          color: AppColors.darkNeutral,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -86,18 +92,24 @@ class ProfileScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(userName,
-                            style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white)),
+                        Text(
+                          userName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                         const SizedBox(height: 2),
                         Text(
-                            authState is AuthAuthenticatedState
-                                ? userPhone
-                                : 'Sign in to sync your bookings',
-                            style: const TextStyle(
-                                fontSize: 13, color: Colors.white70)),
+                          authState is AuthAuthenticatedState
+                              ? userPhone
+                              : 'Sign in to sync your bookings',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.white70,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         GestureDetector(
                           onTap: () {
@@ -112,9 +124,10 @@ class ProfileScreen extends StatelessWidget {
                                 ? 'Edit profile'
                                 : 'Sign In / Register →',
                             style: const TextStyle(
-                                color: AppColors.primaryGold,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold),
+                              color: AppColors.primaryGold,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -125,30 +138,66 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            _optionTile(context, Icons.calendar_today_rounded, 'My bookings',
-                onTap: () => context.push('/my-bookings')),
-            _optionTile(context, Icons.auto_awesome, 'AI Style Studio (Virtual Looks)',
-                onTap: () => context.push('/ai-style-studio')),
-            _optionTile(context, Icons.style_outlined, 'My Saved AI Looks',
-                onTap: () => context.push('/saved-ai-looks')),
             _optionTile(
-                context, Icons.favorite_border_rounded, 'Favorite salons',
-                onTap: () => context.push('/profile/favorites')),
-            _optionTile(context, Icons.card_giftcard_rounded, 'Invite friends',
-                onTap: () => context.push('/profile/invite')),
+              context,
+              Icons.calendar_today_rounded,
+              'My bookings',
+              onTap: () => context.push('/my-bookings'),
+            ),
             _optionTile(
-                context, Icons.confirmation_number_outlined, 'Offers & coupons',
-                onTap: () => context.push('/offers')),
+              context,
+              Icons.auto_awesome,
+              'AI Style Studio (Virtual Looks)',
+              onTap: () => context.push('/ai-style-studio'),
+            ),
             _optionTile(
-                context, Icons.notifications_none_rounded, 'Notifications',
-                onTap: () => context.push('/profile/notifications')),
-            _optionTile(context, Icons.payment_rounded, 'Payment methods',
-                onTap: () => context.push('/profile/payment-methods')),
+              context,
+              Icons.style_outlined,
+              'My Saved AI Looks',
+              onTap: () => context.push('/saved-ai-looks'),
+            ),
             _optionTile(
-                context, Icons.chat_bubble_outline_rounded, 'Help & support',
-                onTap: () => context.push('/profile/help')),
-            _optionTile(context, Icons.shield_outlined, 'Privacy & terms',
-                onTap: () => context.push('/profile/privacy')),
+              context,
+              Icons.favorite_border_rounded,
+              'Favorite salons',
+              onTap: () => context.push('/profile/favorites'),
+            ),
+            _optionTile(
+              context,
+              Icons.card_giftcard_rounded,
+              'Invite friends',
+              onTap: () => context.push('/profile/invite'),
+            ),
+            _optionTile(
+              context,
+              Icons.confirmation_number_outlined,
+              'Offers & coupons',
+              onTap: () => context.push('/offers'),
+            ),
+            _optionTile(
+              context,
+              Icons.notifications_none_rounded,
+              'Notifications',
+              onTap: () => context.push('/profile/notifications'),
+            ),
+            _optionTile(
+              context,
+              Icons.payment_rounded,
+              'Payment methods',
+              onTap: () => context.push('/profile/payment-methods'),
+            ),
+            _optionTile(
+              context,
+              Icons.chat_bubble_outline_rounded,
+              'Help & support',
+              onTap: () => context.push('/profile/help'),
+            ),
+            _optionTile(
+              context,
+              Icons.shield_outlined,
+              'Privacy & terms',
+              onTap: () => context.push('/profile/privacy'),
+            ),
             const SizedBox(height: AppSpacing.lg),
 
             // Logout or Login/Signup Action Button
@@ -166,13 +215,16 @@ class ProfileScreen extends StatelessWidget {
                         foregroundColor: const Color(0xFFDC2626),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: const Text(
                         'Log out',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
                     )
                   : ElevatedButton(
@@ -182,13 +234,16 @@ class ProfileScreen extends StatelessWidget {
                         foregroundColor: AppColors.primaryGold,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: const Text(
                         'Sign In or Create Account →',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
             ),
@@ -208,20 +263,27 @@ class ProfileScreen extends StatelessWidget {
           SlotNavItem(icon: Icons.explore_outlined, label: 'Explore'),
           SlotNavItem(icon: Icons.calendar_today_rounded, label: 'Bookings'),
           SlotNavItem(
-              icon: Icons.confirmation_number_outlined, label: 'Offers'),
+            icon: Icons.confirmation_number_outlined,
+            label: 'Offers',
+          ),
           SlotNavItem(icon: Icons.person_outline_rounded, label: 'Profile'),
         ],
       ),
     );
   }
 
-  Widget _optionTile(BuildContext context, IconData icon, String title,
-      {required VoidCallback onTap}) {
+  Widget _optionTile(
+    BuildContext context,
+    IconData icon,
+    String title, {
+    required VoidCallback onTap,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       decoration: const BoxDecoration(
         border: Border(
-            bottom: BorderSide(color: AppColors.borderLight, width: 0.5)),
+          bottom: BorderSide(color: AppColors.borderLight, width: 0.5),
+        ),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -233,13 +295,19 @@ class ProfileScreen extends StatelessWidget {
           ),
           child: Icon(icon, color: AppColors.primaryGoldDark, size: 20),
         ),
-        title: Text(title,
-            style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                color: AppColors.darkNeutral)),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded,
-            size: 14, color: AppColors.textMuted),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: AppColors.darkNeutral,
+          ),
+        ),
+        trailing: const Icon(
+          Icons.arrow_forward_ios_rounded,
+          size: 14,
+          color: AppColors.textMuted,
+        ),
         onTap: onTap,
       ),
     );

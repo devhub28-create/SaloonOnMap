@@ -38,7 +38,8 @@ class CustomerApiUrls {
   static const String aiStyleSavedLooksEndpoint = '/style-studio/saved-looks';
 
   // Reverse Geocoding
-  static const String reverseGeocodeUrl = 'https://nominatim.openstreetmap.org/reverse';
+  static const String reverseGeocodeUrl =
+      'https://nominatim.openstreetmap.org/reverse';
 
   // ==========================================
   // Computed Full URLs: baseUrl + endpoint
@@ -52,7 +53,8 @@ class CustomerApiUrls {
   static String get homeUrl => '$baseUrl$homeEndpoint';
   static String get offersUrl => '$baseUrl$offersEndpoint';
   static String get notificationsUrl => '$baseUrl$notificationsEndpoint';
-  static String get notificationsReadAllUrl => '$baseUrl$notificationsReadAllEndpoint';
+  static String get notificationsReadAllUrl =>
+      '$baseUrl$notificationsReadAllEndpoint';
 
   static String get salonsUrl => '$baseUrl$salonsEndpoint';
   static String get bookingsUrl => '$baseUrl$bookingsEndpoint';
@@ -64,19 +66,29 @@ class CustomerApiUrls {
   static String get aiStyleOptionsUrl => '$baseUrl$aiStyleOptionsEndpoint';
   static String get aiStyleHealthUrl => '$baseUrl$aiStyleHealthEndpoint';
   static String get aiStyleAnalyzeUrl => '$baseUrl$aiStyleAnalyzeEndpoint';
-  static String get aiStyleGenerationsUrl => '$baseUrl$aiStyleGenerationsEndpoint';
+  static String get aiStyleGenerationsUrl =>
+      '$baseUrl$aiStyleGenerationsEndpoint';
   static String get aiStyleSaveLookUrl => '$baseUrl$aiStyleSaveLookEndpoint';
-  static String get aiStyleSavedLooksUrl => '$baseUrl$aiStyleSavedLooksEndpoint';
+  static String get aiStyleSavedLooksUrl =>
+      '$baseUrl$aiStyleSavedLooksEndpoint';
 
   // ==========================================
   // Dynamic Full URLs with Path Parameters
   // ==========================================
-  static String salonDetailsUrl(String salonId) => '$baseUrl$salonsEndpoint/$salonId';
-  static String availableSlotsUrl(String salonId) => '$baseUrl$salonsEndpoint/$salonId/available-slots';
-  static String cancelBookingUrl(String bookingId) => '$baseUrl$bookingsEndpoint/$bookingId/cancel';
-  static String bookingStatusUrl(String bookingId) => '$baseUrl$bookingsEndpoint/$bookingId/status';
-  static String salonReviewsUrl(String salonId) => '$baseUrl$salonsEndpoint/$salonId/reviews';
-  static String bookingReviewUrl(String bookingId) => '$baseUrl$reviewsEndpoint/booking/$bookingId';
-  static String aiStyleJobUrl(String jobId) => '$baseUrl$aiStyleGenerationsEndpoint/$jobId';
-  static String aiStyleLooksUrl(String jobId) => '$baseUrl$aiStyleGenerationsEndpoint/$jobId/looks';
+  static String salonDetailsUrl(String salonId) =>
+      '$baseUrl$salonsEndpoint/$salonId';
+  static String availableSlotsUrl(String salonId) =>
+      '$baseUrl$salonsEndpoint/$salonId/available-slots';
+  static String cancelBookingUrl(String bookingId) =>
+      '$baseUrl$bookingsEndpoint/$bookingId/cancel';
+  static String bookingStatusUrl(String bookingId) =>
+      '$baseUrl$bookingsEndpoint/$bookingId/status';
+  static String salonReviewsUrl(String salonId) =>
+      '$baseUrl$salonsEndpoint/$salonId/reviews';
+  static String bookingReviewUrl(String bookingId) =>
+      '$baseUrl$reviewsEndpoint/booking/$bookingId';
+  static String aiStyleJobUrl(String jobId) =>
+      '$baseUrl$aiStyleGenerationsEndpoint/$jobId';
+  static String aiStyleLooksUrl(String jobId) =>
+      '$baseUrl$aiStyleGenerationsEndpoint/$jobId/looks';
 }

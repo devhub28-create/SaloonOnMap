@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../auth/cubit/auth_cubit.dart';
 
 class MyBookingsScreen extends StatefulWidget {
@@ -27,8 +28,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       final apiClient = context.read<AuthCubit>().apiClient;
       final customerId = context.read<AuthCubit>().user?['id']?.toString();
       if (customerId == null) throw StateError('Customer session is missing.');
-      final bookings =
-          await apiClient.getCustomerBookings(customerId: customerId);
+      final bookings = await apiClient.getCustomerBookings(
+        customerId: customerId,
+      );
       if (mounted) {
         setState(() {
           _bookings = bookings;
@@ -47,10 +49,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     final upcomingList = _bookings
-        .where((b) =>
-            (b['status'] ?? 'CONFIRMED') == 'CONFIRMED' ||
-            (b['status'] ?? '') == 'WAITING' ||
-            (b['status'] ?? '') == 'IN_SERVICE')
+        .where(
+          (b) =>
+              (b['status'] ?? 'CONFIRMED') == 'CONFIRMED' ||
+              (b['status'] ?? '') == 'WAITING' ||
+              (b['status'] ?? '') == 'IN_SERVICE',
+        )
         .toList();
     final completedList =
         _bookings.where((b) => (b['status'] ?? '') == 'DONE').toList();
@@ -77,8 +81,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             if (_isLoading)
               const Expanded(
                 child: Center(
-                    child: CircularProgressIndicator(
-                        color: AppColors.primaryGold)),
+                  child: CircularProgressIndicator(
+                    color: AppColors.primaryGold,
+                  ),
+                ),
               )
             else if (_selectedTab == 0)
               Expanded(
@@ -95,8 +101,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                               (b['status'] ?? 'Confirmed').toString();
 
                           return Container(
-                            margin:
-                                const EdgeInsets.only(bottom: AppSpacing.md),
+                            margin: const EdgeInsets.only(
+                              bottom: AppSpacing.md,
+                            ),
                             child: GestureDetector(
                               onTap: () => _showBookingDetailsBottomSheet(b),
                               child: SlotBookingCard(
@@ -122,16 +129,27 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.calendar_today_outlined,
-                                size: 40, color: AppColors.primaryGoldDark),
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 40,
+                              color: AppColors.primaryGoldDark,
+                            ),
                             SizedBox(height: 12),
-                            Text('No upcoming visits yet',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text(
+                              'No upcoming visits yet',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                             SizedBox(height: 4),
-                            Text('Your active bookings will appear here.',
-                                style: TextStyle(
-                                    fontSize: 12, color: AppColors.textMuted)),
+                            Text(
+                              'Your active bookings will appear here.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -144,18 +162,20 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         itemBuilder: (context, index) {
                           final b = completedList[index];
                           return Container(
-                            margin:
-                                const EdgeInsets.only(bottom: AppSpacing.md),
+                            margin: const EdgeInsets.only(
+                              bottom: AppSpacing.md,
+                            ),
                             child: Column(
                               children: [
                                 GestureDetector(
-                                  onTap: () => _showBookingDetailsBottomSheet(b),
+                                  onTap: () =>
+                                      _showBookingDetailsBottomSheet(b),
                                   child: SlotBookingCard(
                                     title: b['salonName'] ??
                                         b['salon']?['name'] ??
                                         'Salon',
-                                    services:
-                                        (b['serviceName'] ?? 'Service').toString(),
+                                    services: (b['serviceName'] ?? 'Service')
+                                        .toString(),
                                     time: _formatDateTime(b['startAt']),
                                     seat: _formatSeat(b),
                                     status: 'Completed',
@@ -166,22 +186,29 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                                   width: double.infinity,
                                   child: OutlinedButton.icon(
                                     onPressed: () => _showReviewModal(b),
-                                    icon: const Icon(Icons.star_rounded,
-                                        color: AppColors.primaryGoldDark,
-                                        size: 18),
-                                    label: const Text('★ Rate & Review Visit',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                            color: AppColors.darkNeutral)),
+                                    icon: const Icon(
+                                      Icons.star_rounded,
+                                      color: AppColors.primaryGoldDark,
+                                      size: 18,
+                                    ),
+                                    label: const Text(
+                                      '★ Rate & Review Visit',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: AppColors.darkNeutral,
+                                      ),
+                                    ),
                                     style: OutlinedButton.styleFrom(
                                       side: const BorderSide(
-                                          color: AppColors.borderLight),
+                                        color: AppColors.borderLight,
+                                      ),
                                       shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(14)),
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
                                       padding: const EdgeInsets.symmetric(
-                                          vertical: 10),
+                                        vertical: 10,
+                                      ),
                                       backgroundColor: Colors.white,
                                     ),
                                   ),
@@ -202,16 +229,27 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.task_alt_rounded,
-                                size: 40, color: AppColors.statusAvailableText),
+                            Icon(
+                              Icons.task_alt_rounded,
+                              size: 40,
+                              color: AppColors.statusAvailableText,
+                            ),
                             SizedBox(height: 12),
-                            Text('No completed visits yet',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text(
+                              'No completed visits yet',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                             SizedBox(height: 4),
-                            Text('Your booking history will appear here.',
-                                style: TextStyle(
-                                    fontSize: 12, color: AppColors.textMuted)),
+                            Text(
+                              'Your booking history will appear here.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -224,8 +262,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         itemBuilder: (context, index) {
                           final b = cancelledList[index];
                           return Container(
-                            margin:
-                                const EdgeInsets.only(bottom: AppSpacing.md),
+                            margin: const EdgeInsets.only(
+                              bottom: AppSpacing.md,
+                            ),
                             child: GestureDetector(
                               onTap: () => _showBookingDetailsBottomSheet(b),
                               child: SlotBookingCard(
@@ -253,17 +292,27 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.cancel_outlined,
-                                size: 40,
-                                color: AppColors.statusDestructiveText),
+                            Icon(
+                              Icons.cancel_outlined,
+                              size: 40,
+                              color: AppColors.statusDestructiveText,
+                            ),
                             SizedBox(height: 12),
-                            Text('No cancelled visits',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text(
+                              'No cancelled visits',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                             SizedBox(height: 4),
-                            Text('Any cancelled bookings will appear here.',
-                                style: TextStyle(
-                                    fontSize: 12, color: AppColors.textMuted)),
+                            Text(
+                              'Any cancelled bookings will appear here.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -284,7 +333,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           SlotNavItem(icon: Icons.explore_outlined, label: 'Explore'),
           SlotNavItem(icon: Icons.calendar_today_rounded, label: 'Bookings'),
           SlotNavItem(
-              icon: Icons.confirmation_number_outlined, label: 'Offers'),
+            icon: Icons.confirmation_number_outlined,
+            label: 'Offers',
+          ),
           SlotNavItem(icon: Icons.person_outline_rounded, label: 'Profile'),
         ],
       ),
@@ -340,24 +391,32 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(salonName,
-                          style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.darkNeutral),
-                          overflow: TextOverflow.ellipsis),
+                      Text(
+                        salonName,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkNeutral,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 2),
-                      Text('Booking Reference: $refCode',
-                          style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textMuted)),
+                      Text(
+                        'Booking Reference: $refCode',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: status == 'CANCELLED'
                         ? const Color(0xFFFEE2E2)
@@ -417,19 +476,26 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   minimumSize: const Size(double.infinity, 50),
                   side: const BorderSide(color: Colors.redAccent),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.button)),
+                    borderRadius: BorderRadius.circular(AppRadius.button),
+                  ),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.cancel_outlined,
-                        color: Colors.redAccent, size: 20),
+                    Icon(
+                      Icons.cancel_outlined,
+                      color: Colors.redAccent,
+                      size: 20,
+                    ),
                     SizedBox(width: 8),
-                    Text('Cancel Booking',
-                        style: TextStyle(
-                            color: Colors.redAccent,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14)),
+                    Text(
+                      'Cancel Booking',
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -455,19 +521,25 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: AppColors.background,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Cancel Booking',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: AppColors.darkNeutral)),
+              Text(
+                'Cancel Booking',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: AppColors.darkNeutral,
+                ),
+              ),
               SizedBox(height: 4),
-              Text('Please tell us why you are cancelling your visit.',
-                  style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+              Text(
+                'Please tell us why you are cancelling your visit.',
+                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+              ),
             ],
           ),
           content: SingleChildScrollView(
@@ -483,7 +555,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 4),
+                          vertical: 8,
+                          horizontal: 4,
+                        ),
                         child: Row(
                           children: [
                             Icon(
@@ -497,11 +571,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: Text(reason,
-                                  style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.darkNeutral)),
+                              child: Text(
+                                reason,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.darkNeutral,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -514,22 +591,29 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogCtx).pop(),
-              child: const Text('Keep Booking',
-                  style: TextStyle(
-                      color: AppColors.textMuted, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Keep Booking',
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             ElevatedButton(
               onPressed: () async {
                 Navigator.of(dialogCtx).pop();
                 try {
                   final apiClient = context.read<AuthCubit>().apiClient;
-                  await apiClient.cancelBooking(bookingId,
-                      reason: selectedReason);
+                  await apiClient.cancelBooking(
+                    bookingId,
+                    reason: selectedReason,
+                  );
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content:
-                            Text('Booking $refCode cancelled successfully.'),
+                        content: Text(
+                          'Booking $refCode cancelled successfully.',
+                        ),
                         backgroundColor: AppColors.darkNeutral,
                       ),
                     );
@@ -537,19 +621,25 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   }
                 } catch (e) {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Could not cancel $refCode: $e')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Could not cancel $refCode: $e')),
+                    );
                   }
                 }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Confirm Cancellation',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Confirm Cancellation',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -563,8 +653,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+          ),
           Flexible(
             child: Text(
               value,
@@ -654,8 +746,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text('Rate your experience to help us improve.',
-                    style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                const Text(
+                  'Rate your experience to help us improve.',
+                  style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                ),
                 const SizedBox(height: AppSpacing.xl),
 
                 // Star Rating Row
@@ -700,8 +794,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Tags
-                const Text('WHAT DID YOU LIKE?',
-                    style: AppTypography.sectionEyebrow),
+                const Text(
+                  'WHAT DID YOU LIKE?',
+                  style: AppTypography.sectionEyebrow,
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -709,18 +805,22 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   children: availableTags.map((tag) {
                     final isTagSelected = selectedTags.contains(tag);
                     return FilterChip(
-                      label: Text(tag,
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isTagSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              color: isTagSelected
-                                  ? AppColors.darkNeutral
-                                  : AppColors.textMuted)),
+                      label: Text(
+                        tag,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isTagSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: isTagSelected
+                              ? AppColors.darkNeutral
+                              : AppColors.textMuted,
+                        ),
+                      ),
                       selected: isTagSelected,
-                      selectedColor:
-                          AppColors.primaryGold.withValues(alpha: 0.3),
+                      selectedColor: AppColors.primaryGold.withValues(
+                        alpha: 0.3,
+                      ),
                       backgroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -745,27 +845,37 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Comment TextField
-                const Text('ADDITIONAL COMMENTS',
-                    style: AppTypography.sectionEyebrow),
+                const Text(
+                  'ADDITIONAL COMMENTS',
+                  style: AppTypography.sectionEyebrow,
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: commentController,
                   maxLines: 3,
                   style: const TextStyle(
-                      fontSize: 14, color: AppColors.darkNeutral),
+                    fontSize: 14,
+                    color: AppColors.darkNeutral,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Share more details about your experience...',
-                    hintStyle:
-                        const TextStyle(fontSize: 13, color: AppColors.textMuted),
+                    hintStyle: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textMuted,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.borderLight),
+                      borderSide: const BorderSide(
+                        color: AppColors.borderLight,
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.borderLight),
+                      borderSide: const BorderSide(
+                        color: AppColors.borderLight,
+                      ),
                     ),
                   ),
                 ),
@@ -803,8 +913,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content:
-                                Text('Failed to submit review: ${e.toString()}'),
+                            content: Text(
+                              'Failed to submit review: ${e.toString()}',
+                            ),
                             backgroundColor: Colors.redAccent,
                           ),
                         );

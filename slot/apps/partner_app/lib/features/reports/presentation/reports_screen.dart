@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:api_client/api_client.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../auth/cubit/partner_auth_cubit.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -36,7 +37,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final salonId =
           authState is PartnerAuthenticated ? authState.salonId : null;
       final res = await _apiClient.getPartnerReports(
-          period: periodStr, salonId: salonId);
+        period: periodStr,
+        salonId: salonId,
+      );
       setState(() {
         _reportsData = res;
         _isLoading = false;
@@ -82,23 +85,32 @@ class _ReportsScreenState extends State<ReportsScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.darkNeutral, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.darkNeutral,
+            size: 20,
+          ),
           onPressed: () => context.pop(),
         ),
-        title:
-            const Text('Reports & Insights', style: AppTypography.screenTitle),
+        title: const Text(
+          'Reports & Insights',
+          style: AppTypography.screenTitle,
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded,
-                color: AppColors.darkNeutral, size: 22),
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: AppColors.darkNeutral,
+              size: 22,
+            ),
             onPressed: _fetchReports,
           ),
         ],
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primaryGold))
+              child: CircularProgressIndicator(color: AppColors.primaryGold),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Column(
@@ -135,36 +147,51 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(periodLabel,
-                                  style: const TextStyle(
-                                      color: AppColors.primaryGold,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.1)),
+                              Text(
+                                periodLabel,
+                                style: const TextStyle(
+                                  color: AppColors.primaryGold,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
                               const SizedBox(height: 8),
-                              Text('₹${totalRevenueNum.toInt()}',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold)),
+                              Text(
+                                '₹${totalRevenueNum.toInt()}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(Icons.north_east_rounded,
-                                      size: 14, color: Color(0xFF16A34A)),
+                                  const Icon(
+                                    Icons.north_east_rounded,
+                                    size: 14,
+                                    color: Color(0xFF16A34A),
+                                  ),
                                   const SizedBox(width: 4),
-                                  Text(revenueChange,
-                                      style: const TextStyle(
-                                          color: Color(0xFF16A34A),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
+                                  Text(
+                                    revenueChange,
+                                    style: const TextStyle(
+                                      color: Color(0xFF16A34A),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.bar_chart_rounded,
-                            color: AppColors.primaryGold, size: 44),
+                        const Icon(
+                          Icons.bar_chart_rounded,
+                          color: AppColors.primaryGold,
+                          size: 44,
+                        ),
                       ],
                     ),
                   ),
@@ -186,7 +213,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         children: rawChartList.map((item) {
                           final dayLabel = item['day']?.toString() ?? '';
                           final val = double.tryParse(
-                                  item['value']?.toString() ?? '0') ??
+                                item['value']?.toString() ?? '0',
+                              ) ??
                               0.0;
                           final factor = maxVal > 0
                               ? (val / maxVal).clamp(0.12, 1.0)
@@ -209,36 +237,55 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('BUSINESS METRICS',
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textMuted,
-                                letterSpacing: 1.1)),
+                        const Text(
+                          'BUSINESS METRICS',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textMuted,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
                         const SizedBox(height: 12),
-                        _insightRow('Total Bookings',
-                            '${metrics['totalBookings'] ?? 0}'),
+                        _insightRow(
+                          'Total Bookings',
+                          '${metrics['totalBookings'] ?? 0}',
+                        ),
                         const Divider(color: AppColors.borderLight),
-                        _insightRow('Completed Visits',
-                            '${metrics['completedBookings'] ?? 0}'),
+                        _insightRow(
+                          'Completed Visits',
+                          '${metrics['completedBookings'] ?? 0}',
+                        ),
                         const Divider(color: AppColors.borderLight),
-                        _insightRow('Cancelled Visits',
-                            '${metrics['cancelledBookings'] ?? 0}'),
+                        _insightRow(
+                          'Cancelled Visits',
+                          '${metrics['cancelledBookings'] ?? 0}',
+                        ),
                         const Divider(color: AppColors.borderLight),
-                        _insightRow('Average Ticket',
-                            '${metrics['averageTicket'] ?? "₹0"}'),
+                        _insightRow(
+                          'Average Ticket',
+                          '${metrics['averageTicket'] ?? "₹0"}',
+                        ),
                         const Divider(color: AppColors.borderLight),
-                        _insightRow('Most Popular Service',
-                            '${metrics['mostPopularService'] ?? "No completed bookings yet"}'),
+                        _insightRow(
+                          'Most Popular Service',
+                          '${metrics['mostPopularService'] ?? "No completed bookings yet"}',
+                        ),
                         const Divider(color: AppColors.borderLight),
-                        _insightRow('Top Combo',
-                            '${metrics['topCombo'] ?? "No combo data yet"}'),
+                        _insightRow(
+                          'Top Combo',
+                          '${metrics['topCombo'] ?? "No combo data yet"}',
+                        ),
                         const Divider(color: AppColors.borderLight),
-                        _insightRow('Peak Booking Time',
-                            '${metrics['peakBookingTime'] ?? "No booking data yet"}'),
+                        _insightRow(
+                          'Peak Booking Time',
+                          '${metrics['peakBookingTime'] ?? "No booking data yet"}',
+                        ),
                         const Divider(color: AppColors.borderLight),
-                        _insightRow('Repeat Customers',
-                            '${metrics['repeatCustomers'] ?? "No repeat data yet"}'),
+                        _insightRow(
+                          'Repeat Customers',
+                          '${metrics['repeatCustomers'] ?? "No repeat data yet"}',
+                        ),
                       ],
                     ),
                   ),
@@ -287,11 +334,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(day,
-            style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textMuted)),
+        Text(
+          day,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textMuted,
+          ),
+        ),
       ],
     );
   }
@@ -302,13 +352,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
-          Text(value,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.darkNeutral)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.darkNeutral,
+            ),
+          ),
         ],
       ),
     );

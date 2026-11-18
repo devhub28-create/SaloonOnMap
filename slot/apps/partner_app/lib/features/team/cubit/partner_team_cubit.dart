@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:api_client/api_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../presentation/team_screen.dart';
 
 abstract class PartnerTeamState {}
@@ -12,8 +14,9 @@ class PartnerTeamLoadingState extends PartnerTeamState {}
 
 class PartnerTeamLoadedState extends PartnerTeamState {
   final List<StaffMemberModel> team;
+  final bool isOffline;
 
-  PartnerTeamLoadedState(this.team);
+  PartnerTeamLoadedState(this.team, {this.isOffline = false});
 
   int get availableCount => team
       .where((t) => t.status == 'Available' || t.status == 'AVAILABLE')
@@ -44,20 +47,21 @@ class PartnerTeamCubit extends Cubit<PartnerTeamState> {
       if (jsonStr != null && jsonStr.isNotEmpty) {
         final decoded = json.decode(jsonStr) as List<dynamic>;
         loadedTeam = decoded
-            .map((item) => StaffMemberModel(
-                  id: item['id'] ??
-                      'st_${DateTime.now().millisecondsSinceEpoch}',
-                  initials: item['initials'] ?? 'ST',
-                  name: item['name'] ?? 'Stylist',
-                  role: item['role'] ?? 'Barber & Stylist',
-                  status: item['status'] ?? 'Available',
-                  jobCountToday: item['jobCountToday'] as int? ?? 0,
-                ))
+            .map(
+              (item) => StaffMemberModel(
+                id: item['id'] ?? 'st_${DateTime.now().millisecondsSinceEpoch}',
+                initials: item['initials'] ?? 'ST',
+                name: item['name'] ?? 'Stylist',
+                role: item['role'] ?? 'Barber & Stylist',
+                status: item['status'] ?? 'Available',
+                jobCountToday: item['jobCountToday'] as int? ?? 0,
+              ),
+            )
             .toList();
       }
     } catch (_) {}
 
-    emit(PartnerTeamLoadedState(loadedTeam));
+    emit(PartnerTeamLoadedState(loadedTeam, isOffline: true));
 
     // 2. Fetch from backend API and replace cache with authoritative data.
     try {
@@ -165,14 +169,16 @@ class PartnerTeamCubit extends Cubit<PartnerTeamState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final mapList = team
-          .map((t) => {
-                'id': t.id,
-                'initials': t.initials,
-                'name': t.name,
-                'role': t.role,
-                'status': t.status,
-                'jobCountToday': t.jobCountToday,
-              })
+          .map(
+            (t) => {
+              'id': t.id,
+              'initials': t.initials,
+              'name': t.name,
+              'role': t.role,
+              'status': t.status,
+              'jobCountToday': t.jobCountToday,
+            },
+          )
           .toList();
       await prefs.setString(_keyTeam, json.encode(mapList));
     } catch (_) {}

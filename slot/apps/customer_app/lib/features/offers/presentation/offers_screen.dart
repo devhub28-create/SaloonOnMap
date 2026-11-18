@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../auth/cubit/auth_cubit.dart';
 
 class OffersScreen extends StatefulWidget {
@@ -60,35 +61,44 @@ class _OffersScreenState extends State<OffersScreen> {
                     final discount =
                         type == 'PERCENTAGE' ? '$value% off' : '₹$value off';
                     final validUntil = DateTime.tryParse(
-                            offer['valid_until']?.toString() ?? '')
-                        ?.toLocal();
+                      offer['valid_until']?.toString() ?? '',
+                    )?.toLocal();
                     return Container(
                       margin: const EdgeInsets.only(bottom: AppSpacing.md),
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(AppRadius.card),
-                          border: Border.all(color: AppColors.borderLight)),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppRadius.card),
+                        border: Border.all(color: AppColors.borderLight),
+                      ),
                       child: Row(
                         children: [
-                          const Icon(Icons.local_offer_outlined,
-                              color: AppColors.primaryGoldDark),
+                          const Icon(
+                            Icons.local_offer_outlined,
+                            color: AppColors.primaryGoldDark,
+                          ),
                           const SizedBox(width: AppSpacing.md),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(offer['name']?.toString() ?? discount,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold)),
                                 Text(
-                                    '$discount · Minimum ₹${offer['min_booking_amount'] ?? 0}'),
+                                  offer['name']?.toString() ?? discount,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  '$discount · Minimum ₹${offer['min_booking_amount'] ?? 0}',
+                                ),
                                 if (validUntil != null)
                                   Text(
-                                      'Valid until ${validUntil.day}/${validUntil.month}/${validUntil.year}',
-                                      style: const TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.textMuted)),
+                                    'Valid until ${validUntil.day}/${validUntil.month}/${validUntil.year}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
@@ -99,7 +109,8 @@ class _OffersScreenState extends State<OffersScreen> {
                                   ClipboardData(text: code));
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('$code copied')));
+                                  SnackBar(content: Text('$code copied')),
+                                );
                               }
                             },
                             child: Text(offer['code']?.toString() ?? 'COPY'),
@@ -122,7 +133,9 @@ class _OffersScreenState extends State<OffersScreen> {
           SlotNavItem(icon: Icons.explore_outlined, label: 'Explore'),
           SlotNavItem(icon: Icons.calendar_today_rounded, label: 'Bookings'),
           SlotNavItem(
-              icon: Icons.confirmation_number_outlined, label: 'Offers'),
+            icon: Icons.confirmation_number_outlined,
+            label: 'Offers',
+          ),
           SlotNavItem(icon: Icons.person_outline_rounded, label: 'Profile'),
         ],
       ),

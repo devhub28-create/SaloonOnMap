@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/network/customer_api_service.dart';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:api_client/api_client.dart';
+
 import '../../auth/cubit/auth_cubit.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -62,8 +65,10 @@ class _HomeScreenState extends State<HomeScreen> {
         final lat = position.latitude;
         final lng = position.longitude;
 
-        final locationLabel = await CustomerApiService.instance
-            .reverseGeocode(lat: lat, lng: lng);
+        final locationLabel = await CustomerApiService.instance.reverseGeocode(
+          lat: lat,
+          lng: lng,
+        );
 
         if (mounted) {
           setState(() {
@@ -181,14 +186,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            const Text('Select Your Location',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.darkNeutral)),
+            const Text(
+              'Select Your Location',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkNeutral,
+              ),
+            ),
             const SizedBox(height: 4),
-            const Text('Salons will be ordered by distance from your location.',
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+            const Text(
+              'Salons will be ordered by distance from your location.',
+              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+            ),
             const SizedBox(height: AppSpacing.lg),
             InkWell(
               onTap: () {
@@ -204,33 +214,48 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.my_location_rounded,
-                        color: AppColors.primaryGoldDark, size: 20),
+                    Icon(
+                      Icons.my_location_rounded,
+                      color: AppColors.primaryGoldDark,
+                      size: 20,
+                    ),
                     SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Detect My Location',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.darkNeutral)),
-                          Text('Use GPS to find closest salons near you',
-                              style: TextStyle(
-                                  fontSize: 11, color: AppColors.textMuted)),
+                          Text(
+                            'Detect My Location',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.darkNeutral,
+                            ),
+                          ),
+                          Text(
+                            'Use GPS to find closest salons near you',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    Icon(Icons.arrow_forward_ios_rounded,
-                        size: 14, color: AppColors.textMuted),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 14,
+                      color: AppColors.textMuted,
+                    ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            const Text('POPULAR NEIGHBORHOODS',
-                style: AppTypography.sectionEyebrow),
+            const Text(
+              'POPULAR NEIGHBORHOODS',
+              style: AppTypography.sectionEyebrow,
+            ),
             const SizedBox(height: AppSpacing.md),
             ...areas.map((a) {
               final isSelected = _selectedArea.contains(a['name'] as String);
@@ -243,42 +268,54 @@ class _HomeScreenState extends State<HomeScreen> {
                     _userLng = a['lng'] as double;
                   });
                   _fetchHomeData(
-                      gender: _selectedGenderIndex == 1 ? 'WOMEN' : 'MEN');
+                    gender: _selectedGenderIndex == 1 ? 'WOMEN' : 'MEN',
+                  );
                 },
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected ? const Color(0xFFFEF9C3) : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: isSelected
-                            ? AppColors.primaryGoldDark
-                            : AppColors.borderLight),
+                      color: isSelected
+                          ? AppColors.primaryGoldDark
+                          : AppColors.borderLight,
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.location_on_outlined,
-                              size: 18,
-                              color: isSelected
-                                  ? AppColors.primaryGoldDark
-                                  : AppColors.textMuted),
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 18,
+                            color: isSelected
+                                ? AppColors.primaryGoldDark
+                                : AppColors.textMuted,
+                          ),
                           const SizedBox(width: 10),
-                          Text(a['name'] as String,
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.w500)),
+                          Text(
+                            a['name'] as String,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                            ),
+                          ),
                         ],
                       ),
                       if (isSelected)
-                        const Icon(Icons.check_rounded,
-                            size: 18, color: AppColors.primaryGoldDark),
+                        const Icon(
+                          Icons.check_rounded,
+                          size: 18,
+                          color: AppColors.primaryGoldDark,
+                        ),
                     ],
                   ),
                 ),
@@ -327,34 +364,44 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('GOOD AFTERNOON',
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textMuted,
-                                letterSpacing: 1.1)),
+                        const Text(
+                          'GOOD AFTERNOON',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textMuted,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
                         const SizedBox(height: 2),
-                        Text('Hey, $userName',
-                            style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.darkNeutral)),
+                        Text(
+                          'Hey, $userName',
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.darkNeutral,
+                          ),
+                        ),
                         const SizedBox(height: 4),
                         GestureDetector(
                           onTap: _showLocationPickerBottomSheet,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.location_on_outlined,
-                                  size: 16, color: primaryAccentColor),
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 16,
+                                color: primaryAccentColor,
+                              ),
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
                                   '$_selectedArea >',
                                   style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.darkNeutral),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.darkNeutral,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -377,8 +424,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               border: Border.all(color: AppColors.borderLight),
                             ),
                             child: IconButton(
-                              icon: const Icon(Icons.notifications_none_rounded,
-                                  color: AppColors.darkNeutral, size: 20),
+                              icon: const Icon(
+                                Icons.notifications_none_rounded,
+                                color: AppColors.darkNeutral,
+                                size: 20,
+                              ),
                               onPressed: () async {
                                 await context.push('/profile/notifications');
                                 if (mounted) _loadUnreadNotificationCount();
@@ -394,13 +444,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   minWidth: 18,
                                   minHeight: 18,
                                 ),
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: primaryAccentColor,
                                   borderRadius: BorderRadius.circular(999),
-                                  border:
-                                      Border.all(color: Colors.white, width: 2),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
                                 ),
                                 alignment: Alignment.center,
                                 child: Text(
@@ -427,18 +480,24 @@ class _HomeScreenState extends State<HomeScreen> {
                               onTap: () => ctx.push('/login'),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.darkNeutral,
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                      color: const Color(0x4DC89300)),
+                                    color: const Color(0x4DC89300),
+                                  ),
                                 ),
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.login_rounded,
-                                        size: 14, color: AppColors.primaryGold),
+                                    Icon(
+                                      Icons.login_rounded,
+                                      size: 14,
+                                      color: AppColors.primaryGold,
+                                    ),
                                     SizedBox(width: 4),
                                     Text(
                                       'Login',
@@ -466,9 +525,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Text(
                                   userInitials == 'A' ? 'AT' : userInitials,
                                   style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold),
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
@@ -486,28 +546,37 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () => context.push('/explore'),
                 child: Container(
                   padding: const EdgeInsets.only(
-                      left: 16, right: 8, top: 6, bottom: 6),
+                    left: 16,
+                    right: 8,
+                    top: 6,
+                    bottom: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                        color: isWomenTheme
-                            ? const Color(0xFFFBCFE8)
-                            : AppColors.borderLight),
+                      color: isWomenTheme
+                          ? const Color(0xFFFBCFE8)
+                          : AppColors.borderLight,
+                    ),
                     boxShadow: const [AppShadows.cardShadow],
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.search_rounded,
-                          color: AppColors.textMuted, size: 22),
+                      const Icon(
+                        Icons.search_rounded,
+                        color: AppColors.textMuted,
+                        size: 22,
+                      ),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
                           'Search salon, service or stylist',
                           style: TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500),
+                            color: AppColors.textMuted,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                       Container(
@@ -518,11 +587,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               : const Color(0xFFF3F4F6),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Icon(Icons.tune_rounded,
-                            color: isWomenTheme
-                                ? const Color(0xFFEC4899)
-                                : AppColors.darkNeutral,
-                            size: 18),
+                        child: Icon(
+                          Icons.tune_rounded,
+                          color: isWomenTheme
+                              ? const Color(0xFFEC4899)
+                              : AppColors.darkNeutral,
+                          size: 18,
+                        ),
                       ),
                     ],
                   ),
@@ -566,15 +637,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.content_cut_rounded,
-                                  size: 16, color: AppColors.darkNeutral),
+                              Icon(
+                                Icons.content_cut_rounded,
+                                size: 16,
+                                color: AppColors.darkNeutral,
+                              ),
                               SizedBox(width: 6),
                               Text(
                                 'Men & Unisex',
                                 style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                    color: AppColors.darkNeutral),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: AppColors.darkNeutral,
+                                ),
                               ),
                             ],
                           ),
@@ -601,11 +676,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.auto_awesome_outlined,
-                                  size: 16,
-                                  color: isWomenTheme
-                                      ? const Color(0xFFEC4899)
-                                      : AppColors.darkNeutral),
+                              Icon(
+                                Icons.auto_awesome_outlined,
+                                size: 16,
+                                color: isWomenTheme
+                                    ? const Color(0xFFEC4899)
+                                    : AppColors.darkNeutral,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 'Women',
@@ -648,8 +725,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         errorBuilder: (context, error, stackTrace) => Container(
                           color: AppColors.darkNeutral,
                           child: const Center(
-                            child: Icon(Icons.storefront_rounded,
-                                color: AppColors.primaryGold, size: 48),
+                            child: Icon(
+                              Icons.storefront_rounded,
+                              color: AppColors.primaryGold,
+                              size: 48,
+                            ),
                           ),
                         ),
                       ),
@@ -673,7 +753,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: primaryAccentColor,
                                 borderRadius: BorderRadius.circular(8),
@@ -696,10 +778,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ? 'A little glow-up?'
                                   : 'Sharp cut. Zero wait.',
                               style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  height: 1.1),
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                height: 1.1,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -707,16 +790,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ? 'Hair spa + styling from ₹1,199'
                                   : '20% off first chair booking',
                               style: const TextStyle(
-                                  color: Colors.white70, fontSize: 13),
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
                             ),
                             const SizedBox(height: 12),
                             ElevatedButton(
                               onPressed: () {
                                 if (featuredSalon != null) {
-                                  context.push('/salon-detail', extra: {
-                                    'salonId': featuredSalon['id'],
-                                    'salon': featuredSalon
-                                  });
+                                  context.push(
+                                    '/salon-detail',
+                                    extra: {
+                                      'salonId': featuredSalon['id'],
+                                      'salon': featuredSalon,
+                                    },
+                                  );
                                 } else {
                                   context.push('/explore');
                                 }
@@ -727,17 +815,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ? Colors.white
                                     : AppColors.darkNeutral,
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16)),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 10),
+                                  horizontal: 20,
+                                  vertical: 10,
+                                ),
                               ),
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text('Book now',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13)),
+                                  Text(
+                                    'Book now',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
                                   SizedBox(width: 4),
                                   Icon(Icons.arrow_forward_rounded, size: 16),
                                 ],
@@ -760,22 +854,31 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Popular services',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.darkNeutral)),
+                  const Text(
+                    'Popular services',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.darkNeutral,
+                    ),
+                  ),
                   GestureDetector(
                     onTap: () => context.push('/explore'),
                     child: const Row(
                       children: [
-                        Text('See all',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textMuted)),
-                        Icon(Icons.arrow_forward_ios_rounded,
-                            size: 12, color: AppColors.textMuted),
+                        Text(
+                          'See all',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 12,
+                          color: AppColors.textMuted,
+                        ),
                       ],
                     ),
                   ),
@@ -797,8 +900,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               .toString();
                       final dur = formatDuration(svc['duration_minutes'] ?? 30);
                       final subtitle = '$dur • ⭐ 4.9';
-                      final priceNum =
-                          double.tryParse(svc['price']?.toString() ?? '0');
+                      final priceNum = double.tryParse(
+                        svc['price']?.toString() ?? '0',
+                      );
                       final priceStr =
                           priceNum != null ? '₹${priceNum.toInt()}' : '₹399';
                       final imgUrl = _getServiceImageUrl(title, isWomenTheme);
@@ -826,11 +930,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: _getServiceFallbackIcon(title),
                           onTap: () {
                             if (targetSalonId != null) {
-                              context.push('/salon-detail', extra: {
-                                'salonId': targetSalonId,
-                                'salon': targetSalon,
-                                'selectedServiceId': svc['id'],
-                              });
+                              context.push(
+                                '/salon-detail',
+                                extra: {
+                                  'salonId': targetSalonId,
+                                  'salon': targetSalon,
+                                  'selectedServiceId': svc['id'],
+                                },
+                              );
                             } else {
                               context.push('/explore');
                             }
@@ -843,8 +950,10 @@ class _HomeScreenState extends State<HomeScreen> {
               else
                 Container(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -852,14 +961,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.spa_outlined,
-                          size: 24, color: AppColors.textMuted),
+                      Icon(
+                        Icons.spa_outlined,
+                        size: 24,
+                        color: AppColors.textMuted,
+                      ),
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'No services listed yet. Partner salons will appear here.',
                           style: TextStyle(
-                              fontSize: 13, color: AppColors.textMuted),
+                            fontSize: 13,
+                            color: AppColors.textMuted,
+                          ),
                         ),
                       ),
                     ],
@@ -868,11 +982,14 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: AppSpacing.xl),
 
               // 6. Your next visit Card (Matches media_1791347258511.png & media_1791347258532.png)
-              const Text('Your next visit',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.darkNeutral)),
+              const Text(
+                'Your next visit',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.darkNeutral,
+                ),
+              ),
               const SizedBox(height: AppSpacing.md),
 
               GestureDetector(
@@ -888,28 +1005,40 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.calendar_today_rounded,
-                                color: AppColors.primaryGoldDark, size: 28),
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              color: AppColors.primaryGoldDark,
+                              size: 28,
+                            ),
                             SizedBox(width: AppSpacing.md),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('No upcoming visits',
-                                      style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.darkNeutral)),
+                                  Text(
+                                    'No upcoming visits',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.darkNeutral,
+                                    ),
+                                  ),
                                   SizedBox(height: 2),
-                                  Text('Book your chair with zero waiting time',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.textMuted)),
+                                  Text(
+                                    'Book your chair with zero waiting time',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                            Icon(Icons.arrow_forward_ios_rounded,
-                                size: 16, color: AppColors.textMuted),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 16,
+                              color: AppColors.textMuted,
+                            ),
                           ],
                         ),
                       )
@@ -925,7 +1054,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 10),
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.darkNeutral,
                                 borderRadius: BorderRadius.circular(16),
@@ -935,25 +1066,29 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Text(
                                     activeBooking['start_at'] != null &&
                                             DateTime.tryParse(
-                                                    activeBooking['start_at']
-                                                        .toString()) !=
+                                                  activeBooking['start_at']
+                                                      .toString(),
+                                                ) !=
                                                 null
                                         ? DateTime.tryParse(
-                                                activeBooking['start_at']
-                                                    .toString())!
+                                            activeBooking['start_at']
+                                                .toString(),
+                                          )!
                                             .day
                                             .toString()
                                         : 'NOW',
                                     style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20),
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
                                   ),
                                   Text(
                                     activeBooking['start_at'] != null &&
                                             DateTime.tryParse(
-                                                    activeBooking['start_at']
-                                                        .toString()) !=
+                                                  activeBooking['start_at']
+                                                      .toString(),
+                                                ) !=
                                                 null
                                         ? [
                                             'JAN',
@@ -967,17 +1102,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                             'SEP',
                                             'OCT',
                                             'NOV',
-                                            'DEC'
+                                            'DEC',
                                           ][DateTime.tryParse(
-                                                    activeBooking['start_at']
-                                                        .toString())!
+                                              activeBooking['start_at']
+                                                  .toString(),
+                                            )!
                                                 .month -
                                             1]
                                         : 'VISIT',
                                     style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold),
+                                      color: Colors.white70,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -990,18 +1127,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Text(
                                     activeBooking['status'] ?? 'CONFIRMED',
                                     style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF16A34A)),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF16A34A),
+                                    ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     activeBooking['salon']?['name'] ??
                                         'Salon Visit',
                                     style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.darkNeutral),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.darkNeutral,
+                                    ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
@@ -1013,14 +1152,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                             'Salon Service'
                                         : 'Styling & Grooming',
                                     style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textMuted),
+                                      fontSize: 12,
+                                      color: AppColors.textMuted,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.arrow_forward_ios_rounded,
-                                size: 16, color: AppColors.textMuted),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 16,
+                              color: AppColors.textMuted,
+                            ),
                           ],
                         ),
                       ),
@@ -1029,19 +1172,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // 7. Combos worth showing up for (Renders dynamically ONLY when partner combos exist)
               if (_combos.isNotEmpty) ...[
-                const Text('Combos worth showing up for',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.darkNeutral)),
+                const Text(
+                  'Combos worth showing up for',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.darkNeutral,
+                  ),
+                ),
                 GestureDetector(
                   onTap: () {
                     final comboSalonId =
                         _combos.first['salon_id'] ?? featuredSalon?['id'];
-                    context.push('/salon-detail', extra: {
-                      'salonId': comboSalonId,
-                      'salon': featuredSalon
-                    });
+                    context.push(
+                      '/salon-detail',
+                      extra: {'salonId': comboSalonId, 'salon': featuredSalon},
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.xl),
@@ -1058,46 +1204,56 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.auto_awesome_rounded,
-                                      color: primaryAccentColor, size: 16),
+                                  Icon(
+                                    Icons.auto_awesome_rounded,
+                                    color: primaryAccentColor,
+                                    size: 16,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     _combos.first['discountTag']?.toString() ??
                                         'POWER COMBO',
                                     style: TextStyle(
-                                        color: primaryAccentColor,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.1),
+                                      color: primaryAccentColor,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.1,
+                                    ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                  _combos.first['name']?.toString() ??
-                                      'Special Package',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold)),
+                                _combos.first['name']?.toString() ??
+                                    'Special Package',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               Text(
-                                  _combos.first['description']?.toString() ??
-                                      '',
-                                  style: const TextStyle(
-                                      color: Colors.white70, fontSize: 12)),
+                                _combos.first['description']?.toString() ?? '',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
                               const SizedBox(height: 14),
                               Builder(
                                 builder: (context) {
                                   final combo = _combos.first;
                                   final price = double.tryParse(
-                                          combo['price']?.toString() ?? '0') ??
+                                        combo['price']?.toString() ?? '0',
+                                      ) ??
                                       0.0;
                                   final rawOrig = double.tryParse(
-                                      (combo['original_price'] ??
-                                                  combo['originalPrice'])
-                                              ?.toString() ??
-                                          '0');
+                                    (combo['original_price'] ??
+                                                combo['originalPrice'])
+                                            ?.toString() ??
+                                        '0',
+                                  );
                                   final origPrice =
                                       (rawOrig != null && rawOrig > price)
                                           ? rawOrig
@@ -1137,11 +1293,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                         const SizedBox(width: 8),
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 7, vertical: 3),
+                                            horizontal: 7,
+                                            vertical: 3,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: AppColors.primaryGoldDark,
-                                            borderRadius:
-                                                BorderRadius.circular(6),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
                                           ),
                                           child: Text(
                                             'SAVE ₹$savings',
@@ -1164,19 +1323,29 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 12),
                         Row(
                           children: [
-                            Icon(Icons.content_cut_rounded,
-                                color: primaryAccentColor, size: 28),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 4),
-                              child: Text('+',
-                                  style: TextStyle(
-                                      color: primaryAccentColor,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold)),
+                            Icon(
+                              Icons.content_cut_rounded,
+                              color: primaryAccentColor,
+                              size: 28,
                             ),
-                            Icon(Icons.auto_awesome_rounded,
-                                color: primaryAccentColor, size: 28),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: Text(
+                                '+',
+                                style: TextStyle(
+                                  color: primaryAccentColor,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.auto_awesome_rounded,
+                              color: primaryAccentColor,
+                              size: 28,
+                            ),
                           ],
                         ),
                       ],
@@ -1190,22 +1359,31 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Recommended near you',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.darkNeutral)),
+                  const Text(
+                    'Recommended near you',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.darkNeutral,
+                    ),
+                  ),
                   GestureDetector(
                     onTap: () => context.push('/explore'),
                     child: const Row(
                       children: [
-                        Text('Explore',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textMuted)),
-                        Icon(Icons.arrow_forward_ios_rounded,
-                            size: 12, color: AppColors.textMuted),
+                        Text(
+                          'Explore',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 12,
+                          color: AppColors.textMuted,
+                        ),
                       ],
                     ),
                   ),
@@ -1215,10 +1393,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
               if (featuredSalon != null)
                 GestureDetector(
-                  onTap: () => context.push('/salon-detail', extra: {
-                    'salonId': featuredSalon['id'],
-                    'salon': featuredSalon
-                  }),
+                  onTap: () => context.push(
+                    '/salon-detail',
+                    extra: {
+                      'salonId': featuredSalon['id'],
+                      'salon': featuredSalon,
+                    },
+                  ),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -1231,10 +1412,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(24)),
+                            top: Radius.circular(24),
+                          ),
                           child: Image.network(
                             ApiConfig.formatImageUrl(
-                                featuredSalon['cover_image']?.toString()),
+                              featuredSalon['cover_image']?.toString(),
+                            ),
                             height: 180,
                             width: double.infinity,
                             fit: BoxFit.cover,
@@ -1255,32 +1438,38 @@ class _HomeScreenState extends State<HomeScreen> {
                                     featuredSalon['name']?.toString() ??
                                         'Salon',
                                     style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.darkNeutral),
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.darkNeutral,
+                                    ),
                                   ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: secondaryBadgeColor,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Row(
                                       children: [
-                                        Icon(Icons.star_rounded,
-                                            size: 14,
-                                            color: isWomenTheme
-                                                ? const Color(0xFFEC4899)
-                                                : AppColors.primaryGoldDark),
+                                        Icon(
+                                          Icons.star_rounded,
+                                          size: 14,
+                                          color: isWomenTheme
+                                              ? const Color(0xFFEC4899)
+                                              : AppColors.primaryGoldDark,
+                                        ),
                                         const SizedBox(width: 2),
                                         Text(
                                           (featuredSalon['rating'] ?? 4.9)
                                               .toString(),
                                           style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.darkNeutral),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.darkNeutral,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -1289,13 +1478,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                  '${featuredSalon['area'] ?? featuredSalon['city'] ?? ""} · ${featuredSalon['formattedDistance'] ?? "Nearby"}',
-                                  style: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppColors.textMuted)),
+                                '${featuredSalon['area'] ?? featuredSalon['city'] ?? ""} · ${featuredSalon['formattedDistance'] ?? "Nearby"}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
                               const SizedBox(height: 12),
                               const Divider(
-                                  height: 1, color: AppColors.borderLight),
+                                height: 1,
+                                color: AppColors.borderLight,
+                              ),
                               const SizedBox(height: 12),
                               Row(
                                 mainAxisAlignment:
@@ -1303,23 +1496,30 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      const Icon(Icons.access_time_rounded,
-                                          size: 14,
-                                          color: AppColors.darkNeutral),
+                                      const Icon(
+                                        Icons.access_time_rounded,
+                                        size: 14,
+                                        color: AppColors.darkNeutral,
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
-                                          'Open until ${featuredSalon['closing_time'] ?? "21:00"}',
-                                          style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.darkNeutral)),
-                                    ],
-                                  ),
-                                  const Text('View details →',
-                                      style: TextStyle(
+                                        'Open until ${featuredSalon['closing_time'] ?? "21:00"}',
+                                        style: const TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
-                                          color: AppColors.primaryGoldDark)),
+                                          color: AppColors.darkNeutral,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Text(
+                                    'View details →',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primaryGoldDark,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -1332,8 +1532,10 @@ class _HomeScreenState extends State<HomeScreen> {
               else
                 Container(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 28,
+                    horizontal: 20,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -1341,21 +1543,27 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: const Column(
                     children: [
-                      Icon(Icons.storefront_outlined,
-                          size: 40, color: AppColors.textMuted),
+                      Icon(
+                        Icons.storefront_outlined,
+                        size: 40,
+                        color: AppColors.textMuted,
+                      ),
                       SizedBox(height: 10),
                       Text(
                         'No partner salons in this area yet',
                         style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.darkNeutral),
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkNeutral,
+                        ),
                       ),
                       SizedBox(height: 4),
                       Text(
                         'Registered partner salons will appear here.',
-                        style:
-                            TextStyle(fontSize: 12, color: AppColors.textMuted),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -1381,31 +1589,43 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: secondaryBadgeColor,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Icon(Icons.card_giftcard_rounded,
-                            color: isWomenTheme
-                                ? const Color(0xFFEC4899)
-                                : AppColors.primaryGoldDark,
-                            size: 24),
+                        child: Icon(
+                          Icons.card_giftcard_rounded,
+                          color: isWomenTheme
+                              ? const Color(0xFFEC4899)
+                              : AppColors.primaryGoldDark,
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Invite friends, earn ₹250',
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.darkNeutral)),
+                            Text(
+                              'Invite friends, earn ₹250',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.darkNeutral,
+                              ),
+                            ),
                             SizedBox(height: 2),
-                            Text('Good hair days are better together',
-                                style: TextStyle(
-                                    fontSize: 12, color: AppColors.textMuted)),
+                            Text(
+                              'Good hair days are better together',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded,
-                          size: 16, color: AppColors.textMuted),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: AppColors.textMuted,
+                      ),
                     ],
                   ),
                 ),
@@ -1428,7 +1648,9 @@ class _HomeScreenState extends State<HomeScreen> {
           SlotNavItem(icon: Icons.explore_outlined, label: 'Explore'),
           SlotNavItem(icon: Icons.calendar_today_rounded, label: 'Bookings'),
           SlotNavItem(
-              icon: Icons.confirmation_number_outlined, label: 'Offers'),
+            icon: Icons.confirmation_number_outlined,
+            label: 'Offers',
+          ),
           SlotNavItem(icon: Icons.person_outline_rounded, label: 'Profile'),
         ],
       ),
@@ -1490,8 +1712,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPopularServiceCard(
-      String title, String subtitle, String price, String imageUrl,
-      {required bool isWomenTheme, IconData? icon, VoidCallback? onTap}) {
+    String title,
+    String subtitle,
+    String price,
+    String imageUrl, {
+    required bool isWomenTheme,
+    IconData? icon,
+    VoidCallback? onTap,
+  }) {
     final accentColor =
         isWomenTheme ? const Color(0xFFEC4899) : AppColors.primaryGoldDark;
     final fallbackIcon = icon ?? _getServiceFallbackIcon(title);
@@ -1503,18 +1731,16 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.borderLight,
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.borderLight, width: 1),
           boxShadow: const [AppShadows.cardShadow],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
               child: Container(
                 height: 110,
                 width: double.infinity,
@@ -1549,20 +1775,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           colors: isWomenTheme
                               ? [
                                   const Color(0xFFFCE7F3),
-                                  const Color(0xFFFBCFE8)
+                                  const Color(0xFFFBCFE8),
                                 ]
                               : [
                                   const Color(0xFFF1F5F9),
-                                  const Color(0xFFE2E8F0)
+                                  const Color(0xFFE2E8F0),
                                 ],
                         ),
                       ),
                       child: Center(
-                        child: Icon(
-                          fallbackIcon,
-                          color: accentColor,
-                          size: 38,
-                        ),
+                        child: Icon(fallbackIcon, color: accentColor, size: 38),
                       ),
                     );
                   },
@@ -1574,23 +1796,33 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: AppColors.darkNeutral),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: AppColors.darkNeutral,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 2),
-                  Text(subtitle,
-                      style: const TextStyle(
-                          fontSize: 10, color: AppColors.textMuted)),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(price,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: AppColors.darkNeutral)),
+                  Text(
+                    price,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: AppColors.darkNeutral,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1615,8 +1847,11 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.storefront_rounded,
-                size: 48, color: AppColors.primaryGold),
+            Icon(
+              Icons.storefront_rounded,
+              size: 48,
+              color: AppColors.primaryGold,
+            ),
             SizedBox(height: 6),
             Text(
               'SLOT Premium Salon',
@@ -1647,10 +1882,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-              color: const Color(0xFFD49B28).withOpacity(0.35), width: 1.2),
+            color: const Color(0xFFD49B28).withValues(alpha: 0.35),
+            width: 1.2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 12,
               offset: const Offset(0, 5),
             ),
@@ -1666,16 +1903,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFD49B28).withOpacity(0.2),
+                          color: const Color(0xFFD49B28).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.auto_awesome,
-                                size: 12, color: Color(0xFFE5B552)),
+                            Icon(
+                              Icons.auto_awesome,
+                              size: 12,
+                              color: Color(0xFFE5B552),
+                            ),
                             SizedBox(width: 4),
                             Text(
                               'AI STYLE STUDIO',
@@ -1692,7 +1934,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 3),
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white10,
                           borderRadius: BorderRadius.circular(6),
@@ -1700,9 +1944,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: const Text(
                           '100% FREE',
                           style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold),
+                            color: Colors.white70,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -1721,7 +1966,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   const Text(
                     'See your new cut or beard style before your chair appointment.',
                     style: TextStyle(
-                        color: Colors.white70, fontSize: 12, height: 1.3),
+                      color: Colors.white70,
+                      fontSize: 12,
+                      height: 1.3,
+                    ),
                   ),
                 ],
               ),
@@ -1734,12 +1982,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                      color: const Color(0xFFD49B28).withOpacity(0.4),
-                      blurRadius: 8),
+                    color: const Color(0xFFD49B28).withValues(alpha: 0.4),
+                    blurRadius: 8,
+                  ),
                 ],
               ),
-              child: const Icon(Icons.arrow_forward_rounded,
-                  color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ],
         ),

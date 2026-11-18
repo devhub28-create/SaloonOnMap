@@ -1,5 +1,7 @@
 import 'dart:developer' as developer;
+
 import 'package:api_client/api_client.dart';
+
 import '../constants/partner_api_urls.dart';
 export '../constants/partner_api_urls.dart';
 
@@ -27,7 +29,8 @@ class PartnerApiService extends ApiClient {
     } on DioException catch (dioErr) {
       final statusCode = dioErr.response?.statusCode;
       final responseData = dioErr.response?.data;
-      String errorMessage = 'Network error occurred. Please check your connection.';
+      String errorMessage =
+          'Network error occurred. Please check your connection.';
 
       if (responseData is Map && responseData['message'] != null) {
         final msg = responseData['message'];
@@ -35,13 +38,16 @@ class PartnerApiService extends ApiClient {
       } else if (statusCode != null) {
         switch (statusCode) {
           case 400:
-            errorMessage = 'Invalid request parameters. Please check your details.';
+            errorMessage =
+                'Invalid request parameters. Please check your details.';
             break;
           case 401:
-            errorMessage = 'Invalid credentials or expired session. Please log in again.';
+            errorMessage =
+                'Invalid credentials or expired session. Please log in again.';
             break;
           case 403:
-            errorMessage = 'Your salon account is pending approval or inactive.';
+            errorMessage =
+                'Your salon account is pending approval or inactive.';
             break;
           case 404:
             errorMessage = 'Salon resource was not found.';
@@ -52,19 +58,30 @@ class PartnerApiService extends ApiClient {
           case 500:
           case 502:
           case 503:
-            errorMessage = 'Salon server is experiencing issues. Please try again shortly.';
+            errorMessage =
+                'Salon server is experiencing issues. Please try again shortly.';
             break;
           default:
             errorMessage = 'Request failed (HTTP $statusCode).';
         }
       }
 
-      developer.log('[$operation Error] $errorMessage (Status: $statusCode)', error: dioErr);
-      throw PartnerApiException(errorMessage, statusCode: statusCode, originalError: dioErr);
+      developer.log(
+        '[$operation Error] $errorMessage (Status: $statusCode)',
+        error: dioErr,
+      );
+      throw PartnerApiException(
+        errorMessage,
+        statusCode: statusCode,
+        originalError: dioErr,
+      );
     } catch (e) {
       developer.log('[$operation Unexpected Error] $e', error: e);
       if (e is PartnerApiException) rethrow;
-      throw PartnerApiException('An unexpected error occurred: $e', originalError: e);
+      throw PartnerApiException(
+        'An unexpected error occurred: $e',
+        originalError: e,
+      );
     }
   }
 
@@ -77,33 +94,26 @@ class PartnerApiService extends ApiClient {
     required String phoneOrEmail,
     required String password,
   }) async {
-    return handleRequest(
-      () async {
-        final response = await dio.post(
-          PartnerApiUrls.partnerLoginEndpoint,
-          data: {
-            'phoneOrEmail': phoneOrEmail.trim(),
-            'password': password,
-          },
-        );
-        return Map<String, dynamic>.from(response.data as Map);
-      },
-      operation: 'Partner Login',
-    );
+    return handleRequest(() async {
+      final response = await dio.post(
+        PartnerApiUrls.partnerLoginEndpoint,
+        data: {'phoneOrEmail': phoneOrEmail.trim(), 'password': password},
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    }, operation: 'Partner Login');
   }
 
   /// Register new salon partner and workspace
-  Future<Map<String, dynamic>> registerPartner(Map<String, dynamic> data) async {
-    return handleRequest(
-      () async {
-        final response = await dio.post(
-          PartnerApiUrls.partnerRegisterEndpoint,
-          data: data,
-        );
-        return Map<String, dynamic>.from(response.data as Map);
-      },
-      operation: 'Partner Registration',
-    );
+  Future<Map<String, dynamic>> registerPartner(
+    Map<String, dynamic> data,
+  ) async {
+    return handleRequest(() async {
+      final response = await dio.post(
+        PartnerApiUrls.partnerRegisterEndpoint,
+        data: data,
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    }, operation: 'Partner Registration');
   }
 
   /// Fetch authenticated partner salon profile
@@ -115,7 +125,9 @@ class PartnerApiService extends ApiClient {
   }
 
   /// Update salon profile details (name, area, hours, gender, images)
-  Future<Map<String, dynamic>> updateSalonProfile(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> updateSalonProfile(
+    Map<String, dynamic> data,
+  ) async {
     return handleRequest(
       () => updatePartnerSalon(data),
       operation: 'Update Salon Profile',
@@ -131,18 +143,25 @@ class PartnerApiService extends ApiClient {
   }
 
   /// Reverse geocode partner salon GPS location
-  Future<String> reverseGeocode({required double lat, required double lng}) async {
+  Future<String> reverseGeocode({
+    required double lat,
+    required double lng,
+  }) async {
     try {
-      final response = await dio.get(
-        PartnerApiUrls.reverseGeocodeUrl,
-        queryParameters: {'format': 'json', 'lat': lat, 'lon': lng},
-        options: Options(headers: {'User-Agent': 'SlotPartnerApp/1.0'}),
-      ).timeout(const Duration(seconds: 4));
+      final response = await dio
+          .get(
+            PartnerApiUrls.reverseGeocodeUrl,
+            queryParameters: {'format': 'json', 'lat': lat, 'lon': lng},
+            options: Options(headers: {'User-Agent': 'SlotPartnerApp/1.0'}),
+          )
+          .timeout(const Duration(seconds: 4));
 
       if (response.data != null && response.data['address'] != null) {
         final addr = response.data['address'];
-        final suburb = addr['suburb'] ?? addr['neighbourhood'] ?? addr['subdistrict'];
-        final city = addr['city'] ?? addr['town'] ?? addr['county'] ?? 'Bengaluru';
+        final suburb =
+            addr['suburb'] ?? addr['neighbourhood'] ?? addr['subdistrict'];
+        final city =
+            addr['city'] ?? addr['town'] ?? addr['county'] ?? 'Bengaluru';
         return suburb != null ? '$suburb, $city' : city.toString();
       }
     } catch (_) {}
@@ -170,7 +189,10 @@ class PartnerApiService extends ApiClient {
   // ==========================================
 
   /// Fetch bookings for salon desk with optional status filter
-  Future<List<dynamic>> fetchBookings({required String salonId, String? status}) async {
+  Future<List<dynamic>> fetchBookings({
+    required String salonId,
+    String? status,
+  }) async {
     return handleRequest(
       () => getPartnerBookings(salonId: salonId, status: status),
       operation: 'Get Partner Bookings',

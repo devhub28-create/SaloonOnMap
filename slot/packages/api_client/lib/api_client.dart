@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 export 'package:dio/dio.dart';
+export 'push_notification_service.dart';
+export 'firebase_observability_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -204,12 +206,16 @@ class ApiClient {
   final FlutterSecureStorage _storage;
   Future<void> Function()? onUnauthorized;
   Future<void>? _refreshInFlight;
+  String? _accessToken;
 
   static const _accessTokenKey = 'slot_access_token';
   static const _refreshTokenKey = 'slot_refresh_token';
 
+  String? get accessToken => _accessToken;
+  bool get hasSession => _accessToken != null && _accessToken!.isNotEmpty;
+
   ApiClient({String? baseUrl, FlutterSecureStorage? storage})
-    : _storage = storage ?? const FlutterSecureStorage() {
+      : _storage = storage ?? const FlutterSecureStorage() {
     dio = Dio(
       BaseOptions(
         baseUrl: baseUrl ?? ApiConfig.baseUrl,
@@ -221,12 +227,10 @@ class ApiClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onError: (error, handler) async {
-          final isConnError =
-              error.type == DioExceptionType.connectionError ||
+          final isConnError = error.type == DioExceptionType.connectionError ||
               error.type == DioExceptionType.connectionTimeout;
           final reqUri = error.requestOptions.uri;
-          final isLocal =
-              reqUri.host == '127.0.0.1' ||
+          final isLocal = reqUri.host == '127.0.0.1' ||
               reqUri.host == 'localhost' ||
               reqUri.host == '10.0.2.2';
 
@@ -251,8 +255,7 @@ class ApiClient {
                   BaseOptions(
                     baseUrl: candidateUrl,
                     connectTimeout: const Duration(seconds: 5),
-                    receiveTimeout:
-                        error.requestOptions.receiveTimeout ??
+                    receiveTimeout: error.requestOptions.receiveTimeout ??
                         const Duration(minutes: 3),
                     sendTimeout: error.requestOptions.sendTimeout,
                     headers: error.requestOptions.headers,
@@ -356,10 +359,12 @@ class ApiClient {
   }
 
   void setAuthToken(String token) {
+    _accessToken = token;
     dio.options.headers['Authorization'] = 'Bearer $token';
   }
 
   void clearAuthToken() {
+    _accessToken = null;
     dio.options.headers.remove('Authorization');
   }
 
@@ -397,6 +402,31 @@ class ApiClient {
     return Map<String, dynamic>.from(response.data as Map);
   }
 
+  Future<String> requestPartnerPasswordReset(String phoneOrEmail) async {
+    final response = await dio.post(
+      '/auth/partner/password-reset/request',
+      data: {'phoneOrEmail': phoneOrEmail.trim()},
+    );
+    return response.data['message']?.toString() ??
+        'Verification code requested.';
+  }
+
+  Future<String> resetPartnerPassword({
+    required String phoneOrEmail,
+    required String code,
+    required String newPassword,
+  }) async {
+    final response = await dio.post(
+      '/auth/partner/password-reset/confirm',
+      data: {
+        'phoneOrEmail': phoneOrEmail.trim(),
+        'code': code.trim(),
+        'newPassword': newPassword,
+      },
+    );
+    return response.data['message']?.toString() ?? 'Password updated.';
+  }
+
   Future<Map<String, dynamic>> getCustomerProfile() async {
     final response = await dio.get('/auth/customer/profile');
     return Map<String, dynamic>.from(response.data as Map);
@@ -407,6 +437,22 @@ class ApiClient {
   ) async {
     final response = await dio.patch('/auth/customer/profile', data: data);
     return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<void> registerDevice({
+    required String token,
+    required String platform,
+    required String appType,
+  }) async {
+    await dio.post('/devices', data: {
+      'token': token,
+      'platform': platform,
+      'appType': appType,
+    });
+  }
+
+  Future<void> unregisterDevice(String token) async {
+    await dio.delete('/devices/${Uri.encodeComponent(token)}');
   }
 
   // Customer Home & Salons API

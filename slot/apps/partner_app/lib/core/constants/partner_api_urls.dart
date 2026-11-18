@@ -30,7 +30,8 @@ class PartnerApiUrls {
   static const String reviewsEndpoint = '/partner/reviews';
 
   // Reverse Geocoding
-  static const String reverseGeocodeUrl = 'https://nominatim.openstreetmap.org/reverse';
+  static const String reverseGeocodeUrl =
+      'https://nominatim.openstreetmap.org/reverse';
 
   // ==========================================
   // Computed Full URLs: baseUrl + endpoint
@@ -55,8 +56,10 @@ class PartnerApiUrls {
   // ==========================================
   // Dynamic Full URLs with Path Parameters
   // ==========================================
-  static String bookingStatusUrl(String bookingId) => '$baseUrl/bookings/$bookingId/status';
-  static String seatStatusUrl(String seatId) => '$baseUrl$seatsEndpoint/$seatId/status';
+  static String bookingStatusUrl(String bookingId) =>
+      '$baseUrl/bookings/$bookingId/status';
+  static String seatStatusUrl(String seatId) =>
+      '$baseUrl$seatsEndpoint/$seatId/status';
   static String serviceByIdUrl(String id) => '$baseUrl$servicesEndpoint/$id';
   static String staffByIdUrl(String id) => '$baseUrl$staffEndpoint/$id';
 }

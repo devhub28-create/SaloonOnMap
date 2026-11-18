@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:api_client/api_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,11 +12,13 @@ class PartnerSeatsLoadedState extends PartnerSeatsState {
   final Map<int, String> seatStatuses;
   final Map<int, String> seatIds;
   final int totalSeats;
+  final bool isOffline;
 
   PartnerSeatsLoadedState({
     required this.seatStatuses,
     this.seatIds = const {},
     required this.totalSeats,
+    this.isOffline = false,
   });
 
   int get availableCount =>
@@ -68,16 +71,19 @@ class PartnerSeatsCubit extends Cubit<PartnerSeatsState> {
                 (seat['seatNumber'] as num?)?.toInt();
             final id = seat['id']?.toString();
             if (seatNumber != null) {
-              statuses[seatNumber] =
-                  _fromApiStatus(seat['status']?.toString() ?? 'AVAILABLE');
+              statuses[seatNumber] = _fromApiStatus(
+                seat['status']?.toString() ?? 'AVAILABLE',
+              );
               if (id != null && id.isNotEmpty) ids[seatNumber] = id;
             }
           }
-          emit(PartnerSeatsLoadedState(
-            seatStatuses: statuses,
-            seatIds: ids,
-            totalSeats: seats.length,
-          ));
+          emit(
+            PartnerSeatsLoadedState(
+              seatStatuses: statuses,
+              seatIds: ids,
+              totalSeats: seats.length,
+            ),
+          );
           return;
         }
       } catch (_) {}
@@ -104,14 +110,25 @@ class PartnerSeatsCubit extends Cubit<PartnerSeatsState> {
         }
       }
 
-      emit(PartnerSeatsLoadedState(seatStatuses: map, totalSeats: totalSeats));
+      emit(
+        PartnerSeatsLoadedState(
+          seatStatuses: map,
+          totalSeats: totalSeats,
+          isOffline: true,
+        ),
+      );
     } catch (e) {
       final Map<int, String> defaultMap = {};
       for (int i = 1; i <= totalSeats; i++) {
         defaultMap[i] = 'Available';
       }
-      emit(PartnerSeatsLoadedState(
-          seatStatuses: defaultMap, totalSeats: totalSeats));
+      emit(
+        PartnerSeatsLoadedState(
+          seatStatuses: defaultMap,
+          totalSeats: totalSeats,
+          isOffline: true,
+        ),
+      );
     }
   }
 
@@ -135,14 +152,21 @@ class PartnerSeatsCubit extends Cubit<PartnerSeatsState> {
     }
 
     map[seatNumber] = nextStatus;
-    emit(PartnerSeatsLoadedState(
-        seatStatuses: map, seatIds: ids, totalSeats: totalSeats));
+    emit(
+      PartnerSeatsLoadedState(
+        seatStatuses: map,
+        seatIds: ids,
+        totalSeats: totalSeats,
+      ),
+    );
 
     try {
       final seatId = ids[seatNumber];
       if (seatId != null && seatId.isNotEmpty) {
         await apiClient.updatePartnerSeatStatus(
-            seatId, _toApiStatus(nextStatus));
+          seatId,
+          _toApiStatus(nextStatus),
+        );
       }
       final prefs = await SharedPreferences.getInstance();
       final saveMap = map.map((k, v) => MapEntry(k.toString(), v));

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../tokens/app_colors.dart';
 import '../tokens/app_tokens.dart';
 
@@ -46,7 +47,9 @@ class SlotSeatCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
-            color: isSelected ? AppColors.primaryGold : _statusColor.withOpacity(0.4),
+            color: isSelected
+                ? AppColors.primaryGold
+                : _statusColor.withValues(alpha: 0.4),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: const [AppShadows.cardShadow],
@@ -65,11 +68,7 @@ class SlotSeatCard extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(
-              Icons.chair_alt_rounded,
-              size: 32,
-              color: _statusColor,
-            ),
+            Icon(Icons.chair_alt_rounded, size: 32, color: _statusColor),
             const SizedBox(height: AppSpacing.sm),
             Text(
               statusLabel,
@@ -83,7 +82,10 @@ class SlotSeatCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 '$customerName ${timeInfo != null ? "· $timeInfo" : ""}',
-                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

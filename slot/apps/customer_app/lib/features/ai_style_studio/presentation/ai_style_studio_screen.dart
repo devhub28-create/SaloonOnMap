@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:api_client/api_client.dart';
+
 import '../cubit/ai_style_cubit.dart';
 import '../cubit/ai_style_state.dart';
 import 'widgets/consent_dialog.dart';
@@ -22,7 +23,10 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
     context.read<AiStyleCubit>().initStudio();
   }
 
-  Color _parseHexColor(String? hex, {Color fallback = const Color(0xFF1E3A5F)}) {
+  Color _parseHexColor(
+    String? hex, {
+    Color fallback = const Color(0xFF1E3A5F),
+  }) {
     if (hex == null || hex.isEmpty) return fallback;
     final cleaned = hex.replaceAll('#', '');
     if (cleaned.length == 6) {
@@ -35,7 +39,7 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
   void _openFullScreenStoryboard(BuildContext context, String imageUrl) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.92),
+      barrierColor: Colors.black.withValues(alpha: 0.92),
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(8),
@@ -47,10 +51,7 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
               maxScale: 4.5,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                ),
+                child: Image.network(imageUrl, fit: BoxFit.contain),
               ),
             ),
             Positioned(
@@ -70,14 +71,21 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
             Positioned(
               bottom: 16,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black87,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
                   'Pinch to zoom • Show to your barber',
-                  style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -160,7 +168,10 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
   }
 
   /// Screen A (Landing) + Screen B (Photo Review, Dynamic Analysis & Preferences)
-  Widget _buildLandingAndPreferencesView(BuildContext context, AiStyleConfigState state) {
+  Widget _buildLandingAndPreferencesView(
+    BuildContext context,
+    AiStyleConfigState state,
+  ) {
     final cubit = context.read<AiStyleCubit>();
 
     return SingleChildScrollView(
@@ -184,7 +195,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                   Expanded(
                     child: Text(
                       'AI inference server is unreachable. Please verify backend is running.',
-                      style: TextStyle(color: Color(0xFF856404), fontSize: 12, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        color: Color(0xFF856404),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -208,9 +223,13 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFD49B28).withOpacity(0.25),
+                          color:
+                              const Color(0xFFD49B28).withValues(alpha: 0.25),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
@@ -234,7 +253,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                       const SizedBox(height: 6),
                       const Text(
                         'Analyses your facial proportions, hairline, eyewear & beard density to rank and render tailored styles directly on your portrait.',
-                        style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.35),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          height: 1.35,
+                        ),
                       ),
                     ],
                   ),
@@ -243,10 +266,14 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD49B28).withOpacity(0.18),
+                    color: const Color(0xFFD49B28).withValues(alpha: 0.18),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.face_retouching_natural, color: Color(0xFFFFD579), size: 34),
+                  child: const Icon(
+                    Icons.face_retouching_natural,
+                    color: Color(0xFFFFD579),
+                    size: 34,
+                  ),
                 ),
               ],
             ),
@@ -256,7 +283,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
           // Step 1: Upload / Capture Portrait
           const Text(
             '1. Your Portrait Photo',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E1A15)),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E1A15),
+            ),
           ),
           const SizedBox(height: 4),
           const Text(
@@ -282,13 +313,19 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                   SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD49B28)),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFFD49B28),
+                    ),
                   ),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Analyzing face geometry, hair texture, eyewear & lighting...',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -310,7 +347,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.tune_rounded, size: 19, color: Color(0xFF1E3A5F)),
+                    Icon(
+                      Icons.tune_rounded,
+                      size: 19,
+                      color: Color(0xFF1E3A5F),
+                    ),
                     SizedBox(width: 8),
                     Text(
                       '2. Your Styling Preferences (Optional)',
@@ -328,7 +369,6 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                   style: TextStyle(fontSize: 12, color: Color(0xFF7A7265)),
                 ),
                 const SizedBox(height: 14),
-
                 if (state.hairStyles.isNotEmpty) ...[
                   _buildCatalogStyleChipGroup(
                     title: 'Target Hairstyle (Optional)',
@@ -339,7 +379,6 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                   ),
                   const SizedBox(height: 14),
                 ],
-
                 if (state.beardStyles.isNotEmpty) ...[
                   _buildCatalogStyleChipGroup(
                     title: 'Target Facial Hair / Beard (Optional)',
@@ -350,7 +389,6 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                   ),
                   const SizedBox(height: 14),
                 ],
-
                 _buildPreferenceChipGroup(
                   title: 'Maintenance Level',
                   selectedValue: state.maintenanceLevel,
@@ -363,7 +401,6 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                   onSelected: cubit.setMaintenanceLevel,
                 ),
                 const SizedBox(height: 12),
-
                 _buildPreferenceChipGroup(
                   title: 'Style Vibe',
                   selectedValue: state.styleVibe,
@@ -377,7 +414,6 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                   onSelected: cubit.setStyleVibe,
                 ),
                 const SizedBox(height: 12),
-
                 _buildPreferenceChipGroup(
                   title: 'Number of Variations',
                   selectedValue: state.variationsCount.toString(),
@@ -386,7 +422,8 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                     {'id': '4', 'label': '4 Looks'},
                     {'id': '6', 'label': '6 Looks (Full Board)'},
                   ],
-                  onSelected: (val) => cubit.setVariationsCount(int.tryParse(val) ?? 6),
+                  onSelected: (val) =>
+                      cubit.setVariationsCount(int.tryParse(val) ?? 6),
                 ),
               ],
             ),
@@ -461,7 +498,8 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
 
   Widget _buildPhotoAnalysisCard(PhotoAnalysisSummary summary) {
     final isOk = summary.faceDetected && summary.isAcceptable;
-    final shapeLabel = summary.estimatedFaceShape.replaceAll('_', ' ').toUpperCase();
+    final shapeLabel =
+        summary.estimatedFaceShape.replaceAll('_', ' ').toUpperCase();
     final texLabel = summary.visibleTexture.replaceAll('_', ' ');
     final lenLabel = summary.currentHairLength.replaceAll('_', ' ');
     final beardLabel = summary.currentFacialHair.replaceAll('_', ' ');
@@ -473,7 +511,9 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
         color: isOk ? const Color(0xFFF3F8F6) : const Color(0xFFFFF3F3),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isOk ? const Color(0xFF2E6F5E).withOpacity(0.35) : Colors.redAccent.withOpacity(0.45),
+          color: isOk
+              ? const Color(0xFF2E6F5E).withValues(alpha: 0.35)
+              : Colors.redAccent.withValues(alpha: 0.45),
         ),
       ),
       child: Column(
@@ -491,7 +531,8 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                 child: Text(
                   isOk
                       ? 'Portrait Analyzed • Approximate Proportions: $shapeLabel'
-                      : (summary.rejectionReason ?? 'Photo quality check failed'),
+                      : (summary.rejectionReason ??
+                          'Photo quality check failed'),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
@@ -509,14 +550,19 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
               children: [
                 _buildAnalysisBadge('Hair: $lenLabel ($texLabel)'),
                 _buildAnalysisBadge('Beard: $beardLabel'),
-                if (summary.eyewearDetected) _buildAnalysisBadge('Eyewear Protected'),
+                if (summary.eyewearDetected)
+                  _buildAnalysisBadge('Eyewear Protected'),
               ],
             ),
             if (summary.shapeGuidance.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 summary.shapeGuidance,
-                style: const TextStyle(fontSize: 11.5, color: Color(0xFF43534F), height: 1.35),
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: Color(0xFF43534F),
+                  height: 1.35,
+                ),
               ),
             ],
           ],
@@ -544,7 +590,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1E3A5F)),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF1E3A5F),
+        ),
       ),
     );
   }
@@ -560,7 +610,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4A4238)),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF4A4238),
+          ),
         ),
         const SizedBox(height: 6),
         Wrap(
@@ -600,7 +654,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4A4238)),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF4A4238),
+          ),
         ),
         const SizedBox(height: 6),
         Wrap(
@@ -615,7 +673,8 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
               labelStyle: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: selectedId == null ? Colors.white : const Color(0xFF3A352F),
+                color:
+                    selectedId == null ? Colors.white : const Color(0xFF3A352F),
               ),
               onSelected: (_) => onSelected(null),
             ),
@@ -659,10 +718,15 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black87,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
               icon: const Icon(Icons.refresh, color: Colors.white, size: 16),
-              label: const Text('Change Photo', style: TextStyle(color: Colors.white, fontSize: 12)),
+              label: const Text(
+                'Change Photo',
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
               onPressed: () => context.read<AiStyleCubit>().clearPhoto(),
             ),
           ),
@@ -682,10 +746,14 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFD49B28).withOpacity(0.12),
+              color: const Color(0xFFD49B28).withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.face_retouching_natural, size: 36, color: Color(0xFFD49B28)),
+            child: const Icon(
+              Icons.face_retouching_natural,
+              size: 36,
+              color: Color(0xFFD49B28),
+            ),
           ),
           const SizedBox(height: 10),
           const Text(
@@ -705,23 +773,49 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1E1A15),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
-                icon: const Icon(Icons.camera_alt_outlined, color: Colors.white, size: 18),
-                label: const Text('Camera', style: TextStyle(color: Colors.white)),
-                onPressed: () => context.read<AiStyleCubit>().pickPhoto(ImageSource.camera),
+                icon: const Icon(
+                  Icons.camera_alt_outlined,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                label: const Text(
+                  'Camera',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onPressed: () =>
+                    context.read<AiStyleCubit>().pickPhoto(ImageSource.camera),
               ),
               const SizedBox(width: 12),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   side: const BorderSide(color: Color(0xFF1E1A15)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
-                icon: const Icon(Icons.photo_library_outlined, color: Color(0xFF1E1A15), size: 18),
-                label: const Text('Gallery', style: TextStyle(color: Color(0xFF1E1A15))),
-                onPressed: () => context.read<AiStyleCubit>().pickPhoto(ImageSource.gallery),
+                icon: const Icon(
+                  Icons.photo_library_outlined,
+                  color: Color(0xFF1E1A15),
+                  size: 18,
+                ),
+                label: const Text(
+                  'Gallery',
+                  style: TextStyle(color: Color(0xFF1E1A15)),
+                ),
+                onPressed: () =>
+                    context.read<AiStyleCubit>().pickPhoto(ImageSource.gallery),
               ),
             ],
           ),
@@ -733,7 +827,8 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
   /// Screen C: Live Generation Progress
   Widget _buildProgressScreenC(AiStyleState state) {
     String title = 'Creating Your Personalized Storyboard...';
-    String subtitle = 'Synthesizing realistic hair & beard styles directly on your portrait.';
+    String subtitle =
+        'Synthesizing realistic hair & beard styles directly on your portrait.';
     int activeStep = 2;
 
     if (state is AiStyleUploadingState) {
@@ -804,9 +899,13 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                     child: Row(
                       children: [
                         Icon(
-                          done ? Icons.check_circle : Icons.radio_button_unchecked,
+                          done
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
                           size: 18,
-                          color: done ? const Color(0xFFD49B28) : Colors.grey.shade400,
+                          color: done
+                              ? const Color(0xFFD49B28)
+                              : Colors.grey.shade400,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -814,8 +913,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                             steps[idx],
                             style: TextStyle(
                               fontSize: 12.5,
-                              fontWeight: done ? FontWeight.w600 : FontWeight.normal,
-                              color: done ? const Color(0xFF1E1A15) : Colors.grey.shade600,
+                              fontWeight:
+                                  done ? FontWeight.w600 : FontWeight.normal,
+                              color: done
+                                  ? const Color(0xFF1E1A15)
+                                  : Colors.grey.shade600,
                             ),
                           ),
                         ),
@@ -832,7 +934,10 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
   }
 
   /// Screen D: Personalized Storyboard & Dynamic Recommendations View
-  Widget _buildStoryboardScreenD(BuildContext context, AiStyleSuccessState state) {
+  Widget _buildStoryboardScreenD(
+    BuildContext context,
+    AiStyleSuccessState state,
+  ) {
     final storyboardFullUrl = state.storyboardImageUrl != null
         ? ApiConfig.formatImageUrl(state.storyboardImageUrl!)
         : null;
@@ -847,9 +952,10 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
     final bestReason = state.bestOption?['reason']?.toString() ??
         topVariation.whyItSuits ??
         'Ranked #1 for your analyzed facial proportions and styling preferences.';
-    final analyzedShape = state.analysis?.estimatedFaceShape.replaceAll('_', ' ').toUpperCase() ??
-        state.bestOption?['face_shape']?.toString().toUpperCase() ??
-        'BALANCED';
+    final analyzedShape =
+        state.analysis?.estimatedFaceShape.replaceAll('_', ' ').toUpperCase() ??
+            state.bestOption?['face_shape']?.toString().toUpperCase() ??
+            'BALANCED';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 36),
@@ -865,7 +971,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.auto_awesome, color: Color(0xFFFFD579), size: 22),
+                const Icon(
+                  Icons.auto_awesome,
+                  color: Color(0xFFFFD579),
+                  size: 22,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -881,19 +991,31 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                       ),
                       Text(
                         'Analyzed Proportions: $analyzedShape • Tap any card for Barber Specs',
-                        style: const TextStyle(color: Colors.white70, fontSize: 11.5),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11.5,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 TextButton.icon(
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    backgroundColor: Colors.white.withValues(alpha: 0.14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   onPressed: () => context.read<AiStyleCubit>().initStudio(),
-                  icon: const Icon(Icons.refresh, size: 15, color: Colors.white),
-                  label: const Text('New Photo', style: TextStyle(color: Colors.white, fontSize: 12)),
+                  icon: const Icon(
+                    Icons.refresh,
+                    size: 15,
+                    color: Colors.white,
+                  ),
+                  label: const Text(
+                    'New Photo',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                 ),
               ],
             ),
@@ -919,7 +1041,10 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFD49B28),
                         borderRadius: BorderRadius.circular(6),
@@ -947,7 +1072,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                 const SizedBox(height: 4),
                 Text(
                   bestReason,
-                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF4A4238), height: 1.38),
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Color(0xFF4A4238),
+                    height: 1.38,
+                  ),
                 ),
               ],
             ),
@@ -973,7 +1102,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                         const Expanded(
                           child: Row(
                             children: [
-                              Icon(Icons.grid_view_rounded, size: 18, color: Color(0xFF1E3A5F)),
+                              Icon(
+                                Icons.grid_view_rounded,
+                                size: 18,
+                                color: Color(0xFF1E3A5F),
+                              ),
                               SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -995,26 +1128,39 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                           children: [
                             InkWell(
                               onTap: () async {
-                                final ok = await context.read<AiStyleCubit>().saveStoryboard();
+                                final ok = await context
+                                    .read<AiStyleCubit>()
+                                    .saveStoryboard();
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      ok ? 'Storyboard saved to My Saved Looks!' : 'Failed to save storyboard.',
+                                      ok
+                                          ? 'Storyboard saved to My Saved Looks!'
+                                          : 'Failed to save storyboard.',
                                     ),
-                                    backgroundColor: ok ? const Color(0xFF1F3D3A) : Colors.redAccent,
+                                    backgroundColor: ok
+                                        ? const Color(0xFF1F3D3A)
+                                        : Colors.redAccent,
                                   ),
                                 );
                               },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFD49B28),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Row(
                                   children: [
-                                    Icon(Icons.bookmark_add, size: 13, color: Colors.white),
+                                    Icon(
+                                      Icons.bookmark_add,
+                                      size: 13,
+                                      color: Colors.white,
+                                    ),
                                     SizedBox(width: 4),
                                     Text(
                                       'Save Sheet',
@@ -1030,14 +1176,25 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                             ),
                             const SizedBox(width: 6),
                             InkWell(
-                              onTap: () => _openFullScreenStoryboard(context, storyboardFullUrl),
+                              onTap: () => _openFullScreenStoryboard(
+                                context,
+                                storyboardFullUrl,
+                              ),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 5,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1E3A5F).withOpacity(0.1),
+                                  color: const Color(0xFF1E3A5F)
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Icon(Icons.zoom_out_map, size: 15, color: Color(0xFF1E3A5F)),
+                                child: const Icon(
+                                  Icons.zoom_out_map,
+                                  size: 15,
+                                  color: Color(0xFF1E3A5F),
+                                ),
                               ),
                             ),
                           ],
@@ -1046,9 +1203,12 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => _openFullScreenStoryboard(context, storyboardFullUrl),
+                    onTap: () =>
+                        _openFullScreenStoryboard(context, storyboardFullUrl),
                     child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(17)),
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(17),
+                      ),
                       child: Image.network(
                         storyboardFullUrl,
                         width: double.infinity,
@@ -1106,7 +1266,10 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF283E5D),
                       borderRadius: BorderRadius.circular(8),
@@ -1133,11 +1296,21 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('• ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          const Text(
+                            '• ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
                           Expanded(
                             child: Text(
                               note,
-                              style: const TextStyle(fontSize: 12.5, color: Color(0xFF2C2620), height: 1.35),
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: Color(0xFF2C2620),
+                                height: 1.35,
+                              ),
                             ),
                           ),
                         ],
@@ -1154,20 +1327,32 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
           Center(
             child: TextButton.icon(
               onPressed: () async {
-                final deleted = await context.read<AiStyleCubit>().deleteCurrentGeneration();
+                final deleted = await context
+                    .read<AiStyleCubit>()
+                    .deleteCurrentGeneration();
                 if (!context.mounted) return;
                 if (deleted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Generation job and stored photos deleted from server.'),
+                      content: Text(
+                        'Generation job and stored photos deleted from server.',
+                      ),
                     ),
                   );
                 }
               },
-              icon: const Icon(Icons.delete_forever_outlined, color: Colors.redAccent, size: 18),
+              icon: const Icon(
+                Icons.delete_forever_outlined,
+                color: Colors.redAccent,
+                size: 18,
+              ),
               label: const Text(
                 'Delete This Generation & Stored Photos',
-                style: TextStyle(color: Colors.redAccent, fontSize: 12.5, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -1193,12 +1378,19 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
           originalImageUrl: state.originalImageUrl,
           variation: v,
           onSave: (title, notes) async {
-            final ok = await context.read<AiStyleCubit>().saveLook(v, title: title, notes: notes);
+            final ok = await context.read<AiStyleCubit>().saveLook(
+                  v,
+                  title: title,
+                  notes: notes,
+                );
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(ok ? 'Saved "${v.styleLabel}"!' : 'Failed to save look.'),
-                backgroundColor: ok ? const Color(0xFF1F3D3A) : Colors.redAccent,
+                content: Text(
+                  ok ? 'Saved "${v.styleLabel}"!' : 'Failed to save look.',
+                ),
+                backgroundColor:
+                    ok ? const Color(0xFF1F3D3A) : Colors.redAccent,
               ),
             );
           },
@@ -1209,12 +1401,14 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
           color: const Color(0xFFFAF7F2),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: v.isRecommended ? const Color(0xFFD49B28) : const Color(0xFFD8D0C5),
+            color: v.isRecommended
+                ? const Color(0xFFD49B28)
+                : const Color(0xFFD8D0C5),
             width: v.isRecommended ? 2.2 : 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -1229,7 +1423,9 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: headerColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(14),
+                ),
               ),
               child: Row(
                 children: [
@@ -1244,13 +1440,20 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                      color: v.isRecommended ? const Color(0xFFD49B28) : Colors.black26,
+                      color: v.isRecommended
+                          ? const Color(0xFFD49B28)
+                          : Colors.black26,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      v.isRecommended ? '★ TOP SUGGESTION • ${v.suitabilityScore}%' : 'Suggestion ${v.suitabilityScore}%',
+                      v.isRecommended
+                          ? '★ TOP SUGGESTION • ${v.suitabilityScore}%'
+                          : 'Suggestion ${v.suitabilityScore}%',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
@@ -1288,9 +1491,12 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                             bottom: 6,
                             left: 6,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.65),
+                                color: Colors.black.withValues(alpha: 0.65),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
@@ -1315,16 +1521,26 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (v.hairLengthCm != null || v.hairDesc != null)
-                          _buildBulletPoint('Hair:', v.hairLengthCm ?? v.hairDesc!),
+                          _buildBulletPoint(
+                            'Hair:',
+                            v.hairLengthCm ?? v.hairDesc!,
+                          ),
                         if (v.beardLengthMm != null || v.beardDesc != null) ...[
                           const SizedBox(height: 5),
-                          _buildBulletPoint('Beard:', v.beardLengthMm ?? v.beardDesc!),
+                          _buildBulletPoint(
+                            'Beard:',
+                            v.beardLengthMm ?? v.beardDesc!,
+                          ),
                         ],
                         if (v.maintenanceLevel != null) ...[
                           const SizedBox(height: 5),
-                          _buildBulletPoint('Maintenance:', v.maintenanceLevel!.toUpperCase()),
+                          _buildBulletPoint(
+                            'Maintenance:',
+                            v.maintenanceLevel!.toUpperCase(),
+                          ),
                         ],
-                        if (v.whyItSuits != null && v.whyItSuits!.isNotEmpty) ...[
+                        if (v.whyItSuits != null &&
+                            v.whyItSuits!.isNotEmpty) ...[
                           const SizedBox(height: 5),
                           _buildBulletPoint('Why it fits:', v.whyItSuits!),
                         ],
@@ -1334,11 +1550,20 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                             Expanded(
                               child: OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                    horizontal: 8,
+                                  ),
                                   side: BorderSide(color: headerColor),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
-                                icon: Icon(Icons.compare_arrows, size: 14, color: headerColor),
+                                icon: Icon(
+                                  Icons.compare_arrows,
+                                  size: 14,
+                                  color: headerColor,
+                                ),
                                 label: Text(
                                   'Barber Card',
                                   style: TextStyle(
@@ -1353,7 +1578,13 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                                     originalImageUrl: state.originalImageUrl,
                                     variation: v,
                                     onSave: (title, notes) async {
-                                      await context.read<AiStyleCubit>().saveLook(v, title: title, notes: notes);
+                                      await context
+                                          .read<AiStyleCubit>()
+                                          .saveLook(
+                                            v,
+                                            title: title,
+                                            notes: notes,
+                                          );
                                     },
                                   );
                                 },
@@ -1363,14 +1594,26 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
                             IconButton(
                               visualDensity: VisualDensity.compact,
                               tooltip: 'Save Look',
-                              icon: const Icon(Icons.bookmark_add_outlined, color: Color(0xFFD49B28), size: 20),
+                              icon: const Icon(
+                                Icons.bookmark_add_outlined,
+                                color: Color(0xFFD49B28),
+                                size: 20,
+                              ),
                               onPressed: () async {
-                                final ok = await context.read<AiStyleCubit>().saveLook(v);
+                                final ok = await context
+                                    .read<AiStyleCubit>()
+                                    .saveLook(v);
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(ok ? 'Saved "${v.styleLabel}"!' : 'Failed to save look.'),
-                                    backgroundColor: ok ? const Color(0xFF1F3D3A) : Colors.redAccent,
+                                    content: Text(
+                                      ok
+                                          ? 'Saved "${v.styleLabel}"!'
+                                          : 'Failed to save look.',
+                                    ),
+                                    backgroundColor: ok
+                                        ? const Color(0xFF1F3D3A)
+                                        : Colors.redAccent,
                                   ),
                                 );
                               },
@@ -1394,10 +1637,20 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
       maxLines: 3,
       overflow: TextOverflow.ellipsis,
       text: TextSpan(
-        style: const TextStyle(fontSize: 11.5, color: Color(0xFF2C2620), height: 1.32),
+        style: const TextStyle(
+          fontSize: 11.5,
+          color: Color(0xFF2C2620),
+          height: 1.32,
+        ),
         children: [
-          const TextSpan(text: '• ', style: TextStyle(fontWeight: FontWeight.bold)),
-          TextSpan(text: '$label ', style: const TextStyle(fontWeight: FontWeight.bold)),
+          const TextSpan(
+            text: '• ',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          TextSpan(
+            text: '$label ',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           TextSpan(text: value),
         ],
       ),
@@ -1411,7 +1664,11 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.warning_amber_rounded, size: 56, color: Colors.redAccent),
+            const Icon(
+              Icons.warning_amber_rounded,
+              size: 56,
+              color: Colors.redAccent,
+            ),
             const SizedBox(height: 16),
             const Text(
               'Could Not Generate Style Preview',
@@ -1427,10 +1684,16 @@ class _AiStyleStudioScreenState extends State<AiStyleStudioScreen> {
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD49B28),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
               icon: const Icon(Icons.refresh, color: Colors.white),
-              label: const Text('Try Another Photo', style: TextStyle(color: Colors.white)),
+              label: const Text(
+                'Try Another Photo',
+                style: TextStyle(color: Colors.white),
+              ),
               onPressed: () => context.read<AiStyleCubit>().initStudio(),
             ),
           ],

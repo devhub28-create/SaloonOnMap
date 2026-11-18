@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:design_system/design_system.dart';
 import 'package:go_router/go_router.dart';
+
 import '../cubit/booking_cubit.dart';
 
 class BookSeatScreen extends StatefulWidget {
@@ -38,8 +39,9 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
       if (salonId == null) {
         throw StateError('Select a salon before choosing a slot.');
       }
-      final selectedDate =
-          DateTime.now().add(Duration(days: _selectedDateIndex));
+      final selectedDate = DateTime.now().add(
+        Duration(days: _selectedDateIndex),
+      );
       final date =
           '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
       final res = await bookingCubit.apiClient.getAvailableSlots(
@@ -49,8 +51,9 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
       );
       final fetchedSeats = List<Map<String, dynamic>>.from(res['seats'] ?? []);
       final fetchedStaff = List<Map<String, dynamic>>.from(res['staff'] ?? []);
-      final fetchedTimes =
-          List<Map<String, dynamic>>.from(res['timeSlots'] ?? []);
+      final fetchedTimes = List<Map<String, dynamic>>.from(
+        res['timeSlots'] ?? [],
+      );
 
       setState(() {
         _seats = fetchedSeats;
@@ -79,7 +82,8 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
           (s) => availSeatIds.contains(s['id']?.toString()),
           orElse: () => _seats.isNotEmpty ? _seats.first : const {},
         );
-        if (initialSeat.isNotEmpty && availSeatIds.contains(initialSeat['id']?.toString())) {
+        if (initialSeat.isNotEmpty &&
+            availSeatIds.contains(initialSeat['id']?.toString())) {
           _selectedSeatId = initialSeat['id']?.toString();
           _selectedSeatLabel = initialSeat['label']?.toString() ?? '';
         } else {
@@ -151,7 +155,9 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
     if (!_isSeatAvailableForSelectedTime(id)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$label is occupied at $_selectedTime. Please pick another chair or time slot.'),
+          content: Text(
+            '$label is occupied at $_selectedTime. Please pick another chair or time slot.',
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -186,20 +192,26 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primaryGold))
+              child: CircularProgressIndicator(color: AppColors.primaryGold),
+            )
           : _error != null
               ? Center(
                   child: Padding(
-                      padding: const EdgeInsets.all(24), child: Text(_error!)))
+                    padding: const EdgeInsets.all(24),
+                    child: Text(_error!),
+                  ),
+                )
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Choose Date Header
-                      const Text('Choose date',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Choose date',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: AppSpacing.md),
 
                       // Date horizontal list
@@ -214,23 +226,28 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
                       const SizedBox(height: AppSpacing.xl),
 
                       // Available Times Header
-                      const Text('Available times',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Available times',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: AppSpacing.md),
 
                       // Time Slots Grid
                       Wrap(
                         spacing: 12,
                         runSpacing: 12,
-                        children: _timeSlots.map((ts) => _timePill(ts)).toList(),
+                        children:
+                            _timeSlots.map((ts) => _timePill(ts)).toList(),
                       ),
                       const SizedBox(height: AppSpacing.xl),
 
                       // Choose a Seat Header
-                      const Text('Choose a seat',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Choose a seat',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: AppSpacing.md),
 
                       // Seat Selector
@@ -246,9 +263,11 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
                       const SizedBox(height: AppSpacing.xl),
 
                       // Preferred Stylist
-                      const Text('Preferred stylist',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Preferred stylist',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: AppSpacing.md),
 
                       Row(
@@ -276,8 +295,11 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
           text: 'Review · ₹${totalPrice.toInt()} →',
           onPressed: () {
             if (_selectedSeatId == null || _selectedTime.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('No available seat or time is selected.')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('No available seat or time is selected.'),
+                ),
+              );
               return;
             }
             bookingCubit.selectDateTimeSeat(
@@ -309,24 +331,28 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
             color: isSelected ? AppColors.darkNeutral : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-                color:
-                    isSelected ? AppColors.darkNeutral : AppColors.borderLight),
+              color: isSelected ? AppColors.darkNeutral : AppColors.borderLight,
+            ),
           ),
           child: Column(
             children: [
-              Text(day,
-                  style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color:
-                          isSelected ? Colors.white70 : AppColors.textMuted)),
+              Text(
+                day,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white70 : AppColors.textMuted,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(dateNum,
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color:
-                          isSelected ? Colors.white : AppColors.darkNeutral)),
+              Text(
+                dateNum,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : AppColors.darkNeutral,
+                ),
+              ),
             ],
           ),
         ),
@@ -351,7 +377,9 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
         if (!generalAvailable) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('$time is completely booked. Please select another slot.'),
+              content: Text(
+                '$time is completely booked. Please select another slot.',
+              ),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -360,7 +388,9 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
         if (!seatAvailable) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('$_selectedSeatLabel is occupied at $time. Select another chair or slot.'),
+              content: Text(
+                '$_selectedSeatLabel is occupied at $time. Select another chair or slot.',
+              ),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -400,9 +430,7 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
                 margin: const EdgeInsets.only(top: 2),
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.white24
-                      : const Color(0xFFFEE2E2),
+                  color: isSelected ? Colors.white24 : const Color(0xFFFEE2E2),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -528,21 +556,24 @@ class _BookSeatScreenState extends State<BookSeatScreen> {
                 backgroundColor: isSelected
                     ? AppColors.primaryGold
                     : const Color(0xFFEFECE6),
-                child: Text(avatar,
-                    style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.darkNeutral)),
+                child: Text(
+                  avatar,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.darkNeutral,
+                  ),
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 name,
                 style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected
-                        ? AppColors.darkNeutral
-                        : AppColors.textMuted),
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color:
+                      isSelected ? AppColors.darkNeutral : AppColors.textMuted,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

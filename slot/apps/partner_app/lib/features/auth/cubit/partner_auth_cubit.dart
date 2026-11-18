@@ -1,6 +1,7 @@
 import 'package:api_client/api_client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../core/constants/partner_api_urls.dart';
 
 abstract class PartnerAuthState {}
@@ -49,10 +50,12 @@ class PartnerAuthError extends PartnerAuthState {
 
 class PartnerAuthCubit extends Cubit<PartnerAuthState> {
   final ApiClient apiClient;
+  late final PushNotificationService _pushNotifications =
+      PushNotificationService(apiClient: apiClient, appType: 'PARTNER');
 
   PartnerAuthCubit({required this.apiClient}) : super(PartnerAuthInitial());
 
-  static const String _keyToken = 'partner_jwt_token';
+  static const String _legacyKeyToken = 'partner_jwt_token';
   static const String _keySalonId = 'partner_salon_id';
   static const String _keySalonName = 'partner_salon_name';
   static const String _keyOwnerName = 'partner_owner_name';
@@ -65,7 +68,8 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
   Future<void> checkAuthStatus() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(_keyToken);
+      final restored = await apiClient.restoreSession();
+      final token = apiClient.accessToken;
       final salonId = prefs.getString(_keySalonId);
       final salonName = prefs.getString(_keySalonName);
       final ownerName = prefs.getString(_keyOwnerName);
@@ -75,16 +79,18 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
       final address = prefs.getString(_keyAddress) ?? '';
       final coverImage = prefs.getString(_keyCoverImage) ?? '';
 
-      if (token != null && token.isNotEmpty) {
-        apiClient.setAuthToken(token);
+      if (restored && token != null && token.isNotEmpty) {
+        await prefs.remove(_legacyKeyToken);
         try {
           await apiClient.getPartnerSalon();
         } on DioException catch (error) {
           if (error.response?.statusCode == 403) {
-            emit(PartnerPendingApproval(
-              salonName: salonName ?? 'My Salon',
-              ownerName: ownerName ?? 'Partner',
-            ));
+            emit(
+              PartnerPendingApproval(
+                salonName: salonName ?? 'My Salon',
+                ownerName: ownerName ?? 'Partner',
+              ),
+            );
             return;
           }
           if (error.response?.statusCode == 401) {
@@ -92,22 +98,31 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
             emit(PartnerUnauthenticated());
             return;
           }
+          emit(
+            PartnerAuthError(
+              'Could not verify your salon status. Check your connection and try again.',
+            ),
+          );
+          return;
         }
-        emit(PartnerAuthenticated(
-          token: token,
-          salonId: salonId ?? '',
-          salonName: (salonName != null && salonName.isNotEmpty)
-              ? salonName
-              : 'My Salon',
-          ownerName: (ownerName != null && ownerName.isNotEmpty)
-              ? ownerName
-              : 'Partner',
-          seatCount: seatCount,
-          city: city,
-          area: area,
-          address: address,
-          coverImage: coverImage,
-        ));
+        emit(
+          PartnerAuthenticated(
+            token: token,
+            salonId: salonId ?? '',
+            salonName: (salonName != null && salonName.isNotEmpty)
+                ? salonName
+                : 'My Salon',
+            ownerName: (ownerName != null && ownerName.isNotEmpty)
+                ? ownerName
+                : 'Partner',
+            seatCount: seatCount,
+            city: city,
+            area: area,
+            address: address,
+            coverImage: coverImage,
+          ),
+        );
+        _pushNotifications.register();
       } else {
         emit(PartnerUnauthenticated());
       }
@@ -137,16 +152,16 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
     try {
       final response = await apiClient.dio.post(
         PartnerApiUrls.partnerLoginEndpoint,
-        data: {
-          'phoneOrEmail': phoneOrEmail.trim(),
-          'password': password,
-        },
+        data: {'phoneOrEmail': phoneOrEmail.trim(), 'password': password},
       );
 
       final token = response.data['accessToken'] as String?;
       if (token == null || token.isEmpty) {
-        emit(PartnerAuthError(
-            'Login succeeded but the server did not return an access token.'));
+        emit(
+          PartnerAuthError(
+            'Login succeeded but the server did not return an access token.',
+          ),
+        );
         return;
       }
       final salonData = response.data['salon'];
@@ -183,13 +198,7 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
               ? salonData['coverImage'].toString()
               : '';
 
-      if (salonData is Map && salonData['isActive'] == false) {
-        emit(PartnerPendingApproval(
-          salonName: salonName,
-          ownerName: ownerName,
-        ));
-        return;
-      }
+      final isPending = salonData is Map && salonData['isActive'] == false;
 
       final refreshToken = response.data['refreshToken']?.toString();
       if (refreshToken == null || refreshToken.isEmpty) {
@@ -197,7 +206,7 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
         return;
       }
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_keyToken, token);
+      await prefs.remove(_legacyKeyToken);
       await prefs.setString(_keySalonId, salonId);
       await prefs.setString(_keySalonName, salonName);
       await prefs.setString(_keyOwnerName, ownerName);
@@ -208,17 +217,27 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
       await prefs.setString(_keyCoverImage, coverImage);
       await apiClient.saveSession(token, refreshToken);
 
-      emit(PartnerAuthenticated(
-        token: token,
-        salonId: salonId,
-        salonName: salonName,
-        ownerName: ownerName,
-        seatCount: seatCount,
-        city: city,
-        area: area,
-        address: address,
-        coverImage: coverImage,
-      ));
+      if (isPending) {
+        emit(
+          PartnerPendingApproval(salonName: salonName, ownerName: ownerName),
+        );
+        return;
+      }
+
+      emit(
+        PartnerAuthenticated(
+          token: token,
+          salonId: salonId,
+          salonName: salonName,
+          ownerName: ownerName,
+          seatCount: seatCount,
+          city: city,
+          area: area,
+          address: address,
+          coverImage: coverImage,
+        ),
+      );
+      _pushNotifications.register();
     } on DioException catch (e) {
       if (e.response != null && e.response?.data != null) {
         final msg = e.response?.data['message'];
@@ -228,8 +247,11 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
           return;
         }
       }
-      emit(PartnerAuthError(
-          'Unable to connect to server. Please check your connection.'));
+      emit(
+        PartnerAuthError(
+          'Unable to connect to server. Please check your connection.',
+        ),
+      );
     } catch (e) {
       emit(PartnerAuthError('Login failed: ${e.toString()}'));
     }
@@ -255,6 +277,7 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
     String? refreshToken;
     String salonId = '';
     String savedCover = coverImage ?? '';
+    bool isPending = false;
 
     try {
       final response = await apiClient.dio.post(
@@ -270,7 +293,8 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
           'area': area,
           'address': address,
           'seatCount': seatCount,
-          if (coverImage != null && coverImage.isNotEmpty) 'coverImage': coverImage,
+          if (coverImage != null && coverImage.isNotEmpty)
+            'coverImage': coverImage,
           if (images != null && images.isNotEmpty) 'images': images,
         },
       );
@@ -290,16 +314,11 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
 
       final salonData = response.data['salon'];
       if (salonData is Map) {
-        if (salonData['cover_image'] != null && salonData['cover_image'].toString().isNotEmpty) {
+        if (salonData['cover_image'] != null &&
+            salonData['cover_image'].toString().isNotEmpty) {
           savedCover = salonData['cover_image'].toString();
         }
-        if (salonData['isActive'] == false) {
-          emit(PartnerPendingApproval(
-            salonName: salonName,
-            ownerName: ownerName,
-          ));
-          return;
-        }
+        isPending = salonData['isActive'] == false;
       }
     } on DioException catch (e) {
       if (e.response != null && e.response?.data != null) {
@@ -310,24 +329,32 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
           return;
         }
       }
-      emit(PartnerAuthError(
-          'Unable to connect to server: ${e.message ?? e.toString()}'));
+      emit(
+        PartnerAuthError(
+          'Unable to connect to server: ${e.message ?? e.toString()}',
+        ),
+      );
       return;
     } catch (e) {
       emit(PartnerAuthError('Registration error: ${e.toString()}'));
       return;
     }
 
-    if (token == null || token.isEmpty || refreshToken == null || refreshToken.isEmpty) {
-      emit(PartnerAuthError(
-          'Registration succeeded but the server did not return an access token.'));
+    if (token == null ||
+        token.isEmpty ||
+        refreshToken == null ||
+        refreshToken.isEmpty) {
+      emit(
+        PartnerAuthError(
+          'Registration succeeded but the server did not return an access token.',
+        ),
+      );
       return;
     }
 
     try {
-
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_keyToken, token);
+      await prefs.remove(_legacyKeyToken);
       await prefs.setString(_keySalonId, salonId);
       await prefs.setString(_keySalonName, salonName);
       await prefs.setString(_keyOwnerName, ownerName);
@@ -338,19 +365,76 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
       await prefs.setString(_keyCoverImage, savedCover);
       await apiClient.saveSession(token, refreshToken);
 
-      emit(PartnerAuthenticated(
-        token: token,
-        salonId: salonId,
-        salonName: salonName,
-        ownerName: ownerName,
-        seatCount: seatCount,
-        city: city,
-        area: area,
-        address: address,
-        coverImage: savedCover,
-      ));
+      if (isPending) {
+        emit(
+          PartnerPendingApproval(salonName: salonName, ownerName: ownerName),
+        );
+        return;
+      }
+
+      emit(
+        PartnerAuthenticated(
+          token: token,
+          salonId: salonId,
+          salonName: salonName,
+          ownerName: ownerName,
+          seatCount: seatCount,
+          city: city,
+          area: area,
+          address: address,
+          coverImage: savedCover,
+        ),
+      );
+      _pushNotifications.register();
     } catch (e) {
       emit(PartnerAuthError('Save profile error: ${e.toString()}'));
+    }
+  }
+
+  Future<bool> refreshApprovalStatus() async {
+    final current = state;
+    if (current is! PartnerPendingApproval) {
+      return current is PartnerAuthenticated;
+    }
+    try {
+      final salon = await apiClient.getPartnerSalon();
+      if (salon['isActive'] == false || salon['is_active'] == false) {
+        return false;
+      }
+      final prefs = await SharedPreferences.getInstance();
+      final token = apiClient.accessToken;
+      if (token == null || token.isEmpty) {
+        await handleSessionExpired();
+        return false;
+      }
+      emit(
+        PartnerAuthenticated(
+          token: token,
+          salonId:
+              salon['id']?.toString() ?? prefs.getString(_keySalonId) ?? '',
+          salonName: salon['name']?.toString() ?? current.salonName,
+          ownerName: prefs.getString(_keyOwnerName) ?? current.ownerName,
+          seatCount: (salon['seatCount'] as num?)?.toInt() ??
+              (salon['seat_count'] as num?)?.toInt() ??
+              prefs.getInt(_keySeatCount) ??
+              4,
+          city: salon['city']?.toString() ?? prefs.getString(_keyCity) ?? '',
+          area: salon['area']?.toString() ?? prefs.getString(_keyArea) ?? '',
+          address: salon['address']?.toString() ??
+              prefs.getString(_keyAddress) ??
+              '',
+          coverImage: salon['coverImage']?.toString() ??
+              salon['cover_image']?.toString() ??
+              prefs.getString(_keyCoverImage) ??
+              '',
+        ),
+      );
+      _pushNotifications.register();
+      return true;
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 403) return false;
+      if (error.response?.statusCode == 401) await handleSessionExpired();
+      rethrow;
     }
   }
 
@@ -365,17 +449,19 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
           await apiClient.setPartnerSeatCount(currentState.salonId, newCount);
         }
 
-        emit(PartnerAuthenticated(
-          token: currentState.token,
-          salonId: currentState.salonId,
-          salonName: currentState.salonName,
-          ownerName: currentState.ownerName,
-          seatCount: newCount,
-          city: currentState.city,
-          area: currentState.area,
-          address: currentState.address,
-          coverImage: currentState.coverImage,
-        ));
+        emit(
+          PartnerAuthenticated(
+            token: currentState.token,
+            salonId: currentState.salonId,
+            salonName: currentState.salonName,
+            ownerName: currentState.ownerName,
+            seatCount: newCount,
+            city: currentState.city,
+            area: currentState.area,
+            address: currentState.address,
+            coverImage: currentState.coverImage,
+          ),
+        );
       } catch (_) {}
     }
   }
@@ -387,27 +473,31 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_keyCoverImage, newCoverImage);
         try {
-          await apiClient.dio.patch(PartnerApiUrls.salonProfileEndpoint, data: {
-            'coverImage': newCoverImage,
-          });
+          await apiClient.dio.patch(
+            PartnerApiUrls.salonProfileEndpoint,
+            data: {'coverImage': newCoverImage},
+          );
         } catch (_) {}
 
-        emit(PartnerAuthenticated(
-          token: currentState.token,
-          salonId: currentState.salonId,
-          salonName: currentState.salonName,
-          ownerName: currentState.ownerName,
-          seatCount: currentState.seatCount,
-          city: currentState.city,
-          area: currentState.area,
-          address: currentState.address,
-          coverImage: newCoverImage,
-        ));
+        emit(
+          PartnerAuthenticated(
+            token: currentState.token,
+            salonId: currentState.salonId,
+            salonName: currentState.salonName,
+            ownerName: currentState.ownerName,
+            seatCount: currentState.seatCount,
+            city: currentState.city,
+            area: currentState.area,
+            address: currentState.address,
+            coverImage: newCoverImage,
+          ),
+        );
       } catch (_) {}
     }
   }
 
   Future<void> logout() async {
+    await _pushNotifications.unregister();
     try {
       await apiClient.logout();
       await _clearStoredSession();
@@ -419,6 +509,7 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
   }
 
   Future<void> handleSessionExpired() async {
+    await _pushNotifications.unregister();
     await _clearStoredSession();
     emit(PartnerUnauthenticated());
   }
@@ -426,7 +517,7 @@ class PartnerAuthCubit extends Cubit<PartnerAuthState> {
   Future<void> _clearStoredSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_keyToken);
+      await prefs.remove(_legacyKeyToken);
       await prefs.remove(_keySalonId);
       await prefs.remove(_keySalonName);
       await prefs.remove(_keyOwnerName);

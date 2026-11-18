@@ -17,25 +17,30 @@ import 'features/team/presentation/team_screen.dart';
 import 'features/profile/presentation/partner_support_screen.dart';
 import 'features/profile/presentation/partner_notifications_screen.dart';
 
-class PartnerShellScaffold extends StatefulWidget {
+class PartnerShellScaffold extends StatelessWidget {
   final Widget child;
-  const PartnerShellScaffold({super.key, required this.child});
+  final String location;
+  const PartnerShellScaffold({
+    super.key,
+    required this.child,
+    required this.location,
+  });
 
-  @override
-  State<PartnerShellScaffold> createState() => _PartnerShellScaffoldState();
-}
-
-class _PartnerShellScaffoldState extends State<PartnerShellScaffold> {
-  int _currentIndex = 0;
+  int get _currentIndex => switch (location) {
+        '/bookings' => 1,
+        '/seats' => 2,
+        '/services' => 3,
+        '/profile' => 4,
+        _ => 0,
+      };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: widget.child,
+      body: child,
       bottomNavigationBar: SlotBottomNavBar(
         currentIndex: _currentIndex,
         onTap: (index) {
-          setState(() => _currentIndex = index);
           if (index == 0) context.go('/');
           if (index == 1) context.go('/bookings');
           if (index == 2) context.go('/seats');
@@ -114,27 +119,35 @@ GoRouter createPartnerRouter(PartnerAuthCubit authCubit) {
         },
       ),
       ShellRoute(
-        builder: (context, state, child) => PartnerShellScaffold(child: child),
+        builder: (context, state, child) => PartnerShellScaffold(
+          location: state.uri.path,
+          child: child,
+        ),
         routes: [
           GoRoute(
             path: '/',
-            builder: (context, state) => const DashboardScreen(),
+            pageBuilder: (context, state) =>
+                _noTransitionPage(state, const DashboardScreen()),
           ),
           GoRoute(
             path: '/bookings',
-            builder: (context, state) => const BookingsScreen(),
+            pageBuilder: (context, state) =>
+                _noTransitionPage(state, const BookingsScreen()),
           ),
           GoRoute(
             path: '/seats',
-            builder: (context, state) => const SeatsScreen(),
+            pageBuilder: (context, state) =>
+                _noTransitionPage(state, const SeatsScreen()),
           ),
           GoRoute(
             path: '/services',
-            builder: (context, state) => const ServicesScreen(),
+            pageBuilder: (context, state) =>
+                _noTransitionPage(state, const ServicesScreen()),
           ),
           GoRoute(
             path: '/profile',
-            builder: (context, state) => const PartnerProfileScreen(),
+            pageBuilder: (context, state) =>
+                _noTransitionPage(state, const PartnerProfileScreen()),
           ),
         ],
       ),
@@ -161,3 +174,6 @@ GoRouter createPartnerRouter(PartnerAuthCubit authCubit) {
     ],
   );
 }
+
+Page<void> _noTransitionPage(GoRouterState state, Widget child) =>
+    NoTransitionPage<void>(key: state.pageKey, child: child);

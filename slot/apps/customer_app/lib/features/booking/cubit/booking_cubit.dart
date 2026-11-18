@@ -36,17 +36,22 @@ class BookingCubit extends Cubit<BookingState> {
   String selectedSeatLabel = '';
   String selectedStylist = 'Any Stylist';
   Map<String, dynamic>? activeHoldData;
+  String? _idempotencyKey;
 
   BookingCubit({required this.apiClient}) : super(BookingInitialState());
 
   void selectSalon(
-      String salonId, String salonName, List<Map<String, dynamic>> services) {
+    String salonId,
+    String salonName,
+    List<Map<String, dynamic>> services,
+  ) {
     selectedSalonId = salonId;
     selectedSalonName = salonName;
     selectedServices = services;
     selectedSeatId = null;
     selectedSeatLabel = '';
     activeHoldData = null;
+    _idempotencyKey = null;
     emit(BookingInitialState());
   }
 
@@ -77,24 +82,28 @@ class BookingCubit extends Cubit<BookingState> {
 
   double get totalPrice {
     return selectedServices.fold(
-        0.0,
-        (sum, item) =>
-            sum + (double.tryParse(item['price'].toString()) ?? 0.0));
+      0.0,
+      (sum, item) => sum + (double.tryParse(item['price'].toString()) ?? 0.0),
+    );
   }
 
   int get totalDuration {
     return selectedServices.fold(
-        0,
-        (sum, item) =>
-            sum + (int.tryParse(item['duration_minutes'].toString()) ?? 0));
+      0,
+      (sum, item) =>
+          sum + (int.tryParse(item['duration_minutes'].toString()) ?? 0),
+    );
   }
 
   Future<void> createHold(String salonId, String customerId) async {
     if (selectedSeatId == null ||
         selectedTime.isEmpty ||
         selectedServices.isEmpty) {
-      emit(BookingErrorState(
-          'Select at least one service, time, and available seat.'));
+      emit(
+        BookingErrorState(
+          'Select at least one service, time, and available seat.',
+        ),
+      );
       return;
     }
     emit(BookingLoadingState());
@@ -114,52 +123,80 @@ class BookingCubit extends Cubit<BookingState> {
         'totalDuration': totalDuration,
       });
       activeHoldData = response;
+      _idempotencyKey ??=
+          'booking-${response['holdId']}-${DateTime.now().microsecondsSinceEpoch}';
       emit(BookingHoldCreatedState(response));
     } catch (e) {
-      final msg = e.toString().contains('409')
+      final msg = e is DioException && e.response?.statusCode == 409
           ? 'Selected seat is already booked or held. Please go back and select another seat or time slot.'
-          : 'Failed to create booking hold: ${e.toString()}';
+          : _friendlyError(e, 'Could not reserve this slot. Please try again.');
       emit(BookingErrorState(msg));
     }
   }
 
-  Future<void> confirmBooking(String customerId,
-      {String? idempotencyKey}) async {
+  Future<void> confirmBooking(
+    String customerId, {
+    String? idempotencyKey,
+  }) async {
     if (activeHoldData == null && selectedSalonId != null) {
       await createHold(selectedSalonId!, customerId);
     }
     final holdId = activeHoldData?['holdId']?.toString();
     if (holdId == null || holdId.isEmpty) {
-      emit(BookingErrorState(
-          'Your seat hold is not active. Return and select the slot again.'));
+      emit(
+        BookingErrorState(
+          'Your seat hold is not active. Return and select the slot again.',
+        ),
+      );
       return;
     }
     emit(BookingLoadingState());
     try {
-      final response = await apiClient.confirmBooking(
-        {
-          'holdId': holdId,
-          'customerId': customerId,
-          'serviceIds':
-              selectedServices.map((service) => service['id']).toList(),
-          'notes': 'Pay at salon',
-        },
-        idempotencyKey:
-            idempotencyKey ?? 'idemp-${DateTime.now().millisecondsSinceEpoch}',
-      );
+      final response = await apiClient.confirmBooking({
+        'holdId': holdId,
+        'customerId': customerId,
+        'serviceIds': selectedServices.map((service) => service['id']).toList(),
+        'notes': 'Pay at salon',
+      }, idempotencyKey: idempotencyKey ?? _idempotencyKey);
+      activeHoldData = null;
+      _idempotencyKey = null;
       emit(BookingConfirmedSuccessState(response));
     } catch (e) {
-      final msg = e.toString().contains('400')
-          ? 'Failed to confirm booking (Invalid request or expired hold).'
-          : 'This slot is no longer available. (${e.toString()})';
+      final status = e is DioException ? e.response?.statusCode : null;
+      final msg = status == 400 || status == 404 || status == 409
+          ? 'This hold expired or the slot is no longer available. Select the slot again.'
+          : _friendlyError(
+              e,
+              'Could not confirm the booking. Please try again.',
+            );
       emit(BookingErrorState(msg, code: 'BOOKING_ERROR'));
     }
   }
 
+  DateTime? get holdExpiresAt {
+    final value = activeHoldData?['expiresAt'] ?? activeHoldData?['expires_at'];
+    return value == null
+        ? null
+        : DateTime.tryParse(value.toString())?.toLocal();
+  }
+
+  String _friendlyError(Object error, String fallback) {
+    if (error is! DioException) return fallback;
+    final data = error.response?.data;
+    if (data is Map && data['message'] != null) {
+      final message = data['message'];
+      if (message is List) return message.join(' ');
+      if (message.toString().trim().isNotEmpty) return message.toString();
+    }
+    return fallback;
+  }
+
   DateTime _selectedStartAt() {
     final date = DateTime.parse(selectedDate);
-    final match = RegExp(r'^(\d{1,2}):(\d{2})\s*(AM|PM)$', caseSensitive: false)
-        .firstMatch(selectedTime.trim());
+    final match = RegExp(
+      r'^(\d{1,2}):(\d{2})\s*(AM|PM)$',
+      caseSensitive: false,
+    ).firstMatch(selectedTime.trim());
     if (match == null) {
       throw FormatException('Invalid booking time: $selectedTime');
     }

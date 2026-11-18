@@ -75,12 +75,14 @@ class PhotoAnalysisSummary {
       estimatedFaceShape: geo['estimated_face_shape'] as String? ?? 'uncertain',
       shapeConfidence: (geo['confidence'] as num?)?.toDouble() ?? 0.0,
       shapeGuidance: geo['shape_guidance'] as String? ?? '',
-      currentHairLength: hair['estimated_current_length'] as String? ?? 'medium',
+      currentHairLength:
+          hair['estimated_current_length'] as String? ?? 'medium',
       visibleTexture: hair['visible_texture'] as String? ?? 'natural',
       hairDensity: hair['hair_density'] as String? ?? 'medium',
       foreheadExposure: hair['forehead_exposure'] as String? ?? 'balanced',
       eyewearDetected: hair['eyewear_detected'] == true,
-      currentFacialHair: beard['estimated_current_facial_hair'] as String? ?? 'none',
+      currentFacialHair:
+          beard['estimated_current_facial_hair'] as String? ?? 'none',
     );
   }
 }
@@ -149,8 +151,12 @@ class AiVariation {
       imageUrl: json['image_url'] as String? ?? '',
       sideImageUrl: sideUrl,
       backImageUrl: backUrl,
-      sideViewAvailable: json['side_view_available'] == true && sideUrl != null && sideUrl.isNotEmpty,
-      backViewAvailable: json['back_view_available'] == true && backUrl != null && backUrl.isNotEmpty,
+      sideViewAvailable: json['side_view_available'] == true &&
+          sideUrl != null &&
+          sideUrl.isNotEmpty,
+      backViewAvailable: json['back_view_available'] == true &&
+          backUrl != null &&
+          backUrl.isNotEmpty,
       styleLabel: json['style_label'] as String? ?? 'Personalized Look',
       headerHex: json['header_hex'] as String?,
       hairStyle: json['hair_style'] as String?,
@@ -309,13 +315,19 @@ class AiStyleConfigState extends AiStyleState {
   }) {
     return AiStyleConfigState(
       selectedImage: clearImage ? null : (selectedImage ?? this.selectedImage),
-      selectedImageBase64: clearImage ? null : (selectedImageBase64 ?? this.selectedImageBase64),
-      photoAnalysis: (clearImage || clearAnalysis) ? null : (photoAnalysis ?? this.photoAnalysis),
+      selectedImageBase64:
+          clearImage ? null : (selectedImageBase64 ?? this.selectedImageBase64),
+      photoAnalysis: (clearImage || clearAnalysis)
+          ? null
+          : (photoAnalysis ?? this.photoAnalysis),
       isAnalyzingPhoto: isAnalyzingPhoto ?? this.isAnalyzingPhoto,
       hairStyles: hairStyles ?? this.hairStyles,
       beardStyles: beardStyles ?? this.beardStyles,
-      selectedHairStyle: clearHairStyle ? null : (selectedHairStyle ?? this.selectedHairStyle),
-      selectedBeardStyle: clearBeardStyle ? null : (selectedBeardStyle ?? this.selectedBeardStyle),
+      selectedHairStyle:
+          clearHairStyle ? null : (selectedHairStyle ?? this.selectedHairStyle),
+      selectedBeardStyle: clearBeardStyle
+          ? null
+          : (selectedBeardStyle ?? this.selectedBeardStyle),
       selectedColor: selectedColor ?? this.selectedColor,
       maintenanceLevel: maintenanceLevel ?? this.maintenanceLevel,
       styleVibe: styleVibe ?? this.styleVibe,
@@ -346,7 +358,8 @@ class AiStyleGeneratingState extends AiStyleState {
   final String stage;
   final double progress;
   AiStyleGeneratingState({
-    this.message = 'Synthesizing personalized hair & beard styles on your portrait...',
+    this.message =
+        'Synthesizing personalized hair & beard styles on your portrait...',
     this.stage = 'GENERATING',
     this.progress = 0.65,
   });
@@ -381,9 +394,7 @@ class AiStyleSuccessState extends AiStyleState {
     this.isSaving = false,
   });
 
-  AiStyleSuccessState copyWith({
-    bool? isSaving,
-  }) {
+  AiStyleSuccessState copyWith({bool? isSaving}) {
     return AiStyleSuccessState(
       originalImageUrl: originalImageUrl,
       storyboardImageUrl: storyboardImageUrl,

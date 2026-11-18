@@ -294,52 +294,7 @@ export class AuthService implements OnModuleDestroy {
     email?: string,
   ): Promise<{ accessToken: string; refreshToken: string; user: any }> {
     const normalized = normalizePhoneNumber(phone);
-    const record = await this.getOtp(normalized);
-    if (!record) {
-      throw new UnauthorizedException(
-        "OTP is invalid or has expired. Request a new code.",
-      );
-    }
-    if (record.expiresAt <= Date.now()) {
-      await this.deleteOtp(normalized);
-      throw new UnauthorizedException("OTP has expired. Request a new code.");
-    }
-    if (record.attempts >= 5) {
-      await this.deleteOtp(normalized);
-      throw new UnauthorizedException(
-        "Too many incorrect attempts. Request a new code.",
-      );
-    }
-
-    const submittedCode = (code || "").trim();
-    const providerType = (
-      process.env.OTP_PROVIDER || "development"
-    ).toLowerCase();
-    let isValid = false;
-    if (providerType === "development") {
-      const expected = Buffer.from(record.code);
-      const submitted = Buffer.from(submittedCode);
-      isValid =
-        expected.length === submitted.length &&
-        timingSafeEqual(expected, submitted);
-    } else {
-      try {
-        isValid = await this.otpProvider.verifyOtp(normalized, submittedCode);
-      } catch {
-        throw new ServiceUnavailableException(
-          "OTP verification is temporarily unavailable. Please try again.",
-        );
-      }
-    }
-
-    if (!isValid) {
-      record.attempts += 1;
-      if (record.attempts >= 5) await this.deleteOtp(normalized);
-      else await this.setOtp(normalized, record);
-      throw new UnauthorizedException("The OTP is invalid.");
-    }
-
-    await this.deleteOtp(normalized);
+    await this.validateOtp(normalized, code);
 
     let user = await this.userRepository.findOne({
       where: { phone: normalized },
@@ -392,6 +347,103 @@ export class AuthService implements OnModuleDestroy {
         role: user.role,
       },
     };
+  }
+
+  private async validateOtp(normalized: string, code?: string): Promise<void> {
+    const record = await this.getOtp(normalized);
+    if (!record) {
+      throw new UnauthorizedException(
+        "OTP is invalid or has expired. Request a new code.",
+      );
+    }
+    if (record.expiresAt <= Date.now()) {
+      await this.deleteOtp(normalized);
+      throw new UnauthorizedException("OTP has expired. Request a new code.");
+    }
+    if (record.attempts >= 5) {
+      await this.deleteOtp(normalized);
+      throw new UnauthorizedException(
+        "Too many incorrect attempts. Request a new code.",
+      );
+    }
+
+    const submittedCode = (code || "").trim();
+    const providerType = (
+      process.env.OTP_PROVIDER || "development"
+    ).toLowerCase();
+    let isValid = false;
+    if (providerType === "development") {
+      const expected = Buffer.from(record.code);
+      const submitted = Buffer.from(submittedCode);
+      isValid =
+        expected.length === submitted.length &&
+        timingSafeEqual(expected, submitted);
+    } else {
+      try {
+        isValid = await this.otpProvider.verifyOtp(normalized, submittedCode);
+      } catch {
+        throw new ServiceUnavailableException(
+          "OTP verification is temporarily unavailable. Please try again.",
+        );
+      }
+    }
+
+    if (!isValid) {
+      record.attempts += 1;
+      if (record.attempts >= 5) await this.deleteOtp(normalized);
+      else await this.setOtp(normalized, record);
+      throw new UnauthorizedException("The OTP is invalid.");
+    }
+    await this.deleteOtp(normalized);
+  }
+
+  private async findPartnerForReset(
+    phoneOrEmail: string,
+  ): Promise<User | null> {
+    const input = phoneOrEmail.trim();
+    const user = input.includes("@")
+      ? await this.userRepository
+          .createQueryBuilder("user")
+          .where("LOWER(user.email) = :email", { email: input.toLowerCase() })
+          .getOne()
+      : await this.userRepository
+          .createQueryBuilder("user")
+          .where("user.phone = :phone", {
+            phone: normalizePhoneNumber(input),
+          })
+          .getOne();
+    if (!user) return null;
+    const membership = await this.salonUserRepository.findOne({
+      where: { user_id: user.id },
+    });
+    return membership ? user : null;
+  }
+
+  async requestPartnerPasswordReset(phoneOrEmail: string) {
+    const user = await this.findPartnerForReset(phoneOrEmail);
+    if (user?.phone) await this.requestOtp(user.phone);
+    return {
+      message:
+        "If a partner account matches those details, a verification code has been sent to its registered phone.",
+    };
+  }
+
+  async resetPartnerPassword(
+    phoneOrEmail: string,
+    code: string,
+    newPassword: string,
+  ) {
+    const user = await this.findPartnerForReset(phoneOrEmail);
+    if (!user) throw new UnauthorizedException("The reset code is invalid.");
+    await this.validateOtp(normalizePhoneNumber(user.phone), code);
+    user.password_hash = await bcrypt.hash(newPassword, 12);
+    user.token_version += 1;
+    await this.userRepository.save(user);
+    await this.refreshTokenRepository.update(
+      { user_id: user.id, revoked_at: IsNull() },
+      { revoked_at: new Date() },
+    );
+    return { message: "Password updated. Sign in with your new password." };
   }
 
   async loginAdmin(
@@ -483,12 +535,26 @@ export class AuthService implements OnModuleDestroy {
       role: user.role,
       preferredGender: profile.preferred_gender || "ALL",
       referralCode: profile.referral_code,
+      notificationPreferences: profile.notification_preferences || {
+        bookingReminders: true,
+        holdAlerts: true,
+        promotions: true,
+      },
+      favoriteSalonIds: profile.favorite_salon_ids || [],
     };
   }
 
   async updateCustomerProfile(
     userId: string,
-    dto: { name?: string; email?: string; preferredGender?: string },
+    dto: {
+      name?: string;
+      email?: string;
+      preferredGender?: string;
+      bookingReminders?: boolean;
+      holdAlerts?: boolean;
+      promotions?: boolean;
+      favoriteSalonIds?: string[];
+    },
   ) {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new UnauthorizedException("User account not found.");
@@ -502,6 +568,18 @@ export class AuthService implements OnModuleDestroy {
     if (!profile) profile = this.profileRepository.create({ user_id: userId });
     if (dto.preferredGender?.trim())
       profile.preferred_gender = dto.preferredGender.trim().toUpperCase();
+    profile.notification_preferences = {
+      bookingReminders:
+        dto.bookingReminders ??
+        profile.notification_preferences?.bookingReminders ??
+        true,
+      holdAlerts:
+        dto.holdAlerts ?? profile.notification_preferences?.holdAlerts ?? true,
+      promotions:
+        dto.promotions ?? profile.notification_preferences?.promotions ?? true,
+    };
+    if (dto.favoriteSalonIds != null)
+      profile.favorite_salon_ids = [...new Set(dto.favoriteSalonIds)];
     await this.profileRepository.save(profile);
     return this.getCustomerProfile(userId);
   }

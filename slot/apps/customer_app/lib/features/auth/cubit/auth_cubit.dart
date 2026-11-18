@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:api_client/api_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -51,6 +52,8 @@ class AuthInvalidOtpState extends AuthState {
 
 class AuthCubit extends Cubit<AuthState> {
   final ApiClient apiClient;
+  late final PushNotificationService _pushNotifications =
+      PushNotificationService(apiClient: apiClient, appType: 'CUSTOMER');
   String? _currentPhone;
   String? _token;
   Map<String, dynamic>? _user;
@@ -64,28 +67,31 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> checkSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedToken = prefs.getString('auth_token');
       final savedUserJson = prefs.getString('auth_user');
 
-      if (savedToken != null &&
-          savedToken.isNotEmpty &&
-          savedUserJson != null) {
-        _token = savedToken;
+      if (savedUserJson != null && await apiClient.restoreSession()) {
+        _token = apiClient.accessToken;
         _user = jsonDecode(savedUserJson) as Map<String, dynamic>;
-        apiClient.setAuthToken(_token!);
-        emit(AuthAuthenticatedState(user: _user!, accessToken: _token!));
-        return;
+        if (_token != null) {
+          await prefs.remove('auth_token');
+          emit(AuthAuthenticatedState(user: _user!, accessToken: _token!));
+          _pushNotifications.register();
+          return;
+        }
       }
-    } catch (_) {}
+    } catch (_) {
+      await apiClient.clearSession();
+    }
 
+    await _clearSession();
     emit(AuthUnauthenticatedState());
   }
 
-  Future<void> _saveSession(String token, Map<String, dynamic> user) async {
+  Future<void> _saveUser(Map<String, dynamic> user) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
       await prefs.setString('auth_user', jsonEncode(user));
+      await prefs.remove('auth_token');
     } catch (_) {}
   }
 
@@ -108,8 +114,9 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> requestOtp(String phone) async {
     String clean = phone.replaceAll(RegExp(r'[\s\-]'), '');
     if (clean.length < 10) {
-      emit(AuthValidationErrorState(
-          'Please enter a valid 10-digit phone number.'));
+      emit(
+        AuthValidationErrorState('Please enter a valid 10-digit phone number.'),
+      );
       return;
     }
     if (!clean.startsWith('+')) {
@@ -124,13 +131,20 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthOtpRequestedState(_currentPhone!));
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 429) {
-        emit(AuthRateLimitedState(
-            'Too many OTP requests. Please wait a minute and try again.'));
+        emit(
+          AuthRateLimitedState(
+            'Too many OTP requests. Please wait a minute and try again.',
+          ),
+        );
       } else {
-        emit(AuthNetworkErrorState(_apiErrorMessage(
-          e,
-          fallback: 'Could not send the OTP. Please try again.',
-        )));
+        emit(
+          AuthNetworkErrorState(
+            _apiErrorMessage(
+              e,
+              fallback: 'Could not send the OTP. Please try again.',
+            ),
+          ),
+        );
       }
     }
   }
@@ -142,8 +156,11 @@ class AuthCubit extends Cubit<AuthState> {
     String role = 'CUSTOMER',
   }) async {
     if (_currentPhone == null) {
-      emit(AuthValidationErrorState(
-          'Phone number is missing. Please enter phone number.'));
+      emit(
+        AuthValidationErrorState(
+          'Phone number is missing. Please enter phone number.',
+        ),
+      );
       return;
     }
     if (!RegExp(r'^\d{6}$').hasMatch(code.trim())) {
@@ -168,16 +185,21 @@ class AuthCubit extends Cubit<AuthState> {
       if (_token != null && _user != null) {
         final refreshToken = response['refreshToken']?.toString();
         if (refreshToken == null || refreshToken.isEmpty) {
-          emit(AuthNetworkErrorState(
-              'Authentication server did not return a secure session.'));
+          emit(
+            AuthNetworkErrorState(
+              'Authentication server did not return a secure session.',
+            ),
+          );
           return;
         }
         await apiClient.saveSession(_token!, refreshToken);
-        await _saveSession(_token!, _user!);
+        await _saveUser(_user!);
         emit(AuthAuthenticatedState(user: _user!, accessToken: _token!));
+        _pushNotifications.register();
       } else {
-        emit(AuthInvalidOtpState(
-            'Invalid response from authentication server.'));
+        emit(
+          AuthInvalidOtpState('Invalid response from authentication server.'),
+        );
       }
     } catch (e) {
       final message = e.toString().toLowerCase();
@@ -187,10 +209,14 @@ class AuthCubit extends Cubit<AuthState> {
           message.contains('unauthorized')) {
         emit(AuthInvalidOtpState('The OTP is invalid. Please try again.'));
       } else {
-        emit(AuthNetworkErrorState(_apiErrorMessage(
-          e,
-          fallback: 'Could not verify the OTP. Please try again.',
-        )));
+        emit(
+          AuthNetworkErrorState(
+            _apiErrorMessage(
+              e,
+              fallback: 'Could not verify the OTP. Please try again.',
+            ),
+          ),
+        );
       }
     }
   }
@@ -207,6 +233,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> logout() async {
+    await _pushNotifications.unregister();
     try {
       await apiClient.logout();
     } catch (_) {
@@ -220,6 +247,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> handleSessionExpired() async {
+    await _pushNotifications.unregister();
     await _clearSession();
     await apiClient.clearSession();
     _token = null;
@@ -235,7 +263,7 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final profile = await apiClient.updateCustomerProfile(updates);
       _user = {...?_user, ...profile};
-      await _saveSession(_token!, _user!);
+      await _saveUser(_user!);
       emit(AuthAuthenticatedState(user: _user!, accessToken: _token!));
     } catch (error) {
       emit(AuthNetworkErrorState('Could not update profile: $error'));

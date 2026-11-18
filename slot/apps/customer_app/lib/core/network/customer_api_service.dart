@@ -1,5 +1,7 @@
 import 'dart:developer' as developer;
+
 import 'package:api_client/api_client.dart';
+
 import '../constants/customer_api_urls.dart';
 export '../constants/customer_api_urls.dart';
 
@@ -62,15 +64,22 @@ class CustomerApiService extends ApiClient {
         }
       }
 
-      developer.log('[$operation Error] $errorMessage (HTTP $statusCode)',
-          error: dioErr);
-      throw CustomerApiException(errorMessage,
-          statusCode: statusCode, originalError: dioErr);
+      developer.log(
+        '[$operation Error] $errorMessage (HTTP $statusCode)',
+        error: dioErr,
+      );
+      throw CustomerApiException(
+        errorMessage,
+        statusCode: statusCode,
+        originalError: dioErr,
+      );
     } catch (e) {
       developer.log('[$operation Unexpected Error] $e', error: e);
       if (e is CustomerApiException) rethrow;
-      throw CustomerApiException('An unexpected error occurred: $e',
-          originalError: e);
+      throw CustomerApiException(
+        'An unexpected error occurred: $e',
+        originalError: e,
+      );
     }
   }
 
@@ -80,10 +89,7 @@ class CustomerApiService extends ApiClient {
 
   /// Request OTP for customer phone number
   Future<Map<String, dynamic>> requestOtpCode(String phone) async {
-    return handleRequest(
-      () => requestOtp(phone),
-      operation: 'Request OTP',
-    );
+    return handleRequest(() => requestOtp(phone), operation: 'Request OTP');
   }
 
   /// Verify the one-time code delivered to the customer.
@@ -117,10 +123,7 @@ class CustomerApiService extends ApiClient {
 
   /// Log out from customer session
   Future<void> logOutCustomer() async {
-    return handleRequest(
-      () => logout(),
-      operation: 'Customer Logout',
-    );
+    return handleRequest(() => logout(), operation: 'Customer Logout');
   }
 
   // ==========================================
@@ -164,8 +167,10 @@ class CustomerApiService extends ApiClient {
   }
 
   /// Centralized reverse geocoding via OpenStreetMap with fallback
-  Future<String> reverseGeocode(
-      {required double lat, required double lng}) async {
+  Future<String> reverseGeocode({
+    required double lat,
+    required double lng,
+  }) async {
     try {
       final response = await dio
           .get(
@@ -219,15 +224,13 @@ class CustomerApiService extends ApiClient {
 
   /// Create seat hold before checkout
   Future<Map<String, dynamic>> holdSlot(Map<String, dynamic> data) async {
-    return handleRequest(
-      () => createHold(data),
-      operation: 'Create Slot Hold',
-    );
+    return handleRequest(() => createHold(data), operation: 'Create Slot Hold');
   }
 
   /// Confirm booking after payment / slot confirmation
   Future<Map<String, dynamic>> confirmReservation(
-      Map<String, dynamic> data) async {
+    Map<String, dynamic> data,
+  ) async {
     return handleRequest(
       () => confirmBooking(data),
       operation: 'Confirm Booking',
@@ -269,10 +272,7 @@ class CustomerApiService extends ApiClient {
 
   /// Fetch active deals and banners
   Future<List<dynamic>> fetchOffers() async {
-    return handleRequest(
-      () => getCustomerOffers(),
-      operation: 'Get Offers',
-    );
+    return handleRequest(() => getCustomerOffers(), operation: 'Get Offers');
   }
 
   /// Fetch customer notification list
