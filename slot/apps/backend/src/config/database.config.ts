@@ -26,6 +26,12 @@ import {
   SupportTicket,
   SupportTicketMessage,
 } from "../entities";
+import { ProductionBaseline1791510000000 } from "../migrations/1791510000000-ProductionBaseline";
+import { AdminOperationsFoundation1791511000000 } from "../migrations/1791511000000-AdminOperationsFoundation";
+import { ReviewModeration1791512000000 } from "../migrations/1791512000000-ReviewModeration";
+import { AiStyleProductionTables1791513000000 } from "../migrations/1791513000000-AiStyleProductionTables";
+import { SupportTickets1791514000000 } from "../migrations/1791514000000-SupportTickets";
+import { CustomerPreferencesAndFavorites1791515000000 } from "../migrations/1791515000000-CustomerPreferencesAndFavorites";
 
 export const getDatabaseConfig = (): TypeOrmModuleOptions => {
   const isProd = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
@@ -59,6 +65,16 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
     SupportTicketMessage,
   ];
 
+  // Explicit class references keep migrations in the Vercel serverless bundle.
+  const migrations = [
+    ProductionBaseline1791510000000,
+    AdminOperationsFoundation1791511000000,
+    ReviewModeration1791512000000,
+    AiStyleProductionTables1791513000000,
+    SupportTickets1791514000000,
+    CustomerPreferencesAndFavorites1791515000000,
+  ];
+
   let isValidUrl = false;
   if (dbUrl) {
     try {
@@ -80,7 +96,7 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
       logging: process.env.NODE_ENV === "development",
       ssl:
         process.env.DB_SSL === "false" ? false : { rejectUnauthorized: false },
-      migrations: [__dirname + "/../migrations/*{.ts,.js}"],
+      migrations,
       migrationsRun: process.env.DB_MIGRATIONS_RUN === "true",
       retryAttempts: 1,
       retryDelay: 1000,
@@ -116,7 +132,7 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
               process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false",
           }
         : false,
-    migrations: [__dirname + "/../migrations/*{.ts,.js}"],
+    migrations,
     migrationsRun: process.env.DB_MIGRATIONS_RUN === "true",
     retryAttempts: 1,
     retryDelay: 1000,
